@@ -63,7 +63,7 @@ export default {
           </div>
           <div class="card pad">
             <h3 class="section-title">${icon('sliders-horizontal', 17)}Dettagli del messaggio</h3>
-            <div class="grid g3" id="vars"></div>
+            <div class="grid g2" id="vars"></div>
           </div>
           <div class="card pad" id="tagCard">
             <div class="row between"><h3 class="section-title" style="margin:0">${icon('hash', 17)}Hashtag</h3><label class="switch small"><input type="checkbox" id="ub" ${st.unicodeBold ? 'checked' : ''}><i></i>Grassetto per Instagram, Facebook e X</label></div>

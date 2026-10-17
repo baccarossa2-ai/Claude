@@ -91,7 +91,7 @@ export const TEMPLATES = [
       add(p, 'tv1', img(IMG('ritmica'), 540, 960, 1080, 1920, { loop: { type: 'kenburns' }, filter: 'athlos' }));
       add(p, 'tv2', color(540, 1240, 1080, 1360, { colors: ['rgba(13,11,26,0)', 'rgba(13,11,26,.96)'], angle: 180 }));
       add(p, 'tv3', color(540, 960, 1080, 1920, { fill: 'rgba(0,0,0,0)', effect: 'sparkles', name: 'Stelline' }));
-      add(p, 'tv4', text('SAGGIO\nDI FINE ANNO', 540, 1180, 1000, { font: 'Bebas Neue', weight: 400, size: 190, letterSpacing: 4, lineHeight: 0.9, color: '#FFFFFF', animIn: { type: 'rise', duration: 1 } }));
+      add(p, 'tv4', text('SAGGIO\nDI FINE ANNO', 540, 1130, 1040, { font: 'Bebas Neue', weight: 400, size: 165, letterSpacing: 3, lineHeight: 0.9, color: '#FFFFFF', animIn: { type: 'rise', duration: 1 } }));
       add(p, 'tv4', text('Sabato 13 giugno · ore 18:00', 540, 1430, 900, { font: 'Poppins', weight: 700, size: 46, color: '#1B1440', bg: { enabled: true, color: '#FFFFFF', padding: 24, radius: 999 }, animIn: { type: 'pop', duration: 0.7 } }));
       add(p, 'tv4', text(b.address || 'Palazzetto dello sport', 540, 1560, 900, { font: 'Poppins', weight: 600, size: 40, color: '#E9E6FF', animIn: { type: 'fade', duration: 1 } }));
       add(p, 'tv4', text(b.name, 540, 1760, 900, { font: 'Montserrat', weight: 800, size: 44, color: '#FFFFFF', letterSpacing: 4, uppercase: true }));

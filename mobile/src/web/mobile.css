@@ -1,0 +1,7 @@
+/* Elementi solo per il telefono: attesa durante import/esportazioni ed errore di avvio */
+.m-busy { position: fixed; inset: 0; z-index: 99999; display: grid; place-items: center; background: rgba(8, 6, 20, .45); backdrop-filter: blur(3px); animation: m-fade .2s ease; }
+.m-busy > div { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 16px; background: #17142B; color: #EDEBFF; font: 600 15px/1.2 Inter, system-ui, sans-serif; box-shadow: 0 18px 50px rgba(0, 0, 0, .45); }
+.m-busy i { width: 20px; height: 20px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .2); border-top-color: #9D7BFF; animation: m-spin .8s linear infinite; }
+.m-fatal { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 99999; padding: 16px; border-radius: 14px; background: #3B0D1A; color: #FFD9E2; font: 14px/1.4 system-ui, sans-serif; display: grid; gap: 6px; }
+@keyframes m-spin { to { transform: rotate(360deg); } }
+@keyframes m-fade { from { opacity: 0; } }

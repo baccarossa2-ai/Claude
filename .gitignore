@@ -12,3 +12,4 @@ mobile/android/app/build/
 mobile/android/capacitor-cordova-android-plugins/build/
 mobile/android/local.properties
 mobile/dist/
+mobile/android/keystore/

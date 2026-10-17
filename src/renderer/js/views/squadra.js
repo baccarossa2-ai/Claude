@@ -93,6 +93,7 @@ export default {
       const onlineN = (s().online || []).length;
       $('#cmain', root).innerHTML = `
         <header class="chat-head">
+          <button class="btn icon sm ghost m-only" data-mback aria-label="Indietro">${icon('arrow-left', 20)}</button>
           ${ch.dm ? `<span class="presence ${ch.online ? 'on' : ''}">${avatar({ nome: ch.nome, cognome: '', colore: ch.person.colore }, 40)}</span>` : `<span class="ch-ico" style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:${ch.colore}">${icon(ch.icona || 'hash', 19)}</span>`}
           <div><h3>${ch.dm ? '' : '# '}${esc(ch.nome)}</h3><small>${ch.dm ? (ch.online ? 'Online ora' : esc(ch.descrizione)) : `${esc(ch.descrizione || '')} · ${onlineN + 1} ${onlineN ? 'persone collegate' : 'persona collegata (tu)'}`}</small></div>
           <div class="actions">
@@ -218,6 +219,8 @@ export default {
     };
 
     // eventi
+    on(root, 'click', '[data-mback]', () => $('#chat', root).classList.remove('m-conv'));
+    on(root, 'click', '[data-ch], [data-dm]', () => $('#chat', root).classList.add('m-conv'));
     on(root, 'click', '[data-ch]', (e, t) => {
       active = t.dataset.ch;
       replyTo = null;

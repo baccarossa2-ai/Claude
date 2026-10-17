@@ -251,7 +251,7 @@ export function brandFrom(db) {
   const y = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
   return {
     name,
-    logo: c.logo ? `athlos://media/${encodeURIComponent(c.logo)}` : '',
+    logo: c.logo ? window.athlos.media.url(c.logo) : '',
     phone: c.cellulare || c.telefono || '',
     instagram: c.social?.instagram || '',
     address: [sede.indirizzo, sede.civico, sede.comune].filter(Boolean).join(', '),

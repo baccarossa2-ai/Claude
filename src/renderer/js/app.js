@@ -6,6 +6,15 @@ import { parseHash, go } from './lib/router.js';
 import { esc, daysUntil, fullName, normalize, euro, date, age, todayISO } from './lib/format.js';
 import { startChat, onChat, unreadCount, chatState } from './lib/chatstate.js';
 
+// barra in basso del telefono
+const TABS = [
+  { path: '/dashboard', label: 'Home', icon: 'layout-dashboard' },
+  { path: '/atleti', label: 'Atleti', icon: 'users', match: /^\/atleti/ },
+  { path: '/ricevute', label: 'Ricevute', icon: 'receipt-text', match: /^\/ricevute/ },
+  { path: '/scadenzario', label: 'Scadenze', icon: 'calendar-clock', badge: 'scadenze-m' },
+  { label: 'Altro', icon: 'layout-grid' },
+];
+
 const NAV = [
   { group: 'Gestione' },
   { path: '/dashboard', label: 'Panoramica', icon: 'layout-dashboard' },
@@ -53,6 +62,8 @@ function renderShell() {
     </aside>
     <section class="main">
       <header class="topbar">
+        <button class="top-btn m-only" id="menuBtn" aria-label="Menu">${icon('menu', 22)}</button>
+        <div class="m-title m-only" id="mTitle"><img src="assets/logo.svg" alt=""><span>Athlos</span></div>
         <button class="search-trigger" id="searchBtn">${icon('search', 17)}<span>Cerca atleti, ricevute, azioni…</span><kbd>Ctrl K</kbd></button>
         <div class="spacer"></div>
         <button class="btn primary sm" id="newBtn">${icon('plus', 16)}<span>Nuovo</span></button>
@@ -61,6 +72,9 @@ function renderShell() {
       </header>
       <main class="view" id="view"></main>
     </section>
+    <div class="m-scrim" id="scrim"></div>
+    <nav class="m-tabbar" id="tabbar">${TABS.map(t => `<button class="m-tab" ${t.path ? `data-path="${t.path}"` : 'data-drawer'}>
+      ${icon(t.icon, 22)}<span>${esc(t.label)}</span>${t.badge ? `<i class="nav-badge hidden" data-badge="${t.badge}"></i>` : ''}</button>`).join('')}</nav>
   </div>`;
 
   renderNav();
@@ -73,6 +87,14 @@ function renderShell() {
     db.save('settings');
   };
   $('#clubCard').onclick = () => go('/societa');
+  // telefono: menu laterale a scomparsa
+  const drawer = open => document.documentElement.classList.toggle('drawer-open', open);
+  $('#menuBtn').onclick = () => drawer(true);
+  $('#scrim').onclick = () => drawer(false);
+  on($('#tabbar'), 'click', '[data-drawer]', () => drawer(true));
+  let x0 = null;
+  $('.sidebar').addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  $('.sidebar').addEventListener('touchend', e => { if (x0 !== null && x0 - e.changedTouches[0].clientX > 60) drawer(false); x0 = null; }, { passive: true });
   $('#searchBtn').onclick = openPalette;
   $('#newBtn').onclick = e => newMenu(e.currentTarget);
   $('#bellBtn').onclick = e => alertsMenu(e.currentTarget);
@@ -117,6 +139,10 @@ function highlightNav() {
     const active = n && n.match ? n.match.test(path) : b.dataset.path === path;
     b.classList.toggle('active', active);
   });
+  $$('.m-tab[data-path]').forEach(b => {
+    const t = TABS.find(x => x.path === b.dataset.path);
+    b.classList.toggle('active', t.match ? t.match.test(path) : t.path === path);
+  });
 }
 
 function renderClubCard() {
@@ -146,8 +172,7 @@ export function certStats() {
 function updateBadges() {
   const s = certStats();
   const n = s.expired + s.soon;
-  const b = $('[data-badge="scadenze"]');
-  if (b) { b.textContent = n; b.classList.toggle('hidden', !n); }
+  for (const b of $$('[data-badge="scadenze"], [data-badge="scadenze-m"]')) { b.textContent = n; b.classList.toggle('hidden', !n); }
   const u = unreadCount();
   const cb = $('[data-badge="chat"]');
   if (cb) { cb.textContent = u > 99 ? '99+' : u; cb.classList.toggle('hidden', !u); }
@@ -199,6 +224,7 @@ function alertsMenu(anchor) {
 async function route() {
   const r = parseHash();
   highlightNav();
+  document.documentElement.classList.remove('drawer-open');
   if (cleanup) { try { cleanup(); } catch (err) { console.error(err); } cleanup = null; }
   const view = $('#view');
   current = r;
@@ -227,6 +253,8 @@ async function route() {
   void view.offsetWidth;
   view.classList.add('enter');
   document.title = `${mod.title || 'Athlos'} · Athlos Suite`;
+  const mt = $('#mTitle span');
+  if (mt) mt.textContent = r.path === '/dashboard' ? (db.company.denominazione || 'Athlos') : (mod.title || 'Athlos');
 }
 
 // ------------------------------------------------------------------ palette comandi

@@ -8,7 +8,7 @@ import { decodeCF, validateCF } from '../lib/cf.js';
 import { printDocument, listDocument } from '../print/documents.js';
 import { sendReminder } from './dashboard.js';
 
-const state = { q: '', disc: null, cert: 'tutti', eta: 'tutti', stato: 'attivi', sort: 'nome', view: 'table', selected: new Set() };
+const state = { q: '', disc: null, cert: 'tutti', eta: 'tutti', stato: 'attivi', sort: 'nome', view: matchMedia('(max-width: 760px)').matches ? 'cards' : 'table', selected: new Set() };
 
 export function certBadge(c) {
   const days = db.settings.reminderDays || 30;

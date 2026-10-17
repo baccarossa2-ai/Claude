@@ -8,7 +8,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +16,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // stessa firma per le build locali e per GitHub: gli aggiornamenti si installano sopra la versione precedente
+    def keystoreFile = rootProject.file('keystore/keystore.properties')
+    def keystore = new Properties()
+    if (keystoreFile.exists()) keystoreFile.withInputStream { keystore.load(it) }
+    signingConfigs {
+        release {
+            if (keystoreFile.exists()) {
+                storeFile rootProject.file('keystore/' + keystore['storeFile'])
+                storePassword keystore['storePassword']
+                keyAlias keystore['keyAlias']
+                keyPassword keystore['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig keystoreFile.exists() ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -43,6 +58,13 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
+
+// APK con un nome chiaro: Athlos-<versione>.apk
+android.applicationVariants.all { variant ->
+    variant.outputs.all { output ->
+        if (variant.buildType.name == 'release') outputFileName = "Athlos-${variant.versionName}.apk"
+    }
+}
 
 try {
     def servicesJSON = file('google-services.json')

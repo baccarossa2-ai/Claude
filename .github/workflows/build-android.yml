@@ -1,0 +1,64 @@
+name: Crea APK Android
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Dipendenze
+        working-directory: mobile
+        run: npm ci
+
+      - name: Interfaccia e ponte Android
+        working-directory: mobile
+        run: npm run build:web && npx cap sync android
+
+      # La chiave di firma non sta nel repository: va nei Secrets del repository
+      # (ATHLOS_KEYSTORE_BASE64 e ATHLOS_KEYSTORE_PASSWORD). Senza, l'APK è firmato con una chiave di prova.
+      - name: Chiave di firma
+        env:
+          KEYSTORE_B64: ${{ secrets.ATHLOS_KEYSTORE_BASE64 }}
+          KEYSTORE_PW: ${{ secrets.ATHLOS_KEYSTORE_PASSWORD }}
+        if: env.KEYSTORE_B64 != ''
+        working-directory: mobile/android
+        run: |
+          mkdir -p keystore
+          echo "$KEYSTORE_B64" | base64 -d > keystore/athlos-release.jks
+          printf 'storeFile=athlos-release.jks\nstorePassword=%s\nkeyAlias=athlos\nkeyPassword=%s\n' "$KEYSTORE_PW" "$KEYSTORE_PW" > keystore/keystore.properties
+
+      - name: Crea APK firmato
+        working-directory: mobile/android
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Athlos-Android
+          path: mobile/android/app/build/outputs/apk/release/*.apk
+
+      - name: Allega alla release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mobile/android/app/build/outputs/apk/release/*.apk

@@ -41,7 +41,7 @@ for (const [page, entry, boot] of [['index.html', 'js/app.js', 'boot-app.js'], [
   const tag = `<script type="module" src="${entry}"></script>`;
   if (!html.includes(tag)) throw new Error(`${page}: script principale non trovato`);
   html = html.replace(tag, `<script src="mobile/bridge.js"></script>\n  <script type="module" src="mobile/${boot}"></script>`);
-  html = html.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">');
+  html = html.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover">');
   html = html.replace('</head>', '  <link rel="stylesheet" href="mobile/mobile.css">\n</head>');
   fs.writeFileSync(file, html);
 }

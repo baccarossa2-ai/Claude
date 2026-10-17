@@ -20,6 +20,31 @@ let loop = false;
 let recording = null;
 
 // ------------------------------------------------------------------ layout
+const phone = () => matchMedia('(max-width: 760px)').matches;
+
+// Telefono: strumenti e proprietà si aprono come fogli dal basso sopra la timeline
+function phoneSheets() {
+  const panel = $('#panel');
+  const insp = $('#insp');
+  let lastTab = null;
+  const open = node => {
+    for (const n of [panel, insp]) n.classList.toggle('m-sheet-open', n === node);
+  };
+  $('#rail').addEventListener('click', e => {
+    const b = e.target.closest('[data-tab]');
+    if (!b || !phone()) return;
+    const again = panel.classList.contains('m-sheet-open') && lastTab === b.dataset.tab;
+    lastTab = b.dataset.tab;
+    open(again ? null : panel);
+  });
+  $('#sheetX').onclick = () => open(null);
+  onState(what => {
+    if (what !== 'select' || !phone()) return;
+    if (S.selected) open(insp);
+    else if (insp.classList.contains('m-sheet-open')) open(null);
+  });
+}
+
 function buildUI() {
   const root = $('#studio');
   root.innerHTML = `<div class="studio" id="st">
@@ -42,6 +67,7 @@ function buildUI() {
       <aside class="st-panel" id="panel"></aside>
       <section class="st-stage-wrap" id="stageWrap"></section>
       <aside class="st-insp" id="insp"></aside>
+      <button class="st-sheet-close" id="sheetX" aria-label="Chiudi">${icon('chevron-down', 22)}</button>
     </div>
     <div class="st-resizer" id="resizer"></div>
     <div class="st-tl" id="tl"></div>
@@ -51,6 +77,7 @@ function buildUI() {
   mountTimeline($('#tl'), { openTransition: () => showPanel('transizioni'), recordVoice });
   mountPanels($('#rail'), $('#panel'), appData, { recordVoice, thumb: renderThumb, afterTemplate: () => { setTime(0); layout(); } });
   mountInspector($('#insp'));
+  phoneSheets();
 
   $('#pname').addEventListener('input', e => { S.project.name = e.target.value; S.dirty = true; updateTitle(); });
   $('#undoBtn').onclick = undo;

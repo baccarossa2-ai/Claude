@@ -16,7 +16,7 @@ import * as print from './print.js';
 import { scheduleReminders, ensurePermission } from './reminders.js';
 import { createChatApi } from './chat-api.js';
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 const STUDIO = 'athlos/studio';
 const FILES = 'athlos/files';
 const MEDIA_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'mp4', 'm4v', 'mov', 'webm', 'mkv', 'avi', 'mp3', 'wav', 'ogg', 'opus', 'm4a', 'aac', 'flac', 'salto']);

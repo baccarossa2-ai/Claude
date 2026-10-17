@@ -1,0 +1,91 @@
+{
+  "name": "athlos-suite",
+  "productName": "Athlos Suite",
+  "version": "1.0.0",
+  "description": "Athlos Suite — gestionale desktop per società sportive: anagrafiche, ricevute, scadenzario certificati, stampa, editor video Salto Studio, chat Squadra e messaggi social.",
+  "main": "src/main/main.js",
+  "author": "Athletic Club",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "assets": "node scripts/build-assets.js",
+    "dist:win": "electron-builder --win nsis portable --x64",
+    "dist:win-portable": "electron-builder --win portable --x64",
+    "dist:linux": "electron-builder --linux AppImage"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "homepage": "https://github.com/baccarossa2-ai/claude",
+  "build": {
+    "appId": "it.athlos.suite",
+    "productName": "Athlos Suite",
+    "copyright": "Copyright © 2026 Athletic Club",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "build/icon.png",
+      "build/icon.ico",
+      "!**/*.map"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "Athlos-Suite-${version}-${arch}-${target}.${ext}",
+      "legalTrademarks": "Athlos Suite"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Athlos Suite",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "uninstallDisplayName": "Athlos Suite",
+      "language": "1040",
+      "installerLanguages": [
+        "it_IT"
+      ],
+      "artifactName": "Athlos-Suite-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "Athlos-Suite-Portable-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "build/icon.png",
+      "category": "Office"
+    }
+  }
+}

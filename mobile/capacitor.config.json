@@ -1,0 +1,15 @@
+{
+  "appId": "it.athlos.suite",
+  "appName": "Athlos",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 900, "backgroundColor": "#0B1020", "showSpinner": false, "androidScaleType": "CENTER_CROP" },
+    "LocalNotifications": { "smallIcon": "ic_stat_athlos", "iconColor": "#7C5CFF" },
+    "Keyboard": { "resize": "native" }
+  }
+}

@@ -4,3 +4,11 @@ out/
 *.log
 .DS_Store
 Thumbs.db
+mobile/node_modules/
+mobile/www/
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/capacitor-cordova-android-plugins/build/
+mobile/android/local.properties
+mobile/dist/

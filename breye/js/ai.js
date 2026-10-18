@@ -1,22 +1,22 @@
 /* Iris — the Breye AI engine.
-   Text, code and vision: Claude (inside claude.ai, no key) or the open Pollinations gateway (public web, no key).
-   Images: photoreal (Pollinations Flux / Hugging Face Z-Image), vector (SVG written by the language model),
-   procedural (GLSL shaders written by the language model, rendered on the GPU). Video: see motion.js. */
+   Text, code, tools and vision: Claude inside claude.ai (no key), or on the public web open models running on the
+   AI Horde community GPU network (Skyfall 31B and its Mistral family, or a large Qwen whenever a volunteer hosts one):
+   free, keyless, no quota.
+   Images: photoreal (AI Horde as well, see iris-tools.js; Pollinations Sana as an instant fallback),
+   vector (SVG written by the language model), procedural (GLSL shaders written by the language model). Video: see motion.js. */
 (function () {
   'use strict';
   const B = window.B;
-  const HF = 'Huggingface GPU';
-  const WEB_TEXT = 'https://text.pollinations.ai/openai';
   const WEB_IMG = 'https://image.pollinations.ai/prompt/';
 
   const ai = (B.ai = {
-    engines: { claude: false, hf: false, web: false, vision: false, tools: false },
+    engines: { claude: false, web: false, horde: false, vision: false, tools: false },
     ready: null,
     busy: 0,
     persona: 'Sei Iris, l’intelligenza artificiale di Breye Studio, uno studio creativo tutto-in-uno (design grafico, fotoritocco, montaggio video, generazione di immagini e video, codice, documenti e PDF). Rispondi nella lingua dell’utente (di default in italiano), con tono caldo, preciso e professionale. Usa Markdown quando aiuta: titoli brevi, elenchi, tabelle e blocchi di codice con il linguaggio indicato. Quando scrivi codice, scrivilo completo e funzionante. Non inventare fatti: se non sei sicuro, dillo.'
   });
 
-  let sample = null, mcp = null;
+  let sample = null;
 
   function setBusy(d) {
     ai.busy = Math.max(0, ai.busy + d);
@@ -29,19 +29,19 @@
       const inClaude = !!(window.claude && typeof window.claude.use === 'function');
       if (inClaude) {
         const safe = (n) => window.claude.use(n).catch(() => null);
-        const [s, m, d] = await Promise.all([safe('sample'), safe('mcp'), safe('downloads')]);
-        sample = s; mcp = m; B.cap.downloads = d; B.cap.sample = s; B.cap.mcp = m;
+        const [s, d] = await Promise.all([safe('sample'), safe('downloads')]);
+        sample = s; B.cap.downloads = d; B.cap.sample = s;
         ai.engines.claude = !!s;
         if (s && s.limits) {
           try { const lim = await s.limits(); ai.engines.vision = !!(lim && lim.images); ai.engines.tools = !!(lim && lim.tools); ai.limits = lim; } catch (e) { /* ignore */ }
         }
-        if (m) {
-          try { const lt = await m.listTools(HF); ai.engines.hf = !!(lt && lt.servers && lt.servers.some((sv) => sv.server === HF)); } catch (e) { ai.engines.hf = false; }
-        }
-        ai.engines.web = false;
+        ai.engines.web = false; ai.engines.horde = false;
       } else {
         ai.engines.web = typeof fetch === 'function' && location.protocol !== 'file:' ? true : !!navigator.onLine;
-        ai.engines.vision = ai.engines.web;
+        ai.engines.horde = ai.engines.web;
+        ai.engines.vision = false; // open models read captions instead (ai.caption); canSee() covers both
+        ai.engines.caption = ai.engines.web;
+        ai.engines.tools = ai.engines.web;
       }
       B.emit('ai:ready', ai.engines);
       return ai.engines;
@@ -50,7 +50,7 @@
   };
 
   ai.textEngine = () => (ai.engines.claude ? 'claude' : ai.engines.web ? 'web' : null);
-  ai.engineLabel = () => ai.engines.claude ? 'Iris · motore Claude' : ai.engines.web ? 'Iris · motore web aperto' : 'Iris non collegata';
+  ai.engineLabel = () => ai.engines.claude ? 'Iris · motore Claude' : ai.engines.web ? 'Iris · ' + (ai.gate ? ai.gate.label : 'GPU comunitaria') : 'Iris non collegata';
 
   /* ---------- errors ---------- */
   const MSG = {
@@ -66,11 +66,9 @@
     image_rejected: 'Immagine non accettata: usa JPG, PNG, WebP o GIF più piccola.',
     upstream_error: 'Il servizio AI non ha risposto. Riprova tra poco.',
     no_engine: 'Nessun motore AI raggiungibile. Apri Breye dentro Claude oppure online con connessione attiva.',
-    server_not_connected: 'Il connettore Hugging Face non è collegato: aggiungilo in Claude → Impostazioni → Connettori.',
-    needs_reauth: 'Ricollega il connettore Hugging Face in Claude → Impostazioni → Connettori.',
-    not_in_manifest: 'Il connettore Hugging Face non è autorizzato per questa pagina.',
-    approval_required: 'Serve la tua approvazione per usare il connettore Hugging Face.',
-    quota: 'Quota GPU gratuita di Hugging Face esaurita per oggi. Usa il motore Vettoriale o Shader (illimitati) oppure riprova più tardi.'
+    no_photo: 'Le foto realistiche usano la rete GPU comunitaria, raggiungibile solo dalla versione web di Breye. Qui puoi usare i motori Vettoriale e Procedurale.',
+    horde_busy: 'La rete GPU comunitaria è molto occupata in questo momento. Riprova tra poco oppure usa la qualità Rapida.',
+    horde_error: 'La rete GPU comunitaria non ha completato il lavoro. Riprova: verrà scelto un altro computer.'
   };
   function wrapErr(e) {
     if (e && e.userMessage) return e;
@@ -78,8 +76,7 @@
     const err = new Error((e && e.message) || String(e));
     err.code = code;
     const raw = ((e && e.message) || '') + ' ' + JSON.stringify((e && e.result) || '');
-    if (/quota|ZeroGPU/i.test(raw)) err.userMessage = MSG.quota;
-    else err.userMessage = MSG[code] || (code === 'cancelled' ? 'Interrotto.' : null) || (e && e.message ? 'Errore AI: ' + String(e.message).slice(0, 160) : MSG.upstream_error);
+    err.userMessage = MSG[code] || (code === 'cancelled' ? 'Interrotto.' : null) || (e && e.message ? 'Errore AI: ' + String(e.message).slice(0, 160) : MSG.upstream_error);
     err.partial = e && e.text;
     return err;
   }
@@ -120,47 +117,172 @@
     return r.text;
   }
 
-  async function webText(msgs, o) {
-    const out = [];
-    const sys = o.system === false ? null : (o.system || ai.persona);
-    if (sys) out.push({ role: 'system', content: sys + (o.json ? '\nRispondi esclusivamente con JSON valido, senza testo prima o dopo.' : '') });
-    for (let i = 0; i < msgs.length; i++) {
-      const m = msgs[i];
-      if (o.images && o.images.length && i === msgs.length - 1) {
-        const parts = [{ type: 'text', text: m.content }];
-        for (const im of o.images) parts.push({ type: 'image_url', image_url: { url: await B.blobToDataURL(im) } });
-        out.push({ role: m.role, content: parts });
-      } else out.push(m);
+  /* ---------- AI Horde text: open models on volunteer GPUs, free and keyless ---------- */
+  const HORDE = 'https://aihorde.net/api/v2';
+  const HHEAD = { 'Content-Type': 'application/json', apikey: '0000000000', 'Client-Agent': 'breye-studio:1.2:github.com/baccarossa2-ai/Claude' };
+  const CHUNK = 512; // the most an anonymous request may ask for: longer answers continue in several chunks
+  // model families on the network, best first. A request names a whole family: the first free GPU running any of
+  // its models takes the job, so answers stay fast while the network stays fair (one prompt format per family)
+  const FAMILIES = [
+    { id: 'qwen', fmt: 'chatml', re: /qwen[\w.-]*?(max|14b|27b|30b|32b|72b|235b)/i, label: 'Qwen' },
+    { id: 'mistral-big', fmt: 'mistral', re: /(skyfall|artemis)-31b|(cydonia|magidonia)-24b|mistral-small/i, label: 'Skyfall 31B' },
+    { id: 'mistral', fmt: 'mistral', re: /rocinante|angelic_eclipse|mistral-nemo/i, label: 'Mistral Nemo 12B' },
+    { id: 'chatml', fmt: 'chatml', re: /mini-magnum/i, label: 'Magnum 12B' },
+    { id: 'llama', fmt: 'llama3', re: /stheno|super-nova/i, label: 'Llama 3 8B' }
+  ];
+  // excluded: uncensored builds, debug builds, a 128B model with a long queue, and a Gemma 4 bridge whose forced
+  // reasoning restarts on every 512-token chunk and never reaches the answer for anonymous requests
+  const TEXT_BAD = /heretic|uncensored|nsfw|debug|abliterat|aggressive|behemoth|thinking|^google\/gemma/i;
+  const nap = (ms, signal) => new Promise((res, rej) => {
+    if (signal && signal.aborted) return rej(Object.assign(new Error('Interrotto'), { code: 'cancelled', name: 'AbortError' }));
+    const t = setTimeout(res, ms);
+    if (signal) signal.addEventListener('abort', () => { clearTimeout(t); rej(Object.assign(new Error('Interrotto'), { code: 'cancelled', name: 'AbortError' })); }, { once: true });
+  });
+  ai.modelLabel = (n) => { const b = String(n).split('/').pop().replace(/\.gguf$/i, '').replace(/[-_.](i1-)?I?Q\d[\w.]*$/i, '').replace(/[-_]/g, ' ').replace(/(\d+)b\b/gi, '$1B'); return b.charAt(0).toUpperCase() + b.slice(1); };
+  let tstat = null, tstatT = 0;
+  // live models and the limits of the GPUs that host them, grouped into families
+  ai.textModels = async function () {
+    if (tstat && tstat.length && Date.now() - tstatT < 180000) return tstat;
+    try {
+      const get = (p) => fetch(HORDE + p, { headers: { 'Client-Agent': HHEAD['Client-Agent'] } }).then((r) => r.json());
+      const [ms, ws] = await Promise.all([get('/status/models?type=text'), get('/workers?type=text').catch(() => [])]);
+      const lim = {};
+      (Array.isArray(ws) ? ws : []).forEach((w) => { if ((w.max_length || 0) < CHUNK) return; (w.models || []).forEach((n) => { const l = lim[n] || (lim[n] = { ctx: 0, n: 0 }); l.ctx = Math.max(l.ctx, w.max_context_length || 0); l.n++; }); });
+      tstat = [];
+      ms.filter((m) => m.count > 0 && !TEXT_BAD.test(m.name) && lim[m.name]).forEach((m) => {
+        const fi = FAMILIES.findIndex((f) => f.re.test(m.name)); if (fi < 0) return;
+        tstat.push({ name: m.name, label: ai.modelLabel(m.name), count: lim[m.name].n, ctx: lim[m.name].ctx, fam: FAMILIES[fi], rank: fi });
+      });
+      tstat.sort((a, b) => (a.rank - b.rank) || (b.ctx >= 8192) - (a.ctx >= 8192) || (b.count - a.count));
+      tstatT = Date.now();
+    } catch (e) { tstat = tstat || []; }
+    return tstat;
+  };
+  // pools to try in order: the visitor's chosen model, then each family that is online
+  async function textPools(complex) {
+    const list = await ai.textModels();
+    const pools = [];
+    const add = (models, fam) => { models = models.filter((m) => m.ctx >= 2048); if (models.length) pools.push({ models, fam, ctx: Math.min(16384, Math.min(...models.map((m) => m.ctx))) }); };
+    const pref = list.find((m) => m.name === B.ls.get('ai.textModel', 'auto'));
+    if (pref) add([pref], pref.fam);
+    FAMILIES.forEach((f) => {
+      let ms = list.filter((m) => m.fam === f);
+      if (f.id === 'mistral-big' && !complex) { ms = ms.concat(list.filter((m) => m.fam.id === 'mistral')); add(ms, f); return; } // chat: the first free Mistral GPU answers
+      if (f.id === 'mistral' && !complex) return;
+      add(ms, f);
+    });
+    if (!pools.length) pools.push({ models: [{ name: 'koboldcpp/Skyfall-31B-v4.2', ctx: 8192 }, { name: 'koboldcpp/Rocinante-X-12B', ctx: 8192 }], fam: FAMILIES[1], ctx: 8192 });
+    return pools;
+  }
+  const TEMPLATES = {
+    chatml: { head: '', sys: (s) => '<|im_start|>system\n' + s + '<|im_end|>\n', turn: (r, c) => '<|im_start|>' + r + '\n' + c + '<|im_end|>\n', open: '<|im_start|>assistant\n', stop: ['<|im_end|>', '<|im_start|>'] },
+    mistral: { head: '', sys: (s) => '[SYSTEM_PROMPT]' + s + '[/SYSTEM_PROMPT]', turn: (r, c) => r === 'user' ? '[INST]' + c + '[/INST]' : c + '</s>', open: '', stop: ['[INST]', '</s>', '[/INST]', '[SYSTEM_PROMPT]'] },
+    llama3: { head: '<|begin_of_text|>', sys: (s) => '<|start_header_id|>system<|end_header_id|>\n\n' + s + '<|eot_id|>', turn: (r, c) => '<|start_header_id|>' + r + '<|end_header_id|>\n\n' + c + '<|eot_id|>', open: '<|start_header_id|>assistant<|end_header_id|>\n\n', stop: ['<|eot_id|>', '<|start_header_id|>'] }
+  };
+  function buildPrompt(T, sys, msgs, ctx) {
+    const budget = Math.max(2000, (ctx - CHUNK - 96) * 3.1); // characters that fit in the context window
+    let used = sys.length; const kept = [];
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      let c = String(msgs[i].content || '');
+      if (used + c.length > budget) { if (kept.length) break; const room = Math.max(400, budget - used); c = c.slice(0, Math.floor(room * 0.3)) + '\n[…]\n' + c.slice(-Math.floor(room * 0.7)); }
+      kept.unshift({ role: msgs[i].role === 'assistant' ? 'assistant' : 'user', content: c }); used += c.length;
     }
-    const body = { model: o.model || 'openai', messages: out, stream: !!o.onText, private: true, referrer: 'breye-studio', reasoning_effort: o.tier === 'complex' ? 'medium' : 'low', max_tokens: o.tier === 'complex' ? 16000 : 8000 };
-    let res;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      res = await fetch(WEB_TEXT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: o.signal });
-      if ((res.status === 429 || res.status === 402 || res.status === 503) && attempt < 3) { const ra = +(res.headers.get('Retry-After') || 0); await B.sleep(Math.min(20, Math.max(4 * (attempt + 1), ra)) * 1000); continue; }
-      if (res.status === 400 && (body.reasoning_effort || body.max_tokens)) { delete body.reasoning_effort; delete body.max_tokens; continue; }
-      break;
-    }
-    if (!res.ok) { const e = new Error('HTTP ' + res.status); e.code = res.status === 429 || res.status === 402 ? 'rate_limited' : 'upstream_error'; throw e; }
-    let text = '';
-    if (!o.onText) {
-      const j = await res.json();
-      text = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
-    } else {
-      const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
+    while (kept.length && kept[0].role === 'assistant') kept.shift();
+    return T.head + T.sys(sys) + kept.map((x) => T.turn(x.role, x.content)).join('') + T.open;
+  }
+  const clean = (t) => String(t).replace(/<(think|thought)>[\s\S]*?<\/\1>/gi, '').replace(/<\|im_end\|>|<\|im_start\|>|<\|eot_id\|>|<end_of_turn>|<\/s>|\[\/?INST\]/g, '').replace(/^\s*(Iris|assistant)\s*:\s*/i, '').trim();
+  let tInflight = 0; const tWaiting = [];
+  const tAcquire = () => new Promise((res) => { if (tInflight < 3) { tInflight++; res(); } else tWaiting.push(res); });
+  const tRelease = () => { const n = tWaiting.shift(); if (n) n(); else tInflight--; };
+  async function hordeOnce(prompt, pool, stop, signal) {
+    await tAcquire();
+    try {
+      const body = { prompt, params: { n: 1, max_length: CHUNK, max_context_length: pool.ctx, temperature: 0.6, top_p: 0.92, rep_pen: 1.05, stop_sequence: stop }, models: pool.models.map((m) => m.name), trusted_workers: false, slow_workers: true };
+      let j = null, r = null;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        r = await fetch(HORDE + '/generate/text/async', { method: 'POST', headers: HHEAD, body: JSON.stringify(body), signal });
+        j = await r.json().catch(() => ({}));
+        if (r.status === 429) { await nap(2500 * (attempt + 1), signal); continue; }
+        break;
+      }
+      if (!r.ok) throw Object.assign(new Error((j && j.message) || 'HTTP ' + r.status), { code: r.status === 429 ? 'rate_limited' : 'upstream_error', retryOther: true });
+      const id = j.id, t0 = Date.now();
+      const drop = () => fetch(HORDE + '/generate/text/status/' + id, { method: 'DELETE', headers: HHEAD }).catch(() => {});
       for (;;) {
-        const { value, done } = await reader.read(); if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split('\n'); buf = lines.pop();
-        for (const line of lines) {
-          const l = line.trim(); if (!l.startsWith('data:')) continue;
-          const d = l.slice(5).trim(); if (d === '[DONE]') continue;
-          try { const j = JSON.parse(d); const delta = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content; if (delta) { text += delta; o.onText({ text, delta }); } } catch (e) { /* partial line */ }
+        try { await nap(1100, signal); } catch (e) { drop(); throw e; }
+        let c;
+        try { c = await (await fetch(HORDE + '/generate/text/status/' + id, { headers: HHEAD, signal })).json(); }
+        catch (e) { if (e.name === 'AbortError') { drop(); throw Object.assign(new Error('Interrotto'), { code: 'cancelled', name: 'AbortError' }); } continue; }
+        if (c.faulted || c.is_possible === false) { drop(); throw Object.assign(new Error('Il modello non è disponibile ora'), { code: 'upstream_error', retryOther: true }); }
+        if (c.done) { const g = (c.generations || [])[0] || {}; return { text: g.text || '', model: g.model || pool.models[0].name }; }
+        const secs = Math.round((Date.now() - t0) / 1000);
+        if (!c.processing && secs >= 5) B.emit('ai:wait', secs);
+        if (secs > 300) { drop(); throw Object.assign(new Error('Tempo scaduto'), { code: 'upstream_error', retryOther: true }); }
+      }
+    } finally { tRelease(); }
+  }
+  // no token count comes back: a short chunk, or a complete-looking ending outside any code block, means the model stopped
+  const looksDone = (all, json) => { if (json) { try { ai.parseJSON(all); return true; } catch (e) { return false; } } return ((all.match(/```/g) || []).length % 2 === 0) && /[.!?…:)\]"'»*_`>]\s*$|\p{Extended_Pictographic}\s*$/u.test(all); };
+  const finished = (chunk, all) => chunk.length < CHUNK * 1.6 || (chunk.length < CHUNK * 3.4 && ((all.match(/```/g) || []).length % 2 === 0) && /[.!?…:)\]"'»*_`>]\s*$|\p{Extended_Pictographic}\s*$/u.test(all));
+  // the GPU network has no streaming: each chunk is revealed progressively so the answer still "types"
+  async function reveal(prev, full, onText, signal) {
+    const n = full.length - prev.length; if (n <= 0) return;
+    const steps = Math.min(24, Math.ceil(n / 30));
+    for (let i = 1; i <= steps; i++) { if (signal && signal.aborted) return; onText({ text: full.slice(0, prev.length + Math.round(n * i / steps)), delta: '' }); await B.sleep(16); }
+  }
+  /* vision: the network's interrogation workers caption the image, the language model reads the caption */
+  ai.caption = async function (blob, signal) {
+    const im = await B.loadImage(blob); const sc = Math.min(1, 768 / Math.max(im.naturalWidth, im.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * sc)); c.height = Math.max(1, Math.round(im.naturalHeight * sc)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    const r = await fetch(HORDE + '/interrogate/async', { method: 'POST', headers: HHEAD, body: JSON.stringify({ forms: [{ name: 'caption' }], source_image: c.toDataURL('image/webp', 0.9).split(',')[1], slow_workers: true }), signal });
+    const j = await r.json().catch(() => ({})); if (!r.ok || !j.id) return '';
+    const t0 = Date.now(), drop = () => fetch(HORDE + '/interrogate/status/' + j.id, { method: 'DELETE', headers: HHEAD }).catch(() => {});
+    try {
+      while (Date.now() - t0 < 120000) {
+        await nap(1500, signal);
+        try { const st = await (await fetch(HORDE + '/interrogate/status/' + j.id, { headers: HHEAD, signal })).json(); if (st.state === 'done') { const f = (st.forms || [])[0]; return (f && f.result && f.result.caption) || ''; } if (st.state === 'faulted') return ''; } catch (e) { if (e.name === 'AbortError') throw e; }
+      }
+      drop(); return '';
+    } catch (e) { drop(); throw e; }
+  };
+  async function webText(msgs, o) {
+    const pools = await textPools(o.tier === 'complex');
+    let sys = (o.system === false ? 'Sei un assistente preciso.' : (o.system || ai.persona)) + '\nRispondi direttamente, senza mostrare il ragionamento.';
+    if (o.json) sys += '\nRispondi esclusivamente con JSON valido, senza testo prima o dopo e senza blocchi di codice.';
+    msgs = msgs.map((m) => Object.assign({}, m));
+    if (o.images && o.images.length) {
+      const caps = await Promise.all(o.images.map((im) => ai.caption(im, o.signal).catch(() => '')));
+      const desc = caps.map((c, i) => (o.images.length > 1 ? (i + 1) + ') ' : '') + (c || 'descrizione non disponibile')).join('; ');
+      sys += '\nNon vedi direttamente le immagini: ricevi una loro descrizione automatica (in inglese) e ragioni su quella.';
+      msgs[msgs.length - 1].content += '\n\n[Immagine allegata — descrizione automatica: ' + desc + ']';
+    }
+    const maxTok = o.maxTokens || (o.tier === 'complex' ? 12000 : 4096);
+    let lastErr = null;
+    for (const pool of pools.slice(0, 4)) {
+      const T = TEMPLATES[pool.fam.fmt], base = buildPrompt(T, sys, msgs, pool.ctx);
+      let out = '';
+      try {
+        let empties = 0;
+        for (let round = 0; round < Math.ceil(maxTok / CHUNK); round++) {
+          out = out.replace(/[ \t]+$/, '');
+          const res = await hordeOnce(base + out, pool, T.stop, o.signal);
+          if (!res.text.trim() && out && !looksDone(clean(out), o.json) && ++empties < 2) { out = out.replace(/\s+$/, ''); continue; }
+          const prev = clean(out); out += res.text;
+          ai.gate = { label: ai.modelLabel(res.model) + ' · GPU comunitaria', model: res.model };
+          if (o.onText) await reveal(prev, clean(out), o.onText, o.signal);
+          if (!res.text.trim()) break;
+          if (o.json) { try { ai.parseJSON(clean(out)); break; } catch (e) { continue; } } // JSON: keep going until it parses
+          if (finished(res.text, clean(out))) break;
         }
+        const text = clean(out);
+        if (!text) throw Object.assign(new Error('vuoto'), { code: 'empty_completion', retryOther: true });
+        return o.json ? ai.parseJSON(text) : text;
+      } catch (e) {
+        if (e.code === 'cancelled' || e.name === 'AbortError') throw Object.assign(new Error('Interrotto'), { code: 'cancelled', name: 'AbortError' });
+        lastErr = e; // invalid JSON or an unavailable model: the next family gets a try
       }
     }
-    if (!text.trim()) { const e = new Error('vuoto'); e.code = 'empty_completion'; throw e; }
-    if (o.json) return ai.parseJSON(text);
-    return text;
+    throw lastErr || Object.assign(new Error('nessun modello'), { code: 'upstream_error' });
   }
 
   ai.text = async function (input, o = {}) {
@@ -182,12 +304,66 @@
     finally { setBusy(-1); }
   };
   ai.json = (input, o = {}) => ai.text(input, Object.assign({}, o, { json: true }));
-  ai.canSee = () => ai.engines.vision;
+
+  /* ---------- tool use: the model calls page functions (Claude natively, the open gateway via OpenAI tools) ---------- */
+  ai.canUseTools = () => ai.engines.claude ? !!ai.engines.tools : ai.engines.web;
+  ai.toolChat = async function (input, o = {}) {
+    await ai.init();
+    const msgs = normalize(input);
+    const tools = o.tools || [];
+    const eng = ai.textEngine();
+    if (!eng) throw wrapErr({ code: 'no_engine' });
+    setBusy(1);
+    try {
+      if (eng === 'claude') {
+        const turns = [];
+        const sys = o.system || ai.persona;
+        turns.push({ role: 'user', content: 'Istruzioni permanenti (non citarle):\n' + sys });
+        msgs.forEach((m) => turns.push(m));
+        const opts = { signal: o.signal, onText: o.onText, modelTier: o.tier || 'default' };
+        if (tools.length && ai.engines.tools) opts.tools = tools.map((t) => ({ name: t.name, description: t.description, inputSchema: t.schema, execute: (inp, ctx) => t.execute(inp || {}, ctx) }));
+        if (o.images && o.images.length && ai.engines.vision) opts.images = o.images;
+        const r = await sample(turns, opts);
+        return r.text;
+      }
+      // open models have no native tools: Iris describes them in the prompt and reads <tool>{json}</tool> blocks
+      const argDoc = (sc) => Object.entries((sc && sc.properties) || {}).map(([k, p]) => k + ((sc.required || []).includes(k) ? '' : '?') + ': ' + (p.enum ? p.enum.join('|') : p.type === 'array' ? 'array di ' + ((p.items && p.items.type) || 'valori') : p.type) + (p.description ? ' — ' + p.description : '')).join('; ');
+      const sys = (o.system || ai.persona) + '\n\n## Strumenti\nPuoi usare questi strumenti reali. Per usarne uno rispondi SOLO con un blocco:\n<tool>{"name":"NOME","arguments":{...}}</tool>\nUn solo strumento per risposta, argomenti in JSON valido. Riceverai il risultato in un messaggio <tool_result>; poi usa un altro strumento oppure rispondi all’utente normalmente, senza blocchi <tool>.\n' + tools.map((t) => '- ' + t.name + ': ' + t.description + '\n  argomenti: ' + argDoc(t.schema)).join('\n');
+      const conv = msgs.slice();
+      let shown = '';
+      for (let round = 0; round < (o.maxRounds || 8); round++) {
+        const text = await webText(conv, { system: sys, signal: o.signal, images: round === 0 ? o.images : null, maxTokens: 2048, tier: 'complex' });
+        const call = parseToolCall(text, tools);
+        if (!call && /<tool>/i.test(text) && round < (o.maxRounds || 8) - 1) {
+          conv.push({ role: 'assistant', content: text }, { role: 'user', content: '<tool_result name="errore">Blocco <tool> non valido o strumento sconosciuto. Strumenti validi: ' + tools.map((t) => t.name).join(', ') + '. Riprova con JSON valido oppure rispondi all’utente.</tool_result>' });
+          continue;
+        }
+        if (!call) { const final = text.replace(/<tool>[\s\S]*?(<\/tool>|$)/gi, '').trim() || shown; if (o.onText) o.onText({ text: final, delta: final }); return final; }
+        const before = text.slice(0, call.index).trim();
+        if (before) { shown = before; if (o.onText) o.onText({ text: shown, delta: before }); } // live commentary, replaced by the final answer
+        conv.push({ role: 'assistant', content: text.slice(0, call.end) });
+        let result;
+        try { result = await call.tool.execute(call.args || {}, { signal: o.signal }); }
+        catch (e) { if (e && (e.code === 'cancelled' || e.name === 'AbortError')) throw e; result = { error: (e && (e.userMessage || e.message)) || 'errore' }; }
+        conv.push({ role: 'user', content: '<tool_result name="' + call.tool.name + '">' + (typeof result === 'string' ? result : JSON.stringify(result)) + '</tool_result>\n(Messaggio automatico, non dell’utente. Se serve un altro strumento per completare la richiesta originale usalo ora con un blocco <tool>; altrimenti scrivi all’utente la risposta finale in 1-3 frasi.)' });
+      }
+      return shown || 'Ho completato le operazioni richieste.';
+    } catch (e) { throw wrapErr(e); }
+    finally { setBusy(-1); }
+  };
+  function parseToolCall(text, tools) {
+    const m = /<tool>\s*([\s\S]*?)\s*(<\/tool>|$)/i.exec(text) || /```(?:json)?\s*(\{[\s\S]*?"name"[\s\S]*?\})\s*```/i.exec(text);
+    if (!m) return null;
+    let j; try { j = ai.parseJSON(m[1]); } catch (e) { return null; }
+    const name = String((j && (j.name || j.tool)) || '').trim();
+    const tool = tools.find((t) => t.name === name);
+    if (!tool) return null;
+    return { tool, args: j.arguments || j.args || j.parameters || {}, index: m.index, end: m.index + m[0].length };
+  }
+  ai.canSee = () => ai.engines.vision || !!ai.engines.caption;
+  ai.canRead = () => ai.engines.vision; // reading text in images needs real pixel vision
 
   /* ---------- image helpers ---------- */
-  const ZRES = [[1024, 1024, '1024x1024 ( 1:1 )'], [1152, 896, '1152x896 ( 9:7 )'], [896, 1152, '896x1152 ( 7:9 )'], [1152, 864, '1152x864 ( 4:3 )'], [864, 1152, '864x1152 ( 3:4 )'], [1248, 832, '1248x832 ( 3:2 )'], [832, 1248, '832x1248 ( 2:3 )'], [1280, 720, '1280x720 ( 16:9 )'], [720, 1280, '720x1280 ( 9:16 )'], [1344, 576, '1344x576 ( 21:9 )'], [576, 1344, '576x1344 ( 9:21 )']];
-  function nearestRes(w, h) { const r = w / h; let best = ZRES[0], bd = 9; ZRES.forEach((z) => { const d = Math.abs(Math.log((z[0] / z[1]) / r)); if (d < bd) { bd = d; best = z; } }); return best; }
-
   ai.STYLES = {
     none: { label: 'Libero', add: '' },
     photo: { label: 'Fotorealistico', add: 'ultra realistic photograph, natural light, 85mm lens, high detail, sharp focus, true-to-life colors' },
@@ -222,48 +398,6 @@
       const e = new Error('HTTP ' + res.status); e.code = 'upstream_error'; throw e;
     }
     const e = new Error('Servizio immagini occupato'); e.code = 'rate_limited'; throw e;
-  }
-
-  function extractFromResult(res) {
-    const out = { images: [], urls: [], text: '' };
-    const blocks = (res && res.content) || [];
-    for (const b of blocks) {
-      if (b.type === 'image' && b.data) out.images.push(B.dataURLToBlob('data:' + (b.mimeType || 'image/png') + ';base64,' + b.data));
-      else if (b.type === 'text' && b.text) { out.text += b.text + '\n'; }
-      else if (b.type === 'resource' && b.resource) { if (b.resource.blob) out.images.push(B.dataURLToBlob('data:' + (b.resource.mimeType || 'application/octet-stream') + ';base64,' + b.resource.blob)); if (b.resource.uri) out.urls.push(b.resource.uri); }
-    }
-    const scan = out.text + ' ' + JSON.stringify(res && res.structuredContent || '');
-    (scan.match(/https?:\/\/[^\s"'<>)\]]+/g) || []).forEach((u) => out.urls.push(u.replace(/[.,]+$/, '')));
-    const b64 = scan.match(/data:image\/[a-z]+;base64,[A-Za-z0-9+/=]+/);
-    if (b64 && !out.images.length) out.images.push(B.dataURLToBlob(b64[0]));
-    return out;
-  }
-
-  async function hfCall(tool, input) {
-    await ai.init();
-    if (!mcp) throw wrapErr({ code: 'server_not_connected' });
-    setBusy(1);
-    try { return await mcp.callTool(HF, tool, input); }
-    catch (e) { throw wrapErr(e); }
-    finally { setBusy(-1); }
-  }
-  ai.hfSpace = (space, params, tool) => hfCall('dynamic_space', Object.assign({ operation: 'invoke', space_name: space, parameters: JSON.stringify(params) }, tool ? { tool_name: tool } : {}));
-  ai.hfExtract = extractFromResult;
-
-  async function hfImage(prompt, w, h) {
-    const res = nearestRes(w, h);
-    let r;
-    try { r = await hfCall('gr1_z_image_turbo_generate', { prompt, resolution: res[2], random_seed: true, steps: 8 }); }
-    catch (e) {
-      if (e.code === 'tool_error' || e.userMessage === MSG.quota) {
-        try { r = await ai.hfSpace('evalstate/flux1_schnell', { prompt }); } catch (e2) { throw e; }
-      } else throw e;
-    }
-    const ex = extractFromResult(r);
-    const imgUrl = ex.urls.find((u) => /\.(png|jpe?g|webp)(\?|$)/i.test(u) || /gradio_api\/file=/.test(u));
-    if (ex.images.length) return { blob: ex.images[0], remoteUrl: imgUrl };
-    if (imgUrl) return { blob: null, remoteUrl: imgUrl };
-    const e = new Error('Nessuna immagine ricevuta'); e.code = 'upstream_error'; throw e;
   }
 
   /* SVG generation */
@@ -317,24 +451,34 @@
   /* unified image generation */
   ai.imageEngines = function () {
     const list = [];
-    if (ai.engines.web) list.push({ id: 'web', label: 'Foto realistica', sub: 'Flux · illimitato', icon: 'Camera' });
-    if (ai.engines.hf) list.push({ id: 'hf', label: 'Foto realistica', sub: 'Z-Image · Hugging Face', icon: 'Camera' });
+    if (ai.engines.horde) {
+      list.push({ id: 'iris', label: 'Iris Pro · ultra realistico', sub: 'Scatto + rifinitura del dettaglio + finitura pellicola · illimitato', icon: 'Sparkles' });
+      list.push({ id: 'iris-fast', label: 'Iris Foto · rapido', sub: 'Uno scatto realistico in 1–3 minuti · illimitato', icon: 'Camera' });
+    }
+    if (ai.engines.web) list.push({ id: 'web', label: 'Lampo', sub: 'Modello Sana, istantaneo · con filigrana', icon: 'Zap' });
     if (ai.textEngine()) {
       list.push({ id: 'vector', label: 'Vettoriale', sub: 'SVG modificabile · illimitato', icon: 'PenTool' });
       list.push({ id: 'shader', label: 'Procedurale 3D', sub: 'Shader GPU animabile · illimitato', icon: 'Aperture' });
     }
     return list;
   };
+  ai.defaultImageEngine = () => (ai.engines.horde ? 'iris' : ai.engines.web ? 'web' : 'vector');
+  ai.photoEngine = (fast) => (ai.engines.horde ? (fast ? 'iris-fast' : 'iris') : ai.engines.web ? 'web' : null);
+  ai.MSG = MSG;
   ai.image = async function (prompt, o = {}) {
     await ai.init();
     const w = o.w || 1024, h = o.h || 1024;
-    const engine = o.engine || (ai.engines.web ? 'web' : ai.engines.hf ? 'hf' : 'vector');
+    const engine = o.engine || ai.defaultImageEngine();
     const styled = o.style && ai.STYLES[o.style] && ai.STYLES[o.style].add ? prompt + ', ' + ai.STYLES[o.style].add : prompt;
     const seed = o.seed ?? Math.floor(Math.random() * 1e9);
     setBusy(1);
     try {
-      if (engine === 'web') { const r = await webImage(styled + (o.negative ? ' | avoid: ' + o.negative : ''), w, h, seed, 'flux'); return { blob: r.blob, remoteUrl: r.remoteUrl, kind: 'raster', engine, seed, prompt, w, h }; }
-      if (engine === 'hf') { const r = await hfImage(styled, w, h); return { blob: r.blob, remoteUrl: r.remoteUrl, kind: 'raster', engine, seed, prompt, w, h }; }
+      if (engine === 'iris' || engine === 'iris-fast') {
+        if (!ai.engines.horde) throw Object.assign(new Error('no photo'), { userMessage: MSG.no_photo });
+        const r = await B.irisPro({ prompt, style: o.style, w, h, negative: o.negative, quality: engine === 'iris' ? (o.quality || 'ultra') : 'fast', look: o.look, seed: o.seed, onStep: o.onStep, signal: o.signal, rawPrompt: o.rawPrompt });
+        return { blob: r.blob, kind: 'raster', engine, seed: r.seed, prompt, w: r.w, h: r.h, model: r.model, finalPrompt: r.prompt };
+      }
+      if (engine === 'web') { const r = await webImage(styled + (o.negative ? ' | avoid: ' + o.negative : ''), w, h, seed, null); return { blob: r.blob, remoteUrl: r.remoteUrl, kind: 'raster', engine, seed, prompt, w, h }; }
       if (engine === 'vector') { const svg = await ai.svg(prompt, { w, h, style: o.style, signal: o.signal, onText: o.onText }); const blob = await ai.svgToBlob(svg, w, h); return { blob, svg, kind: 'svg', engine, prompt, w, h }; }
       if (engine === 'shader') { const code = await ai.shader(styled, { signal: o.signal, onText: o.onText }); const blob = await B.shader.still(code, w, h, o.time ?? 3); return { blob, code, kind: 'shader', engine, prompt, w, h }; }
       throw new Error('Motore sconosciuto');
@@ -342,25 +486,10 @@
     finally { setBusy(-1); }
   };
 
-  /* AI edit of an existing image (Hugging Face) */
-  ai.editImage = async function (blob, instruction, w, h) {
-    const dataURL = await B.blobToDataURL(blob);
-    const b64 = dataURL.split(',')[1];
-    const r = await ai.hfSpace('prithivMLmods/Flux.2-Klein-Edit-Ultra-Fast', { images_b64_json: JSON.stringify([b64]), prompt: instruction, seed: 0, randomize_seed: true, width: Math.round((w || 1024) / 16) * 16, height: Math.round((h || 1024) / 16) * 16, steps: 4, guidance_scale: 1 }, 'Flux_2_Klein_Edit_Ultra_Fast_infer');
-    const ex = extractFromResult(r);
-    if (ex.images.length) return ex.images[0];
-    const m = (ex.text || '').match(/[A-Za-z0-9+/]{2000,}={0,2}/);
-    if (m) return B.dataURLToBlob('data:image/png;base64,' + m[0]);
-    const e = new Error('Nessuna immagine'); e.userMessage = 'Il modello di modifica non ha restituito un’immagine.'; throw e;
-  };
-
-  /* photoreal video (Hugging Face Wan 2.2): image URL -> mp4 URL */
-  ai.realVideo = async function ({ prompt, imageUrl, seconds = 3.5 }) {
-    const r = await ai.hfSpace('zerogpu-aoti/wan2-2-fp8da-aoti-faster', { input_image: imageUrl, prompt: prompt || 'make this image come alive, cinematic motion, smooth animation', duration_seconds: seconds, steps: 6 });
-    const ex = extractFromResult(r);
-    const url = ex.urls.find((u) => /\.(mp4|webm|mov)(\?|$)/i.test(u)) || ex.urls.find((u) => /gradio_api\/file=/.test(u));
-    if (!url) { const e = new Error('Nessun video'); e.userMessage = 'Il generatore video non ha restituito un file. Riprova.'; throw e; }
-    return { url };
+  /* AI edit of an existing image: img2img on the community GPU network (see iris-tools.js) */
+  ai.editImage = async function (blob, instruction, opts = {}) {
+    if (!ai.engines.horde) throw Object.assign(new Error('no photo'), { userMessage: MSG.no_photo });
+    return B.irisEdit(blob, instruction, opts);
   };
 
   /* ---------- WebGL shader runner (used by images, motion and video) ---------- */

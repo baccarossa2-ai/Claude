@@ -640,19 +640,23 @@
           }, out);
         }
         const fIn = B.h('input', { class: 'input sm', id: 'phGen', placeholder: doc.sel ? 'Cosa mettere nella selezione?' : 'es. “aggiungi un cappello”, “cielo stellato”' });
-        card('Wand2', 'Riempimento generativo', B.ai.engines.hf ? 'Modifica la foto a parole con FLUX.2 su Hugging Face. Se hai una selezione, cambia solo quella zona.' : 'Disponibile dentro Claude con il connettore Hugging Face. Senza connettore usa lo strumento Rimuovi oggetti (J) e il Timbro clone.', 'Genera', async () => {
-          if (!B.ai.engines.hf) throw Object.assign(new Error(''), { userMessage: 'Serve il connettore Hugging Face (Breye dentro Claude).' });
+        const progress = (b) => (p) => { if (b) b.lastChild && (b.lastChild.textContent = ' ' + (p.processing ? 'Sviluppo…' : 'In coda ' + (p.elapsed || 0) + ' s…')); };
+        const noGPU = () => Object.assign(new Error(''), { userMessage: B.ai.MSG.no_photo });
+        const genCard = card('Wand2', 'Riempimento generativo', B.ai.engines.horde ? 'Modifica la foto a parole sulla rete GPU comunitaria (gratuita, illimitata). Con una selezione Iris rigenera solo quella zona (inpainting); senza selezione trasforma l’intera foto in modo realistico.' : 'Usa la rete GPU comunitaria della versione web di Breye. Qui puoi usare lo strumento Rimuovi oggetti (J) e il Timbro clone.', 'Genera', async () => {
+          if (!B.ai.engines.horde) throw noGPU();
           if (!fIn.value.trim()) throw Object.assign(new Error(''), { userMessage: 'Scrivi cosa generare' });
           if (needComp) composite();
-          const sc = Math.min(1, 1024 / Math.max(doc.w, doc.h)); const s = mk(doc.w * sc, doc.h * sc); s.getContext('2d').drawImage(comp, 0, 0, s.width, s.height);
-          const blob = await B.ai.editImage(await B.canvasToBlob(s, 'image/png'), fIn.value.trim(), s.width, s.height);
+          const btn = B.$('.btn.gold', genCard);
+          const src = mk(doc.w, doc.h); src.getContext('2d').drawImage(comp, 0, 0);
+          const blob = await B.irisEdit(src, fIn.value.trim(), { mask: doc.sel ? doc.sel.mask : null, strength: 0.55, onProgress: progress(btn) });
           const im = await B.loadImage(blob);
           begin('Riempimento generativo', [], true);
           const c = mk(doc.w, doc.h), x = c.getContext('2d'); x.drawImage(im, 0, 0, doc.w, doc.h);
           if (doc.sel) { x.globalCompositeOperation = 'destination-in'; x.filter = 'blur(2px)'; x.drawImage(doc.sel.mask, 0, 0); x.filter = 'none'; }
           insertLayer(layer('Generativo: ' + fIn.value.slice(0, 18), c)); commit(); B.toast('Nuovo livello generato', 'ok');
         }, fIn);
-        card('Expand', 'Espandi immagine', 'Allarga la tela del 25% ricostruendo i bordi (specchio sfumato, oppure FLUX.2 se disponibile).', 'Espandi', async () => {
+        const xIn = B.h('input', { class: 'input sm', id: 'phExp', placeholder: 'Cosa c’è oltre i bordi? (facoltativo)' });
+        const expCard = card('Expand', 'Espandi immagine', B.ai.engines.horde ? 'Allarga la tela del 25%: la rete GPU comunitaria inventa i bordi mancanti (outpainting), il centro resta identico.' : 'Allarga la tela del 25% ricostruendo i bordi con uno specchio sfumato.', 'Espandi', async () => {
           const pad = Math.round(Math.max(doc.w, doc.h) * 0.125), W = doc.w + pad * 2, H = doc.h + pad * 2;
           if (needComp) composite();
           const c = mk(W, H), x = c.getContext('2d');
@@ -663,10 +667,48 @@
           x.save(); x.translate(pad + doc.w * 2, pad); x.scale(-1, 1); x.drawImage(comp, doc.w - pad, 0, pad, doc.h, doc.w, 0, pad, doc.h); x.restore();
           x.filter = 'none'; x.drawImage(comp, pad, pad);
           let final = c;
-          if (B.ai.engines.hf) { try { const sc = Math.min(1, 1024 / Math.max(W, H)); const s = mk(W * sc, H * sc); s.getContext('2d').drawImage(c, 0, 0, s.width, s.height); const blob = await B.ai.editImage(await B.canvasToBlob(s, 'image/png'), 'Seamlessly extend and complete the scene into the blurry borders, photorealistic, keep the center unchanged', s.width, s.height); const im = await B.loadImage(blob); const f = mk(W, H), fx = f.getContext('2d'); fx.drawImage(im, 0, 0, W, H); fx.drawImage(comp, pad, pad); final = f; } catch (e) { B.toast(B.ai.errorText(e)); } }
+          if (B.ai.engines.horde) {
+            try {
+              const m = mk(W, H), mx = m.getContext('2d'); mx.fillStyle = '#fff'; mx.fillRect(0, 0, W, H); mx.clearRect(pad + 6, pad + 6, doc.w - 12, doc.h - 12);
+              let what = xIn.value.trim();
+              const blob = await B.irisEdit(c, (what ? what + ', ' : '') + 'seamless continuation of the same scene, same light and perspective, photorealistic', { mask: m, outpaint: true, rawPrompt: !what, onProgress: progress(B.$('.btn.gold', expCard)) });
+              const im = await B.loadImage(blob); const f = mk(W, H), fx = f.getContext('2d'); fx.drawImage(im, 0, 0, W, H); fx.drawImage(comp, pad, pad); final = f;
+            } catch (e) { B.toast(B.ai.errorText(e) + ' Uso l’espansione locale.'); }
+          }
           begin('Espandi', doc.layers.map((l) => l.id), true);
-          doc.layers = [layer('Espansa', final)]; doc.active = doc.layers[0].id; doc.w = W; doc.h = H; commit(); fit();
-        });
+          doc.layers = [layer('Espansa', final)]; doc.active = doc.layers[0].id; doc.w = W; doc.h = H; doc.sel = null; commit(); fit();
+        }, xIn);
+        const lookSel = B.h('select', { class: 'select sm', id: 'phLook', 'aria-label': 'Look pellicola' }, Object.entries(B.realism.LOOKS).map(([k, l]) => B.h('option', { value: k }, l.label)));
+        const relCard = card('Aperture', 'Realismo Pro', (B.ai.engines.horde ? 'Rifinisci il dettaglio: la rete GPU comunitaria rigenera la foto a tasselli (pelle, tessuti, materiali) e Iris tiene colori e luce dell’originale. ' : '') + 'Finitura pellicola: curva filmica, micro-contrasto, grana, halation e vignettatura, calcolate sul tuo dispositivo.', 'Applica finitura', async () => {
+          const L2 = active();
+          begin('Finitura ' + B.realism.LOOKS[lookSel.value].label, [L2.id]);
+          await B.sleep(20); L2.canvas = B.realism.finish(L2.canvas, lookSel.value); commit(); B.toast('Finitura applicata', 'ok');
+        }, lookSel);
+        if (B.ai.engines.horde) {
+          const rb = B.h('button', { class: 'btn sm', type: 'button' }, B.h('span', { 'data-i': 'ScanFace' }), ' Rifinisci il dettaglio');
+          rb.addEventListener('click', async () => {
+            if (Math.max(doc.w, doc.h) > 1536) return B.toast('La rifinitura lavora fino a 1536 px: riduci l’immagine (Immagine › Ridimensiona) o usa la finitura pellicola.');
+            rb.disabled = true; const old = rb.innerHTML; rb.innerHTML = '<span class="spin"></span> In coda…';
+            try {
+              if (needComp) composite();
+              const src = mk(doc.w, doc.h); src.getContext('2d').drawImage(comp, 0, 0);
+              const prompt = B.ai.canSee() ? await describeForRefine(src) : 'RAW photo, natural light, highly detailed, sharp focus, fine skin and material texture';
+              const r = await B.irisRefine(src, { prompt, tiles: 9, onProgress: (p) => { rb.lastChild.textContent = ' ' + Math.round(p * 100) + '%'; } });
+              begin('Rifinitura del dettaglio', doc.layers.map((l) => l.id), true);
+              doc.layers = [layer('Rifinita', r.canvas)]; doc.active = doc.layers[0].id; doc.w = r.canvas.width; doc.h = r.canvas.height; doc.sel = null; commit(); fit();
+              B.toast('Dettaglio rifinito: ' + r.refined + '/' + r.total + ' tasselli · ' + doc.w + '×' + doc.h, 'ok');
+            } catch (e) { B.err(e); }
+            rb.disabled = false; rb.innerHTML = old;
+          });
+          relCard.append(rb);
+        }
+        async function describeForRefine(c) {
+          try {
+            const s = mk(640 * Math.min(1, c.width / c.height), 640 * Math.min(1, c.height / c.width)); s.getContext('2d').drawImage(c, 0, 0, s.width, s.height);
+            const t = await B.ai.text('Describe this photo as a Stable Diffusion prompt in English (max 40 words): start with "RAW photo", then subject, setting, light, lens, texture. Reply with the prompt only.', { system: false, tier: 'quick', images: [await B.canvasToBlob(s, 'image/jpeg', 0.85)] });
+            return t.replace(/^["'\s]+|["'\s]+$/g, '').split('\n')[0] || 'RAW photo';
+          } catch (e) { return 'RAW photo, natural light, detailed texture'; }
+        }
         card('Scaling', 'Ingrandisci 2×', 'Raddoppia la risoluzione con ricampionamento di qualità e nitidezza adattiva.', 'Ingrandisci', async () => {
           if (doc.w * 2 > 8000 || doc.h * 2 > 8000) throw Object.assign(new Error(''), { userMessage: 'L’immagine è già molto grande (max 8000 px).' });
           begin('Ingrandisci 2×', doc.layers.map((l) => l.id), true);

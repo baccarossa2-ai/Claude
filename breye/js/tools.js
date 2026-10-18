@@ -193,11 +193,20 @@
   /* ---------- OCR ---------- */
   function tOcr() {
     const body = B.h('div', { class: 'tl-box' }); const out = B.h('textarea', { class: 'textarea', rows: 10, id: 'tlOcrOut', placeholder: 'Il testo estratto comparirà qui', hidden: true });
-    const note = B.h('p', { class: 'mini-note', text: B.ai.canSee() ? 'Iris legge il testo dall’immagine mantenendo paragrafi ed elenchi.' : 'Serve un motore AI che veda le immagini: apri Breye dentro Claude oppure online.' });
+    // Claude reads the pixels; elsewhere Tesseract runs locally in the browser (Italian + English), free and unlimited
+    const note = B.h('p', { class: 'mini-note', text: B.ai.canRead() ? 'Iris legge il testo dall’immagine mantenendo paragrafi ed elenchi.' : 'Lettura locale con Tesseract (italiano e inglese): gratuita, illimitata, la foto non lascia il tuo dispositivo. Al primo uso scarica circa 6 MB.' });
     body.append(note, zone('Scegli una foto, uno screenshot o una scansione', 'image/*', false, async (fs) => {
       out.hidden = false; out.value = 'Lettura in corso…';
-      try { const im = await B.loadImage(fs[0]); const s = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight)); const c = mk(im.naturalWidth * s, im.naturalHeight * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); out.value = await B.ai.text('Trascrivi fedelmente tutto il testo presente in questa immagine, mantenendo la struttura (paragrafi, elenchi, tabelle in Markdown). Rispondi solo con il testo trascritto.', { system: false, images: [await B.canvasToBlob(c, 'image/jpeg', 0.9)], tier: 'default' }); }
-      catch (e) { out.value = B.ai.errorText(e); }
+      try {
+        const im = await B.loadImage(fs[0]);
+        if (B.ai.canRead()) { const s = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight)); const c = mk(im.naturalWidth * s, im.naturalHeight * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); out.value = await B.ai.text('Trascrivi fedelmente tutto il testo presente in questa immagine, mantenendo la struttura (paragrafi, elenchi, tabelle in Markdown). Rispondi solo con il testo trascritto.', { system: false, images: [await B.canvasToBlob(c, 'image/jpeg', 0.9)], tier: 'default' }); }
+        else {
+          await B.need('tesseract');
+          const s = Math.min(2, 2400 / Math.max(im.naturalWidth, im.naturalHeight)); const c = mk(im.naturalWidth * s, im.naturalHeight * s); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          const worker = await window.Tesseract.createWorker(['ita', 'eng'], 1, { logger: (m) => { if (m.status === 'recognizing text') out.value = 'Lettura in corso… ' + Math.round(m.progress * 100) + '%'; else if (/load/.test(m.status)) out.value = 'Preparo il lettore (solo la prima volta)…'; } });
+          try { const r = await worker.recognize(c); out.value = (r.data.text || '').trim() || 'Nessun testo riconosciuto.'; } finally { worker.terminate(); }
+        }
+      } catch (e) { out.value = B.ai.errorText(e); }
     }), out, B.h('div', { class: 'chips' }, B.h('button', { class: 'btn', type: 'button', onclick: () => B.copy(out.value) }, B.h('span', { 'data-i': 'Copy' }), 'Copia'), B.h('button', { class: 'btn', type: 'button', onclick: () => { m.close(); B.go('docs', { markdown: out.value }); } }, B.h('span', { 'data-i': 'FileText' }), 'Apri nei Documenti')));
     const m = B.modal({ title: 'Testo da immagine', icon: 'ScanFace', body, wide: true }); B.hydrateIcons(body);
   }

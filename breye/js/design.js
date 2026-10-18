@@ -300,7 +300,7 @@
           if (!img || !img.width) { B.toast('Immagine non valida', 'err'); return res(null); }
           const sc = Math.min(st.w * 0.7 / img.width, st.h * 0.7 / img.height, 1.5);
           img.set({ scaleX: sc, scaleY: sc }); if (opts.prompt) img.bxPrompt = opts.prompt;
-          if (opts.replace) { const r = opts.replace; img.set({ left: r.left, top: r.top, angle: r.angle }); const s2 = Math.max(r.getScaledWidth() / img.width, r.getScaledHeight() / img.height); img.set({ scaleX: s2, scaleY: s2 }); if (r.clipPath) img.clipPath = r.clipPath; cv.remove(r); cv.add(img); cv.setActiveObject(img); snap(); }
+          if (opts.replace) { const r = opts.replace; img.set({ left: r.left, top: r.top, angle: r.angle }); const s2 = Math.max(r.getScaledWidth() / img.width, r.getScaledHeight() / img.height); img.set({ scaleX: s2, scaleY: s2 }); if (r.clipPath) img.clipPath = r.clipPath.type === 'circle' ? new window.fabric.Circle({ radius: r.clipPath.radius * (r.scaleX || 1) / s2, originX: 'center', originY: 'center' }) : r.clipPath; const idx = cv.getObjects().indexOf(r); cv.remove(r); if (idx >= 0) cv.insertAt(img, idx); else cv.add(img); cv.setActiveObject(img); snap(); }
           else add(img);
           res(img);
         }, { crossOrigin: 'anonymous' }));
@@ -438,7 +438,7 @@
         const go = B.h('button', { class: 'btn gold block', type: 'button', onclick: async () => {
           if (!p.value.trim()) return;
           go.disabled = true; go.innerHTML = '<span class="spin"></span> Genero…';
-          try { const r = await B.ai.image(p.value.trim(), { engine: engSel.value, w: 1024, h: 1024, style: engSel.value === 'web' || engSel.value === 'hf' ? 'photo' : 'none' }); B.gallery.add({ blob: r.blob, prompt: p.value.trim(), engine: r.engine, kind: r.kind, svg: r.svg, w: 1024, h: 1024 }); if (r.svg) svgToCanvas(r.svg); else await addImage(await B.blobToDataURL(r.blob), { prompt: p.value.trim() }); }
+          try { const raster = /^(iris|web)/.test(engSel.value); const r = await B.ai.image(p.value.trim(), { engine: engSel.value, w: 1024, h: 1024, style: raster ? 'photo' : 'none', onStep: (s) => { if (s.status === 'run') { go.innerHTML = '<span class="spin"></span> '; go.append(document.createTextNode(s.label.split(' (')[0] + (s.detail && s.id !== 'plan' ? ' · ' + s.detail.split(' · ')[0] : '') + '…')); } } }); B.gallery.add({ blob: r.blob, prompt: p.value.trim(), engine: r.engine, kind: r.kind, svg: r.svg, w: 1024, h: 1024 }); if (r.svg) svgToCanvas(r.svg); else await addImage(await B.blobToDataURL(r.blob), { prompt: p.value.trim() }); }
           catch (e) { B.err(e); }
           go.disabled = false; go.innerHTML = ''; go.append(B.h('span', { 'data-i': 'Sparkles' }), 'Genera e inserisci'); B.hydrateIcons(go);
         } }, B.h('span', { 'data-i': 'Sparkles' }), 'Genera e inserisci');
@@ -553,7 +553,7 @@
         btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Iris impagina…';
         try {
           const spec = LAYOUT_SPEC.replace('{W}', st.w).replace('{H}', st.h);
-          const r = await B.ai.json('Sei un art director di livello mondiale. Progetta un design grafico per: "' + prompt + '".\nTela: ' + st.w + '×' + st.h + ' px.\nRispondi SOLO con JSON: {"background":{"type":"solid|linear|radial","colors":["#hex",...],"angle":gradi},"elements":[...]}\n' + spec + '\nRegole: i testi non devono MAI sovrapporsi tra loro (la y di ogni testo deve essere maggiore della y del testo precedente più fontSize × numero di righe × lineHeight più uno spazio); gerarchia tipografica forte (un titolo grande), margini di almeno il 7% della larghezza, testi nella lingua della richiesta, contrasto leggibile, massimo 12 elementi, al massimo 2 immagini, composizione bilanciata e moderna. Ordina gli elementi dal fondo al primo piano.', { system: false, tier: 'default' });
+          const r = await B.ai.json('Sei un art director di livello mondiale. Progetta un design grafico per: "' + prompt + '".\nTela: ' + st.w + '×' + st.h + ' px.\nRispondi SOLO con JSON: {"background":{"type":"solid|linear|radial","colors":["#hex",...],"angle":gradi},"elements":[...]}\n' + spec + '\nRegole: i testi non devono MAI sovrapporsi tra loro (la y di ogni testo deve essere maggiore della y del testo precedente più fontSize × numero di righe × lineHeight più uno spazio); gerarchia tipografica forte (un titolo grande), margini di almeno il 7% della larghezza, tutti i testi scritti in ' + (/[àèéìòù]|\b(il|lo|la|per|con|una|di|che|del|della)\b/i.test(prompt) ? 'italiano' : 'nella lingua della richiesta') + ', contrasto leggibile, massimo 12 elementi, al massimo 2 immagini, composizione bilanciata e moderna. Ordina gli elementi dal fondo al primo piano.', { system: false, tier: 'complex' });
           await renderLayout(r, B.$('#dsMagicImg') ? B.$('#dsMagicImg').checked : true);
           B.toast('Design creato. Ogni elemento è modificabile.', 'ok');
         } catch (e) { B.err(e); }
@@ -584,16 +584,60 @@
           const o = elementToObj(e); if (o) { o.id = uid(); cv.add(o); }
         }
         await Promise.all(cv.getObjects().filter((o) => o.fontFamily).map((o) => B.loadFont(o.fontFamily, '400;600;700;800').then(() => o.initDimensions && o.initDimensions())));
-        fixOverlaps();
+        fitInside(); fixOverlaps(); clearTexts();
         cv.requestRenderAll(); snap();
-        for (const ph of pending) {
-          try {
-            const eng = B.ai.engines.web ? 'web' : B.ai.engines.hf ? 'hf' : null;
-            if (!eng) break;
-            const res = await B.ai.image(ph.bxPrompt, { engine: eng, w: Math.min(1344, Math.round(ph.width / 8) * 8 || 1024), h: Math.min(1344, Math.round(ph.height / 8) * 8 || 1024), style: 'photo' });
-            await addImage(await B.blobToDataURL(res.blob), { replace: ph, prompt: ph.bxPrompt });
-          } catch (e) { B.toast(B.ai.errorText(e)); break; }
+        const eng = B.ai.photoEngine(true);
+        if (pending.length && !eng) B.toast('Le foto dei segnaposto arrivano dalla rete GPU comunitaria, disponibile nella versione web di Breye. Puoi sostituirle con le tue immagini.');
+        if (pending.length && eng) {
+          let warned = false;
+          B.toast('Iris sta scattando ' + (pending.length === 1 ? 'la foto' : 'le ' + pending.length + ' foto') + ' del design sulla rete GPU comunitaria: compariranno da sole (1–3 minuti).');
+          await Promise.all(pending.map(async (ph) => {
+            try {
+              const res = await B.ai.image(ph.bxPrompt, { engine: eng, w: ph.width || 1024, h: ph.height || 1024, style: 'photo' });
+              if (ph.canvas) await addImage(await B.blobToDataURL(res.blob), { replace: ph, prompt: ph.bxPrompt });
+            } catch (e) { if (!warned) { warned = true; B.toast(B.ai.errorText(e)); } }
+          }));
         }
+      }
+      // keeps the AI's layout on the page: texts always inside the margins, objects mostly off-canvas pulled back in
+      function fitInside() {
+        const W = st.w, H = st.h, m = Math.round(Math.min(W, H) * 0.06);
+        cv.getObjects().forEach((o) => {
+          let b = o.getBoundingRect(true, true);
+          if (!b.width || !b.height) return;
+          const isText = /text/.test(o.type);
+          if (!isText) {
+            const ix = Math.max(0, Math.min(b.left + b.width, W) - Math.max(b.left, 0)), iy = Math.max(0, Math.min(b.top + b.height, H) - Math.max(b.top, 0));
+            if (ix * iy / (b.width * b.height) > 0.65) return; // decorations may bleed off the edge
+            if (b.width > W - 2 * m || b.height > H - 2 * m) { const k = Math.min((W - 2 * m) / b.width, (H - 2 * m) / b.height); o.set({ scaleX: (o.scaleX || 1) * k, scaleY: (o.scaleY || 1) * k }); o.setCoords(); b = o.getBoundingRect(true, true); }
+          } else if (b.width > W - 2 * m) {
+            if (o.type === 'textbox') { o.set('width', (W - 2 * m) / (o.scaleX || 1)); if (o.initDimensions) o.initDimensions(); }
+            else { const k = (W - 2 * m) / b.width; o.set({ scaleX: (o.scaleX || 1) * k, scaleY: (o.scaleY || 1) * k }); }
+            o.setCoords(); b = o.getBoundingRect(true, true);
+          }
+          let dx = 0, dy = 0;
+          if (b.left < m) dx = m - b.left; else if (b.left + b.width > W - m) dx = W - m - b.left - b.width;
+          if (b.top < m * 0.6) dy = m * 0.6 - b.top; else if (b.top + b.height > H - m * 0.6) dy = Math.max(m * 0.6 - b.top, H - m * 0.6 - b.top - b.height);
+          if (dx || dy) { o.set({ left: o.left + dx, top: o.top + dy }); o.setCoords(); }
+        });
+      }
+      // pictures never hide the words: a large picture becomes the backdrop, a small one moves clear of the text
+      function clearTexts() {
+        const m = Math.round(Math.min(st.w, st.h) * 0.06), gap = 18 * S();
+        const texts = cv.getObjects().filter((o) => /text/.test(o.type)).sort((a, b) => a.top - b.top);
+        cv.getObjects().filter((o) => o.type === 'image' || o.bxType === 'placeholder').forEach((p) => {
+          let pb = p.getBoundingRect(true, true);
+          if (pb.width * pb.height > st.w * st.h * 0.5) { cv.sendToBack(p); return; }
+          for (const t of texts) {
+            const tb = t.getBoundingRect(true, true);
+            if (!(pb.left < tb.left + tb.width && tb.left < pb.left + pb.width && pb.top < tb.top + tb.height && tb.top < pb.top + pb.height)) continue;
+            const below = tb.top + tb.height + gap, above = tb.top - gap - pb.height;
+            if (below + pb.height <= st.h - m) p.set('top', p.top + (below - pb.top));
+            else if (above >= m) p.set('top', p.top + (above - pb.top));
+            else { cv.sendToBack(p); break; }
+            p.setCoords(); pb = p.getBoundingRect(true, true);
+          }
+        });
       }
       function fixOverlaps() {
         const texts = cv.getObjects().filter((o) => /text/.test(o.type)).sort((a, b) => a.top - b.top);
@@ -650,7 +694,7 @@
         else if (a.op === 'add' && a.element) {
           const e = a.element;
           if (e.type === 'icon') { const name = B.iconNames.find((n) => n.toLowerCase() === String(e.name || '').toLowerCase()) || 'Sparkles'; await new Promise((res) => f.loadSVGFromString(B.iconSVG(name, 24, 2, e.color || '#c98a2e'), (objs, opts) => { const g = f.util.groupSVGElements(objs, opts); const s = (+e.size || 80) / 24; g.set({ left: +e.x, top: +e.y, scaleX: s, scaleY: s }); g.id = uid(); cv.add(g); res(); })); }
-          else if (e.type === 'image') { try { const eng = B.ai.engines.web ? 'web' : B.ai.engines.hf ? 'hf' : 'vector'; const res = await B.ai.image(e.prompt || 'abstract', { engine: eng, w: 1024, h: 1024, style: 'photo' }); const img = await addImage(await B.blobToDataURL(res.blob)); if (img) { img.set({ left: +e.x || 0, top: +e.y || 0 }); const s = (+e.w || 400) / img.width; img.set({ scaleX: s, scaleY: s }); } } catch (er) { B.toast(B.ai.errorText(er)); } }
+          else if (e.type === 'image') { try { const eng = B.ai.photoEngine(true) || 'vector'; const res = await B.ai.image(e.prompt || 'abstract', { engine: eng, w: +e.w || 1024, h: +e.h || 1024, style: 'photo' }); const img = await addImage(await B.blobToDataURL(res.blob)); if (img) { img.set({ left: +e.x || 0, top: +e.y || 0 }); const s = (+e.w || 400) / img.width; img.set({ scaleX: s, scaleY: s }); } } catch (er) { B.toast(B.ai.errorText(er)); } }
           else { const ob = elementToObj(e); if (ob) { ob.id = uid(); cv.add(ob); } }
         }
       }

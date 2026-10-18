@@ -128,8 +128,8 @@
       function renderEng() {
         const e = B.ai.engines;
         const items = [
-          ['Brain', 'Testo, codice e visione', e.claude ? 'Attivo con Claude: nessuna chiave, nessun costo extra.' : e.web ? 'Attivo con il gateway aperto Pollinations: senza chiave.' : 'In attesa di connessione…', e.claude || e.web],
-          ['Camera', 'Foto realistiche', e.web ? 'Flux via Pollinations, senza chiave.' : e.hf ? 'Z-Image e FLUX via Hugging Face (quota GPU giornaliera).' : 'Disponibile online o col connettore Hugging Face.', e.web || e.hf],
+          ['Brain', 'Testo, codice e visione', e.claude ? 'Attivo con Claude: nessuna chiave, nessun costo extra.' : e.web ? 'Skyfall 31B e altri modelli aperti sulla rete GPU comunitaria: senza chiave, illimitato.' : 'In attesa di connessione…', e.claude || e.web],
+          ['Camera', 'Foto ultra realistiche', e.horde ? 'Rete GPU comunitaria AI Horde + finitura locale: illimitata, senza chiave.' : 'Disponibili nella versione web di Breye (rete GPU comunitaria, illimitata).', e.horde],
           ['PenTool', 'Vettoriale e 3D procedurale', 'Disegni SVG e scene GPU scritte da Iris: illimitati.', e.claude || e.web],
           ['Cpu', 'Strumenti locali', 'Ritocco, montaggio, export, PDF e musica girano nel tuo browser.', true]
         ];

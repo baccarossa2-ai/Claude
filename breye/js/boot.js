@@ -14,11 +14,12 @@
     const ic = B.$('#themeBtn [data-i]'); if (ic) { ic.dataset.i = B.theme.get() === 'light' ? 'Sun' : 'Moon'; B.hydrateIcons(B.$('#themeBtn')); }
 
     B.start();
+    try { const qp = new URLSearchParams(location.search).get('p'); if (qp) { history.replaceState(null, '', location.pathname + '#imagine'); B.go('imagine', { prompt: qp.slice(0, 2000) }); } } catch (e) { /* ignore */ }
     B.ai.init().then((e) => {
       const pill = B.$('#aiPill');
       const any = e.claude || e.web;
-      pill.classList.toggle('ready', !!any && (e.web || e.hf));
-      pill.classList.toggle('partial', !!any && !(e.web || e.hf));
+      pill.classList.toggle('ready', !!any && !!e.horde);
+      pill.classList.toggle('partial', !!any && !e.horde);
       pill.querySelector('.ai-pill-tx').textContent = any ? (e.claude ? 'Iris · Claude' : 'Iris · Web') : 'Iris offline';
       pill.dataset.tip = B.ai.engineLabel();
     });

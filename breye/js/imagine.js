@@ -22,7 +22,7 @@
   B.view('imagine', {
     title: 'Immagini AI', icon: 'ImagePlus', group: 'ai', desc: 'Genera foto, illustrazioni e scene 3D', badge: 'AI',
     mount(el) {
-      const st = { engine: null, style: 'photo', ratio: '1:1', count: 1, busy: false };
+      const st = { engine: null, style: 'photo', ratio: '1:1', count: 1, busy: false, look: 'auto', ctl: null };
       el.classList.add('imagine-view');
       const left = B.h('aside', { class: 'gen-panel scroll' });
       const right = B.h('div', { class: 'gen-results scroll' });
@@ -44,15 +44,21 @@
       [1, 2, 4].forEach((n) => countSeg.append(B.h('button', { type: 'button', class: n === st.count ? 'on' : '', 'data-n': n, onclick: () => { st.count = n; B.$$('button', countSeg).forEach((c) => c.classList.toggle('on', +c.dataset.n === n)); } }, String(n))));
       const neg = B.h('input', { class: 'input sm', id: 'imgNeg', placeholder: 'Da evitare (es. testo, mani deformi)' });
       const goBtn = B.h('button', { class: 'btn gold lg block', type: 'button', onclick: generate }, B.h('span', { 'data-i': 'Sparkles' }), 'Genera');
+      const stopBtn = B.h('button', { class: 'btn lg block', type: 'button', hidden: true, onclick: () => st.ctl && st.ctl.abort() }, B.h('span', { 'data-i': 'StopCircle' }), 'Ferma');
+      const lookWrap = B.h('div', { class: 'chips' });
+      [['auto', 'Scelto da Iris']].concat(Object.entries(B.realism.LOOKS).map(([k, l]) => [k, l.label])).forEach(([k, l]) => lookWrap.append(B.h('button', { class: 'chip' + (k === st.look ? ' on' : ''), type: 'button', 'data-l': k, onclick: () => { st.look = k; B.$$('[data-l]', lookWrap).forEach((c) => c.classList.toggle('on', c.dataset.l === k)); } }, l)));
+      const lookField = B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Look pellicola (finitura locale)' }), lookWrap);
+      const engNote = B.h('div', { class: 'mini-note' });
       left.append(
         B.h('div', { class: 'gen-head' }, B.h('span', { class: 'eyebrow', text: 'Iris Vision' }), B.h('h1', { text: 'Immagini AI' })),
         B.h('div', { class: 'field' }, B.h('label', { for: 'imgPrompt', text: 'Prompt' }), ta, B.h('div', { class: 'row' }, enh, ideaBtn)),
-        B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Motore' }), engWrap),
+        B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Motore' }), engWrap, engNote),
+        lookField,
         B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Stile' }), styleWrap),
         B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Formato' }), ratioWrap),
         B.h('div', { class: 'row', style: 'justify-content:space-between' }, B.h('span', { class: 'lbl', text: 'Varianti' }), countSeg),
         B.h('div', { class: 'field' }, B.h('label', { for: 'imgNeg', text: 'Prompt negativo' }), neg),
-        goBtn
+        goBtn, stopBtn
       );
       ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate(); });
 
@@ -62,6 +68,12 @@
         if (!list.length) { engWrap.append(B.h('div', { class: 'mini-note', text: 'Connessione ai motori in corso…' })); return; }
         if (!st.engine || !list.find((x) => x.id === st.engine)) st.engine = list[0].id;
         list.forEach((e) => engWrap.append(B.h('button', { class: 'eng' + (e.id === st.engine ? ' on' : ''), type: 'button', 'data-e': e.id, onclick: () => { st.engine = e.id; paintEngines(); } }, B.h('span', { class: 'eng-ic', 'data-i': e.icon }), B.h('span', null, B.h('b', { text: e.label }), B.h('small', { text: e.sub })))));
+        const iris = /^iris/.test(st.engine);
+        lookField.hidden = !iris;
+        engNote.innerHTML = '';
+        if (iris) engNote.append(B.h('span', { text: st.engine === 'iris' ? 'Iris scrive lo scatto, lo fa sviluppare dalla rete GPU comunitaria (gratuita e illimitata), rifinisce il dettaglio a tasselli e applica la finitura pellicola nel browser. Di solito 3–6 minuti: puoi continuare a lavorare, l’immagine arriva in galleria.' : 'Uno scatto realistico dalla rete GPU comunitaria con ingrandimento e finitura locali. Di solito 1–3 minuti.' }));
+        else if (!B.ai.engines.horde && B.ai.textEngine()) engNote.append(B.h('span', { text: 'Le foto ultra realistiche illimitate sono nella versione web di Breye. ' }), B.h('a', { href: B.PUBLIC_URL + '#imagine', target: '_blank', rel: 'noopener', onclick: (ev) => { ev.currentTarget.href = B.PUBLIC_URL + (ta.value.trim() ? '?p=' + encodeURIComponent(ta.value.trim()) : '') + '#imagine'; }, text: 'Apri Breye sul web →' }));
+        engNote.hidden = !engNote.childNodes.length;
         B.hydrateIcons(engWrap);
       }
       B.ai.init().then(paintEngines); paintEngines();
@@ -103,29 +115,60 @@
         if (!st.engine) return B.toast('Nessun motore disponibile in questo momento', 'err');
         const r = RATIOS.find((x) => x[0] === st.ratio);
         const base = 1024, w = r[1] >= r[2] ? base : Math.round(base * r[1] / r[2] / 8) * 8, h = r[2] >= r[1] ? base : Math.round(base * r[2] / r[1] / 8) * 8;
-        const W = r[1] > r[2] ? Math.round(base * r[1] / r[2] / 8) * 8 : w, H = r[2] > r[1] ? Math.round(base * r[2] / r[1] / 8) * 8 : h;
-        st.busy = true; goBtn.disabled = true; inspo.hidden = true;
-        const n = st.engine === 'shader' || st.engine === 'vector' ? Math.min(st.count, 2) : st.count;
+        const W = w, H = h; // long side 1024, short side from the ratio
+        st.busy = true; goBtn.hidden = true; stopBtn.hidden = false; inspo.hidden = true;
+        st.ctl = new AbortController();
+        const engine = st.engine, iris = /^iris/.test(engine);
+        const n = engine === 'shader' || engine === 'vector' ? Math.min(st.count, 2) : st.count;
         batch.innerHTML = '';
-        batch.append(B.h('div', { class: 'batch-head' }, B.h('b', { text: prompt }), B.h('span', { class: 'badge gold', text: (B.ai.imageEngines().find((e) => e.id === st.engine) || {}).label || st.engine })));
+        const planNote = B.h('div', { class: 'plan-note', hidden: true });
+        batch.append(B.h('div', { class: 'batch-head' }, B.h('b', { text: prompt }), B.h('span', { class: 'badge gold', text: (B.ai.imageEngines().find((e) => e.id === engine) || {}).label || engine })), planNote);
         const grid = B.h('div', { class: 'batch-grid n' + n });
         batch.append(grid);
         const slots = [];
         for (let i = 0; i < n; i++) { const s = B.h('div', { class: 'slot', style: { aspectRatio: W + '/' + H } }, B.h('div', { class: 'slot-load' }, B.h('div', { class: 'iris-spin' }), B.h('span', { text: n > 1 ? 'Variante ' + (i + 1) : 'Iris sta creando…' }))); slots.push(s); grid.append(s); }
-        for (let i = 0; i < n; i++) {
+        const fail = (i, e) => { slots[i].innerHTML = ''; slots[i].append(B.h('div', { class: 'slot-err' }, B.h('span', { 'data-i': e.code === 'cancelled' ? 'StopCircle' : 'AlertTriangle' }), B.h('span', { text: e.code === 'cancelled' ? 'Interrotto' : B.ai.errorText(e) }))); B.hydrateIcons(slots[i]); };
+        const done = async (i, res) => {
+          const item = await B.gallery.add({ blob: res.blob, prompt, engine: res.engine, kind: res.kind, svg: res.svg, code: res.code, remoteUrl: res.remoteUrl, w: res.w || W, h: res.h || H, style: st.style, model: res.model, finalPrompt: res.finalPrompt });
+          slots[i].replaceWith(resultCard(item, true));
+          if (document.hidden || B.current() !== 'imagine') B.toast('Immagine pronta in galleria', 'ok');
+        };
+        if (iris) {
+          // one plan for every variant, then the variants develop in parallel on the network
+          let plan = null;
           try {
-            const res = await B.ai.image(prompt, { engine: st.engine, style: st.style, w: W, h: H, negative: neg.value.trim() || null });
-            const item = await B.gallery.add({ blob: res.blob, prompt, engine: res.engine, kind: res.kind, svg: res.svg, code: res.code, remoteUrl: res.remoteUrl, w: W, h: H, style: st.style });
-            slots[i].replaceWith(resultCard(item, true));
-          } catch (e) {
-            slots[i].innerHTML = '';
-            slots[i].append(B.h('div', { class: 'slot-err' }, B.h('span', { 'data-i': 'AlertTriangle' }), B.h('span', { text: B.ai.errorText(e) })));
-            B.hydrateIcons(slots[i]);
-            if (st.engine === 'hf') B.toast('Puoi passare al motore Vettoriale o Procedurale: sono illimitati.');
-            break;
+            stepsIn(slots[0], [{ label: 'Iris scrive lo scatto (luce, obiettivo, pellicola)', status: 'run' }]);
+            plan = await B.craftPrompt(prompt, st.style, st.ctl.signal);
+            if (neg.value.trim()) plan.negative += ', ' + neg.value.trim();
+            planNote.hidden = false; planNote.innerHTML = ''; planNote.append(B.h('span', { 'data-i': 'Clapperboard' }), B.h('span', { text: plan.prompt })); B.hydrateIcons(planNote);
+          } catch (e) { plan = null; }
+          if (st.ctl.signal.aborted) slots.forEach((s, i) => fail(i, { code: 'cancelled' }));
+          else await Promise.all(slots.map(async (s, i) => {
+            const steps = [];
+            const onStep = (x) => { const last = steps.find((y) => y.id === x.id); if (last) Object.assign(last, x); else steps.push(Object.assign({}, x)); stepsIn(s, steps); };
+            try {
+              const res = await B.ai.image(plan ? plan.prompt : prompt, { engine, style: st.style, w: W, h: H, negative: plan ? plan.negative : neg.value.trim() || null, rawPrompt: !!plan, look: st.look !== 'auto' ? st.look : plan ? plan.look : undefined, signal: st.ctl.signal, onStep });
+              await done(i, res);
+            } catch (e) { fail(i, e); }
+          }));
+        } else {
+          for (let i = 0; i < n; i++) {
+            if (st.ctl.signal.aborted) { for (let j = i; j < n; j++) fail(j, { code: 'cancelled' }); break; }
+            try { await done(i, await B.ai.image(prompt, { engine, style: st.style, w: W, h: H, negative: neg.value.trim() || null, signal: st.ctl.signal })); }
+            catch (e) { fail(i, e); break; }
           }
         }
-        st.busy = false; goBtn.disabled = false;
+        st.busy = false; st.ctl = null; goBtn.hidden = false; stopBtn.hidden = true;
+      }
+      function stepsIn(slot, steps) {
+        const prev = [...steps].reverse().find((x) => x.preview);
+        const box = B.h('div', { class: 'slot-load steps' });
+        if (prev) { if (!prev._url) prev._url = URL.createObjectURL(prev.preview); box.append(B.h('img', { class: 'slot-prev', src: prev._url, alt: '' })); }
+        else box.append(B.h('div', { class: 'iris-spin' }));
+        const ol = B.h('ol', { class: 'agent-steps live' });
+        steps.forEach((x) => ol.append(B.h('li', { class: 'as-' + x.status }, B.h('span', { class: 'as-dot' }), B.h('span', { class: 'as-l', text: x.label }), x.detail && x.id !== 'plan' ? B.h('small', { text: x.detail }) : null)));
+        box.append(ol);
+        slot.replaceChildren(box);
       }
 
       function resultCard(item, big) {
@@ -139,12 +182,29 @@
           iconBtn('Download', 'Scarica', (e) => downloadMenu(item, e.currentTarget)),
           iconBtn('Aperture', 'Ritocca in Foto Studio', () => openIn('photo', item)),
           iconBtn('LayoutTemplate', 'Usa in un design', () => openIn('design', item)),
+          item.kind !== 'shader' && item.kind !== 'svg' && item.blob ? iconBtn('Wand2', 'Realismo: rifinisci, finitura pellicola, ingrandisci', (e) => realismMenu(item, e.currentTarget)) : null,
           iconBtn('Film', 'Anima in video', () => B.go('motion', { galleryId: item.id, prompt: item.prompt })),
           iconBtn('RefreshCw', 'Altre varianti', () => { ta.value = item.prompt; generate(); }),
           iconBtn('Trash2', 'Elimina', async () => { await B.gallery.remove(item.id); card.remove(); }));
-        card.append(media, B.h('figcaption', null, B.h('span', { class: 'res-p', text: item.prompt }), B.h('span', { class: 'badge', text: { web: 'Flux', hf: 'Z-Image', vector: 'SVG', shader: 'GPU' }[item.engine] || item.engine })), acts);
+        card.append(media, B.h('figcaption', null, B.h('span', { class: 'res-p', text: item.prompt }), B.h('span', { class: 'badge', text: { iris: 'Iris Pro', 'iris-fast': 'Iris Foto', web: 'Lampo', vector: 'SVG', shader: 'GPU', finish: 'Pellicola', refine: 'Rifinita', upscale: '2×' }[item.engine] || item.engine })), acts);
         B.hydrateIcons(card);
         return card;
+      }
+      function realismMenu(item, at) {
+        const derive = async (label, engine, fn) => {
+          const kill = B.toast(label + '…', { ms: 900000, icon: 'Wand2' });
+          try {
+            const cv = await fn(); const blob = await B.canvasToBlob(cv, 'image/jpeg', 0.95);
+            await B.gallery.add({ blob, prompt: item.prompt, engine, kind: 'raster', w: cv.width, h: cv.height, style: item.style, model: item.model, finalPrompt: item.finalPrompt });
+            kill(); B.toast(label + ': fatto, è in galleria', 'ok');
+          } catch (e) { kill(); B.err(e); }
+        };
+        const canvasOf = async () => { const im = await B.loadImage(item.blob); const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); return c; };
+        const items = [];
+        if (B.ai.engines.horde) items.push({ label: 'Rifinisci il dettaglio (rete GPU)', icon: 'ScanFace', fn: () => derive('Rifinitura del dettaglio', 'refine', async () => (await B.irisRefine(await canvasOf(), { prompt: item.finalPrompt || item.prompt, kind: 'photo', model: item.model })).canvas) }, '-');
+        Object.entries(B.realism.LOOKS).forEach(([k, l]) => items.push({ label: 'Finitura ' + l.label, icon: 'Aperture', fn: () => derive('Finitura ' + l.label, 'finish', async () => { await B.sleep(20); return B.realism.finish(await canvasOf(), k); }) }));
+        items.push('-', { label: 'Ingrandisci 2× (locale)', icon: 'Maximize2', fn: () => derive('Ingrandimento', 'upscale', async () => { const c = await canvasOf(); const up = B.realism.upscale(c, Math.min(2, 4096 / Math.max(c.width, c.height))); return B.px && B.px.adjust ? B.px.adjust(up, Object.assign({}, B.px.ADJ0, { sharpen: 25 })) : up; }) });
+        B.menu(at, items);
       }
       function iconBtn(ic, tip, fn) { return B.h('button', { class: 'btn icon sm', type: 'button', 'data-tip': tip, 'aria-label': tip, 'data-i': ic, onclick: (e) => { e.stopPropagation(); fn(e); } }); }
       async function openIn(view, item) { const url = item.blob ? await B.blobToDataURL(item.blob) : null; if (!url) return B.toast('Immagine non disponibile'); B.go(view, { imageURL: url, svg: item.svg }); }
@@ -171,7 +231,7 @@
         list.slice(0, 120).forEach((it) => gal.append(resultCard(it)));
       }
       B.on('gallery', B.debounce(renderGallery, 120)); renderGallery();
-      this.run = (p) => { ta.value = p.prompt || ''; if (p.auto && ta.value) generate(); };
+      this.run = (p) => { ta.value = p.prompt || ''; paintEngines(); if (p.auto && ta.value) generate(); };
     },
     onShow(p) { if (p && p.prompt) this.run(p); }
   });

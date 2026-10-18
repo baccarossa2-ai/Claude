@@ -10,14 +10,26 @@
       inner.append(B.h('div', { class: 'page-head' }, B.h('div', null, B.h('span', { class: 'eyebrow', text: 'Preferenze' }), B.h('h1', { text: 'Impostazioni' }))));
       const eng = B.h('div', { class: 'card', style: 'padding:18px;display:flex;flex-direction:column;gap:14px' });
       inner.append(B.h('h2', { text: 'Motori di Iris', style: 'font-size:var(--t-lg)' }), eng);
+      function modelPicker() {
+        const sel = B.h('select', { class: 'select sm', id: 'setTextModel', 'aria-label': 'Modello di testo', style: 'margin-top:8px;max-width:340px' }, B.h('option', { value: 'auto' }, 'Automatico · il migliore disponibile'));
+        const note = B.h('div', { class: 'mini-note', style: 'margin-top:6px', text: 'Elenco dal vivo dei modelli ospitati ora sulla rete.' });
+        B.ai.textModels().then((list) => {
+          list.forEach((m) => sel.append(B.h('option', { value: m.name }, m.label + ' · ' + m.count + (m.count === 1 ? ' GPU' : ' GPU'))));
+          sel.value = B.ls.get('ai.textModel', 'auto'); if (!sel.value) sel.value = 'auto';
+          if (!list.some((m) => /qwen/i.test(m.name) && m.rank === 0)) note.textContent = 'Nessuna versione grande di Qwen è ospitata in questo momento: Iris la userà da sola appena disponibile.';
+        });
+        sel.addEventListener('change', () => { B.ls.set('ai.textModel', sel.value); B.toast(sel.value === 'auto' ? 'Iris sceglierà il modello migliore' : 'Modello impostato: ' + sel.selectedOptions[0].textContent, 'ok'); });
+        return B.h('div', null, sel, note);
+      }
       async function renderEng() {
         const e = await B.ai.init();
         const row = (ic, t, s, ok, extra) => B.h('div', { style: 'display:flex;gap:14px;align-items:flex-start' }, B.h('span', { class: 'ec-ic', 'data-i': ic, style: 'width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--panel-3);color:var(--gold);flex:none' }), B.h('div', { style: 'flex:1;min-width:0' }, B.h('b', { text: t }), B.h('div', { class: 'muted', style: 'font-size:13px', text: s }), extra || null), B.h('span', { class: 'badge ' + (ok ? 'ok' : 'err'), text: ok ? 'Attivo' : 'Spento' }));
         eng.innerHTML = '';
         eng.append(
           row('Brain', 'Claude (dentro claude.ai)', 'Testo, codice, visione e agente di design. Nessuna chiave: usa il tuo account Claude.', e.claude),
-          row('Globe', 'Gateway aperto (sul web pubblico)', 'Pollinations: testo e foto realistiche Flux senza chiave e senza registrazione.', e.web),
-          row('Camera', 'Hugging Face (connettore)', 'Z-Image, FLUX, modifica immagini e video realistici Wan 2.2. Limitato dalla quota GPU gratuita giornaliera.', e.hf),
+          row('Globe', 'Modelli linguistici sulla rete GPU comunitaria', 'Testo, codice, strumenti e visione con modelli aperti ospitati dai volontari di AI Horde: Skyfall 31B, Cydonia e Magidonia 24B per i compiti complessi, Rocinante 12B per le risposte rapide; una versione grande di Qwen viene scelta per prima appena un volontario la ospita. Le foto vengono descritte dai GPU della stessa rete. Gratuito, senza chiave e senza quota.' + (B.ai.gate ? ' In uso ora: ' + B.ai.gate.label + '.' : ''), e.web, e.web ? modelPicker() : null),
+          row('Camera', 'Rete GPU comunitaria AI Horde', 'Foto ultra realistiche (ICBINP, Realistic Vision, AbsoluteReality…), rifinitura del dettaglio a tasselli, modifiche, riempimento ed espansione. Gratuita e illimitata, senza account: GPU messe a disposizione da volontari. Iris chiede solo scatti piccoli e fa il resto nel browser, così consuma pochissima GPU.', e.horde, e.horde ? null : B.h('a', { href: B.PUBLIC_URL, target: '_blank', rel: 'noopener', style: 'display:inline-block;margin-top:6px;color:var(--gold)', text: 'Apri Breye sul web per usarla →' })),
+          row('Wand2', 'Strumenti di realismo (locali)', 'Finitura pellicola (curva filmica, grana, halation, aberrazione), separazione delle frequenze dopo la rifinitura, ingrandimento, scontorno, lettura del testo (OCR) e montaggio video: girano sul tuo dispositivo, senza limiti.', true),
           row('Cpu', 'Motori locali', 'Ritocco, montaggio, export video, PDF, musica generativa e scene 3D girano sul tuo dispositivo.', true)
         );
         const test = B.h('button', { class: 'btn', type: 'button', onclick: async () => {

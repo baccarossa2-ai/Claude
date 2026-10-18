@@ -16,10 +16,10 @@
   const SUGGEST = [
     ['Feather', 'Scrivi una caption', 'Scrivi 3 caption Instagram per il lancio di una nuova collezione di borse in pelle color cioccolato, con hashtag.'],
     ['Code2', 'Crea una pagina web', 'Crea una landing page HTML completa (un solo file con CSS e JS) per una caffetteria artigianale, elegante e animata.'],
-    ['ImagePlus', 'Genera un’immagine', '/immagine ritratto cinematografico di una donna con occhi marroni, luce dorata del tramonto'],
+    ['Camera', 'Foto ultra realistica', 'Crea una foto ultra realistica: ritratto di una donna con occhi marroni alla luce dorata del tramonto, look pellicola Portra.'],
     ['Lightbulb', 'Idee per un video', 'Dammi 5 idee per Reel di 15 secondi per promuovere una palestra, con hook iniziale e struttura scena per scena.'],
     ['Languages', 'Traduci e migliora', 'Traduci in inglese professionale: “Siamo felici di presentarvi il nostro nuovo servizio di consegna a domicilio.”'],
-    ['Table', 'Organizza dati', 'Crea una tabella con un piano di allenamento settimanale per principianti, 3 giorni a settimana.']
+    ['Film', 'Dalla foto al video', 'Scatta una foto realistica di una tazza di espresso fumante su un tavolo di legno scuro e trasformala in un video verticale di 6 secondi con musica.']
   ];
 
   B.view('chat', {
@@ -72,8 +72,18 @@
       const stopBtn = B.h('button', { class: 'btn icon', type: 'button', 'aria-label': 'Ferma', 'data-i': 'StopCircle', hidden: true, onclick: () => ctl && ctl.abort() });
       const attachBtn = B.h('button', { class: 'btn icon ghost', type: 'button', 'aria-label': 'Allega file', 'data-tip': 'Allega immagini, testi, codice o PDF', 'data-i': 'Paperclip', onclick: async () => addFiles(await B.pickFiles('image/*,.txt,.md,.csv,.json,.js,.ts,.py,.html,.css,.pdf', true)) });
       const imgBtn = B.h('button', { class: 'btn icon ghost', type: 'button', 'aria-label': 'Genera immagine', 'data-tip': 'Genera un’immagine', 'data-i': 'ImagePlus', onclick: () => { if (!ta.value.startsWith('/immagine ')) ta.value = '/immagine ' + ta.value; ta.focus(); } });
+      let agentMode = B.ls.get('chat.agent', 'auto');
+      const agentBtn = B.h('button', { class: 'btn sm ghost agent-tg', type: 'button', onclick: () => { agentMode = agentMode === 'auto' ? 'on' : agentMode === 'on' ? 'off' : 'auto'; B.ls.set('chat.agent', agentMode); paintAgent(); } });
+      function paintAgent() {
+        const lbl = { auto: 'Strumenti: auto', on: 'Strumenti: sempre', off: 'Strumenti: spenti' }[agentMode];
+        agentBtn.innerHTML = ''; agentBtn.append(B.h('span', { 'data-i': 'Wand2' }), lbl);
+        agentBtn.classList.toggle('on', agentMode !== 'off');
+        agentBtn.dataset.tip = agentMode === 'off' ? 'Iris risponde solo con testo' : 'Iris usa strumenti reali: foto ultra realistiche, rifinitura del dettaglio, finitura pellicola, scontorno, vettoriali e video';
+        agentBtn.hidden = !B.ai.canUseTools();
+        B.hydrateIcons(agentBtn);
+      }
       const micNote = B.h('span', { class: 'muted chat-engine' });
-      const composer = B.h('div', { class: 'composer' }, attBar, ta, B.h('div', { class: 'composer-row' }, attachBtn, imgBtn, micNote, B.h('div', { class: 'bar-sp' }), stopBtn, sendBtn));
+      const composer = B.h('div', { class: 'composer' }, attBar, ta, B.h('div', { class: 'composer-row' }, attachBtn, imgBtn, agentBtn, micNote, B.h('div', { class: 'bar-sp' }), stopBtn, sendBtn));
       const composerWrap = B.h('div', { class: 'composer-wrap' }, composer, B.h('div', { class: 'composer-note', text: 'Iris può sbagliare: verifica le informazioni importanti.' }));
       main.append(head, scroller, composerWrap);
       B.dropzone(composer, addFiles);
@@ -106,14 +116,20 @@
         renderList();
         if (!cur) { if (chats[0] && !chats[0].messages.length) open(chats[0]); else newChat(true); }
       }
+      // a running answer writes into the open chat: switching is held until it ends (or Ferma is pressed)
+      const holdSwitch = () => { if (!ctl) return false; B.toast('Iris sta ancora lavorando: attendi qualche istante o premi Ferma'); return true; };
       function newChat(silent) {
+        if (holdSwitch()) return;
         if (cur && !cur.messages.length) { open(cur); ta.focus(); return; }
         cur = { id: B.uid('c'), title: 'Nuova chat', messages: [], updated: Date.now() };
         chats.unshift(cur); renderList(); renderThread(); if (!silent) ta.focus();
       }
-      async function persist() { if (!cur) return; cur.updated = Date.now(); if (cur.messages.length) await B.db.put('chats', JSON.parse(JSON.stringify(cur, (k, v) => (k === 'blob' ? undefined : v)))); renderList(); }
-      function open(c) { cur = c; el.classList.remove('side-open'); renderList(); renderThread(); }
-      async function delChat(c) { if (!(await B.confirm('Eliminare questa chat?', '“' + c.title + '” verrà eliminata.', 'Elimina', true))) return; await B.db.del('chats', c.id); chats = chats.filter((x) => x !== c); cur = null; if (chats[0]) open(chats[0]); else newChat(); }
+      // blobs, the in-memory image store and object-URL previews only live for this session
+      const SKIP = new Set(['blob', '_store', 'preview']);
+      async function persist() { if (!cur) return; cur.updated = Date.now(); if (cur.messages.length) await B.db.put('chats', JSON.parse(JSON.stringify(cur, (k, v) => (SKIP.has(k) ? undefined : v)))); renderList(); }
+      function open(c) { if (c !== cur && holdSwitch()) return; cur = c; el.classList.remove('side-open'); renderList(); renderThread(); }
+      const dropVideos = (msgs) => msgs.forEach((m) => (m.media || []).forEach((x) => { if (x.type === 'video' && x.key) { B.db.del('blobs', x.key).catch(() => {}); vidCache.delete(x.key); } }));
+      async function delChat(c) { if (c === cur && holdSwitch()) return; if (!(await B.confirm('Eliminare questa chat?', '“' + c.title + '” verrà eliminata.', 'Elimina', true))) return; dropVideos(c.messages); await B.db.del('chats', c.id); chats = chats.filter((x) => x !== c); if (c === cur) { cur = null; if (chats[0]) open(chats[0]); else newChat(); } else renderList(); }
       async function rename() { if (!cur) return; const n = await B.prompt('Rinomina chat', cur.title); if (n) { cur.title = n; title.textContent = n; persist(); } }
       function renderList() {
         const q = search.value.trim().toLowerCase();
@@ -143,7 +159,7 @@
         const eh = B.h('div', { class: 'ce-eye' }); B.eye(eh, { range: 0.12 });
         const g = B.h('div', { class: 'ce-grid' });
         SUGGEST.forEach(([ic, t, p]) => g.append(B.h('button', { type: 'button', class: 'ce-card', onclick: () => { ta.value = p; grow(); send(); } }, B.h('span', { 'data-i': ic }), B.h('b', { text: t }), B.h('small', { text: p.replace(/^\/immagine /, '') }))));
-        wrap.append(eh, B.h('h2', { html: 'Ciao, sono <span class="serif">Iris</span>.' }), B.h('p', { class: 'muted', text: 'Chiedimi testi, idee, codice, traduzioni o analisi. Allega foto e documenti, oppure scrivi /immagine per generarne una.' }), g);
+        wrap.append(eh, B.h('h2', { html: 'Ciao, sono <span class="serif">Iris</span>.' }), B.h('p', { class: 'muted', text: 'Chiedimi testi, idee, codice, traduzioni o analisi. Per foto, ritocchi e video uso i miei strumenti creativi: chiedi pure “crea una foto…” o allega un’immagine da modificare.' }), g);
         return wrap;
       }
       function bubble(m, i) {
@@ -156,15 +172,40 @@
         const content = B.h('div', { class: 'msg-content md' });
         if (isUser) content.textContent = m.content; else renderMd(content, m.content);
         body.append(content);
+        if (m.steps && m.steps.length) body.append(stepsBlock(m));
+        if (m.media && m.media.length) body.append(mediaBlock(m));
         if (m.gen) body.append(genBlock(m.gen));
         if (!isUser && !m.pending) body.append(actions(m, i));
         b.append(body);
         return b;
       }
+      function stepsBlock(m) {
+        const box = B.h('ol', { class: 'agent-steps' + (m.pending ? ' live' : '') });
+        m.steps.forEach((s) => box.append(B.h('li', { class: 'as-' + s.status }, B.h('span', { class: 'as-dot' }), B.h('span', { class: 'as-l', text: s.label }), s.detail ? B.h('small', { text: s.detail }) : null, s.preview ? B.h('img', { src: s.preview, alt: '' }) : null)));
+        return box;
+      }
+      function mediaBlock(m) {
+        const box = B.h('div', { class: 'agent-media' });
+        const finals = m.media.filter((x) => !x.draft), drafts = m.media.filter((x) => x.draft && x.type === 'image');
+        finals.forEach((x) => {
+          if (x.type === 'video') {
+            const v = B.h('video', { controls: true, playsinline: true, loop: true, preload: 'metadata' });
+            const card = B.h('div', { class: 'gen-img vid' }, v, B.h('div', { class: 'gen-acts' },
+              B.h('button', { class: 'btn sm', type: 'button', onclick: async () => { const b = await videoBlob(x); if (b) B.save(b, 'breye-video.' + (x.ext || 'mp4')); } }, B.h('span', { 'data-i': 'Download' }), 'Scarica video'),
+              B.h('button', { class: 'btn sm', type: 'button', onclick: async () => { const b = await videoBlob(x); if (b) B.go('video', { importBlob: b, ratio: (x.w || 1080) + 'x' + (x.h || 1920), name: 'Video di Iris.' + (x.ext || 'mp4') }); } }, B.h('span', { 'data-i': 'Clapperboard' }), 'Apri nel Video Editor')));
+            videoBlob(x).then((b) => { if (b) v.src = URL.createObjectURL(b); else card.replaceChildren(B.h('div', { class: 'muted', text: 'Video non più disponibile in questa sessione.' })); });
+            box.append(card);
+          } else box.append(genBlock({ status: 'done', src: x.src, prompt: x.label || 'Immagine di Iris' }));
+        });
+        if (drafts.length) box.append(B.h('details', { class: 'agent-drafts' }, B.h('summary', { text: 'Passaggi intermedi (' + drafts.length + ')' }), B.h('div', { class: 'ad-row' }, drafts.map((d) => B.h('img', { src: d.src, alt: d.label || '', title: d.label || '', onclick: () => B.go('photo', { imageURL: d.src }) })))));
+        return box;
+      }
+      const vidCache = new Map();
+      async function videoBlob(x) { if (vidCache.has(x.key)) return vidCache.get(x.key); try { const r = await B.db.get('blobs', x.key); if (r && r.blob) { vidCache.set(x.key, r.blob); return r.blob; } } catch (e) { /* gone */ } return null; }
       function genBlock(g) {
         const box = B.h('div', { class: 'gen-img' });
-        if (g.status === 'loading') { box.append(B.h('div', { class: 'gen-load' }, B.h('div', { class: 'iris-spin' }), B.h('span', { text: 'Iris sta dipingendo…' }))); return box; }
-        if (g.status === 'error') { box.append(B.h('div', { class: 'muted', text: g.error })); return box; }
+        if (g.status === 'loading') { box.append(B.h('div', { class: 'gen-load' }, B.h('div', { class: 'iris-spin' }), B.h('span', { text: g.label || 'Iris sta dipingendo…' }))); return box; }
+        if (g.status === 'error') { box.append(B.h('div', { class: 'muted', text: g.error })); if (g.link) box.append(B.h('a', { class: 'btn sm gold', href: g.link, target: '_blank', rel: 'noopener' }, B.h('span', { 'data-i': 'ExternalLink' }), 'Apri Breye sul web')); return box; }
         const img = B.h('img', { src: g.src, alt: g.prompt });
         box.append(img, B.h('div', { class: 'gen-acts' },
           B.h('button', { class: 'btn sm', type: 'button', onclick: () => B.save(B.dataURLToBlob(g.src), B.slug(g.prompt) + '.png') }, B.h('span', { 'data-i': 'Download' }), 'Scarica'),
@@ -211,21 +252,103 @@
         if (imgCmd) return genImage(imgCmd[2]);
         await answer();
       }
+      /* repaint only the last bubble while Iris works */
+      function repaintLast() {
+        const i = cur.messages.length - 1, node = thread.lastElementChild;
+        if (!node || i < 0) return renderThread();
+        const nb = bubble(cur.messages[i], i); node.replaceWith(nb); B.hydrateIcons(nb); stick();
+      }
+      const stepper = (msg) => (s) => {
+        msg.steps = msg.steps || [];
+        const last = [...msg.steps].reverse().find((x) => x.id ? x.id === s.id : x.status === 'run');
+        const prev = s.preview ? URL.createObjectURL(s.preview) : null;
+        if (s.status === 'run' && (!last || last.status !== 'run' || (s.id && last.id !== s.id))) msg.steps.push({ id: s.id, label: s.label, status: 'run', detail: s.detail });
+        else if (last) Object.assign(last, { label: s.label, status: s.status, detail: s.detail || (s.status === 'run' ? last.detail : ''), preview: prev || last.preview });
+        repaintLast();
+      };
       async function genImage(prompt) {
-        const msg = { role: 'assistant', content: 'Ecco l’immagine per: *' + prompt + '*', gen: { status: 'loading', prompt } };
+        await B.ai.init();
+        const engine = B.ai.photoEngine(false) || 'vector';
+        const msg = { role: 'assistant', content: 'Ecco l’immagine per: *' + prompt + '*', pending: true, steps: [] };
+        if (engine === 'vector') msg.gen = { status: 'loading', prompt, label: 'Iris disegna in vettoriale…' };
         cur.messages.push(msg); renderThread(); busy(true);
+        ctl = new AbortController();
         try {
-          await B.ai.init();
-          const engine = B.ai.engines.web ? 'web' : B.ai.engines.hf ? 'hf' : 'vector';
-          let r;
-          try { r = await B.ai.image(prompt, { engine, w: 1024, h: 1024, style: 'photo' }); }
-          catch (e) { if (engine === 'hf') { B.toast(e.userMessage || 'Hugging Face non disponibile: passo al motore vettoriale'); r = await B.ai.image(prompt, { engine: 'vector', w: 1024, h: 1024 }); } else throw e; }
+          const r = await B.ai.image(prompt, { engine, w: 1024, h: 1024, style: 'photo', signal: ctl.signal, onStep: stepper(msg) });
           const src = await B.blobToDataURL(r.blob);
           msg.gen = { status: 'done', src, prompt };
-          if (r.engine === 'vector') msg.content += '\n\n_Disegnata con il motore vettoriale di Iris._';
-          B.gallery && B.gallery.add({ blob: r.blob, prompt, engine: r.engine, w: 1024, h: 1024, svg: r.svg });
-        } catch (e) { msg.gen = { status: 'error', error: B.ai.errorText(e) }; msg.error = true; }
-        busy(false); renderThread(); persist();
+          if (r.engine === 'vector') msg.content += '\n\n_Disegnata con il motore vettoriale di Iris. Le foto ultra realistiche sono nella [versione web di Breye](' + B.PUBLIC_URL + '?p=' + encodeURIComponent(prompt) + '#imagine) (illimitata)._';
+          else msg.content += '\n\n_Scatto ' + r.w + '×' + r.h + ' · ' + (r.model || 'Iris') + ' · rifinito e finito in pellicola da Iris._';
+          B.gallery && B.gallery.add({ blob: r.blob, prompt, engine: r.engine, kind: 'raster', w: r.w || 1024, h: r.h || 1024, svg: r.svg });
+        } catch (e) { msg.gen = { status: 'error', error: B.ai.errorText(e) }; if (e.code !== 'cancelled') msg.error = true; }
+        (msg.steps || []).forEach((s) => { if (s.status === 'run') s.status = msg.error || (msg.gen && msg.gen.status === 'error') ? 'err' : 'done'; });
+        delete msg.pending; ctl = null; busy(false); renderThread(); persist();
+      }
+
+      /* the creative agent: Iris plans and calls real tools (photos, refinement, finishing, cut-outs, vectors, video) */
+      const CREATIVE = /\b(foto|fotograf|immagin|ritratt|scatt|logo|icon[ae]|poster|locandin|illustr|disegn|dipin|wallpaper|sfond|copertin|banner|video|reel|clip|anim|render|scontorn|ingrand|ritocc|rifinis|pellicol|grana|vintage|bianco e nero|picture|photo|image|draw|paint|selfie|paesagg|tramonto)\w*/i;
+      function wantsAgent(text, atts) {
+        if (agentMode === 'off' || !B.ai.canUseTools()) return false;
+        if (agentMode === 'on') return true;
+        if (persona === 'coder' || persona === 'translator') return false;
+        if (/```|\b(codice|html|css|javascript|python|traduci|riassumi)\b/i.test(text)) return false;
+        return CREATIVE.test(text) || (atts.some((a) => a.kind === 'image') && /\b(rend[ia]|trasform|cambia|modific|aggiung|togli|rimuov|miglior|sistem|fai)\w*/i.test(text));
+      }
+      async function agentAnswer(history, atts, system) {
+        const pend = { role: 'assistant', content: '', pending: true, steps: [], media: [] };
+        cur.messages.push(pend); renderThread();
+        const node0 = B.$('.msg:last-child .msg-content', thread); if (node0) node0.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+        busy(true); ctl = new AbortController();
+        try {
+          const store = cur._store instanceof Map ? cur._store : (cur._store = new Map());
+          const note = [];
+          for (const a of atts) {
+            if (a.kind !== 'image' || !a.blob) continue;
+            try { const im = await B.loadImage(a.blob); const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); const id = 'img' + (store.size + 1); store.set(id, { blob: a.blob, canvas: c, label: a.name }); note.push(id + ' (allegato “' + a.name + '”)'); }
+            catch (e) { B.toast('Non riesco ad aprire ' + a.name + ': usa JPG, PNG o WebP'); }
+          }
+          const known = [...store.entries()].filter(([id]) => !note.some((n) => n.startsWith(id + ' '))).slice(-6).map(([id, v]) => id + ' (' + String(v.label || '').slice(0, 50) + ')');
+          const ctx = {
+            images: store,
+            onImage: async (id, blob, label) => { pend.media.push({ id, type: 'image', src: await B.blobToDataURL(blob), label }); repaintLast(); },
+            onVideo: async (id, blob, story) => { const key = B.uid('v'); try { await B.db.put('blobs', { id: key, blob }); } catch (e) { /* memory only */ } vidCache.set(key, blob); pend.media.push({ id, type: 'video', key, ext: /webm/.test(blob.type) ? 'webm' : 'mp4', w: story.w, h: story.h }); repaintLast(); },
+            onStep: stepper(pend)
+          };
+          const madeBy = {};
+          const tools = B.irisTools(ctx).map((t) => Object.assign({}, t, { execute: async (a) => {
+            try {
+              const r = await t.execute(a, { signal: ctl.signal });
+              if (r && r.image_id) madeBy[r.image_id] = t.name;
+              // the source becomes an intermediate step only once its refined version exists
+              if (/^(refine_detail|finish_photo|upscale_photo)$/.test(t.name) && a.image_id) { const md = pend.media.find((x) => x.id === a.image_id); if (md) md.draft = true; }
+              return r;
+            }
+            catch (e) { const s = [...pend.steps].reverse().find((x) => x.status === 'run'); if (s) { s.status = 'err'; s.detail = B.ai.errorText(e); repaintLast(); } throw e; }
+          } }));
+          const msgs = history.map((m) => ({ role: m.role, content: m.content || ' ' }));
+          const extra = (note.length ? '\n\n[Immagini allegate disponibili per gli strumenti: ' + note.join(', ') + ']' : '') + (known.length ? '\n[Immagini già create in questa chat: ' + known.join(', ') + ']' : '');
+          msgs[msgs.length - 1].content += extra;
+          const sys = system + '\n\n' + B.agentSystem + (B.ai.engines.horde ? '' : '\nIn questa versione le foto realistiche non sono disponibili: per immagini usa create_vector e ricorda in una frase che le foto ultra realistiche illimitate sono nella versione web di Breye: ' + B.PUBLIC_URL);
+          const text = await B.ai.toolChat(msgs, { system: sys, tools, signal: ctl.signal, tier: tier === 'quick' ? 'default' : tier, images: B.ai.canSee() ? atts.filter((a) => a.kind === 'image').map((a) => a.blob) : null, onText: ({ text: t }) => { pend.content = t; const n = B.$('.msg:last-child .msg-content', thread); if (n) renderMd(n, t); stick(); } });
+          pend.content = text || (pend.media.length ? 'Fatto.' : '');
+          // the realism pipeline always ends with the film finish, even when a smaller model forgets the last step
+          const last = [...pend.media].reverse().find((x) => x.type === 'image' && !x.draft);
+          const fin = tools.find((t) => t.name === 'finish_photo');
+          if (last && fin && /^(generate_photo|refine_detail|edit_photo|upscale_photo)$/.test(madeBy[last.id] || '') && !ctl.signal.aborted) {
+            const u = (history[history.length - 1] || {}).content || '';
+            const look = /portra/i.test(u) ? 'portra' : /cinestill/i.test(u) ? 'cinestill' : /noir|bianco e nero|b\/n/i.test(u) ? 'noir' : /cinema|film|cinematic/i.test(u) ? 'cinema' : /oro|golden|tramonto|sunset/i.test(u) ? 'gold' : /nitid|crisp/i.test(u) ? 'crisp' : 'natural';
+            try { await fin.execute({ image_id: last.id, look }); } catch (e) { /* keep the unfinished photo */ }
+          }
+        } catch (e) {
+          if (e.code === 'cancelled') pend.content = (pend.content || '') + '\n\n_— interrotto_';
+          else { pend.content = (pend.content || '') + (pend.content ? '\n\n' : '') + '⚠️ ' + (e.userMessage || 'Errore'); pend.error = !pend.media.length; }
+        }
+        pend.steps.forEach((s) => { if (s.status === 'run') s.status = ctl && ctl.signal.aborted ? 'err' : 'done'; });
+        const finals = pend.media.filter((x) => x.type === 'image' && !x.draft);
+        for (const f of finals) { try { B.gallery && B.gallery.add({ blob: B.dataURLToBlob(f.src), prompt: f.label || 'Iris', engine: 'iris', kind: 'raster', w: 0, h: 0 }); } catch (e) { /* ignore */ } }
+        delete pend.pending; ctl = null; busy(false); micNote.textContent = B.ai.engineLabel();
+        renderThread(); persist();
+        if (cur.messages.length === 2 && B.ai.textEngine()) autoTitle();
       }
       async function answer() {
         const pend = { role: 'assistant', content: '', pending: true };
@@ -243,6 +366,7 @@
         const msgs = history.map((m, idx) => ({ role: m.role, content: (m.content || ' ') + (idx === history.length - 1 ? fileText : '') }));
         const p = PERSONAS[persona] || PERSONAS.iris;
         const system = B.ai.persona + (p.add ? '\n' + p.add : '') + '\nData di oggi: ' + new Date().toLocaleDateString('it-IT', { dateStyle: 'full' }) + '.';
+        if (wantsAgent(lastUser.content || '', lastUser._atts || [])) { cur.messages.pop(); ctl = null; busy(false); return agentAnswer(msgs, lastUser._atts || [], system); }
         try {
           if (images.length && !B.ai.canSee()) B.toast('Questo motore non può vedere le immagini: invio solo il testo');
           const text = await B.ai.text(msgs, { system, tier, signal: ctl.signal, images: B.ai.canSee() ? images : null, onText: ({ text: t }) => { pend.content = t; renderMd(node, t); stick(); } });
@@ -251,9 +375,9 @@
           if (e.code === 'cancelled') pend.content = (pend.content || '') + '\n\n_— interrotto_';
           else { pend.content = (e.partial || pend.content || '') + (pend.content ? '\n\n' : '') + '⚠️ ' + (e.userMessage || 'Errore'); pend.error = true; }
         }
-        delete pend.pending; ctl = null; busy(false);
+        delete pend.pending; ctl = null; busy(false); micNote.textContent = B.ai.engineLabel();
         renderThread(); persist();
-        if (cur.messages.length === 2 && B.ai.engines.claude) autoTitle();
+        if (cur.messages.length === 2 && B.ai.textEngine()) autoTitle();
       }
       async function autoTitle() {
         try {
@@ -265,7 +389,7 @@
       function busy(on) { sendBtn.hidden = on; stopBtn.hidden = !on; ta.classList.toggle('busy', on); }
       async function regenerate() {
         if (ctl || !cur) return;
-        while (cur.messages.length && cur.messages[cur.messages.length - 1].role === 'assistant') cur.messages.pop();
+        while (cur.messages.length && cur.messages[cur.messages.length - 1].role === 'assistant') dropVideos([cur.messages.pop()]);
         const last = cur.messages[cur.messages.length - 1];
         const cmd = last && last.content.match(/^\/(immagine|img|image|disegna)\s+([\s\S]+)/i);
         renderThread();
@@ -273,10 +397,11 @@
       }
       function exportMd() { if (!cur) return; const md = '# ' + cur.title + '\n\n' + cur.messages.map((m) => '**' + (m.role === 'user' ? 'Tu' : 'Iris') + ':**\n\n' + m.content).join('\n\n---\n\n'); B.save(new Blob([md], { type: 'text/markdown' }), B.slug(cur.title) + '.md'); }
 
-      B.on('ai:ready', (e) => { micNote.textContent = B.ai.engineLabel(); paintHead(); });
+      B.on('ai:ready', (e) => { micNote.textContent = B.ai.engineLabel(); paintHead(); paintAgent(); });
+      B.on('ai:wait', (s) => { const n = B.$('.msg:last-child .msg-content .typing', thread); if (n && !B.$('.wait-note', n.parentNode)) n.after(B.h('small', { class: 'muted wait-note', text: ' in coda sulla rete GPU comunitaria…' })); });
       micNote.textContent = 'Connessione a Iris…';
-      B.ai.init().then(() => { micNote.textContent = B.ai.engineLabel(); paintHead(); });
-      paintHead();
+      B.ai.init().then(() => { micNote.textContent = B.ai.engineLabel(); paintHead(); paintAgent(); });
+      paintHead(); paintAgent();
       this.ask = (q) => { if (cur && cur.messages.length) newChat(true); ta.value = q; grow(); send(); };
       this.focus = () => ta.focus();
       load();

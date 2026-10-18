@@ -455,7 +455,7 @@
 
   /* ================= Video AI view ================= */
   const FORMATS = [['9:16', 1080, 1920, 'Reel / TikTok'], ['16:9', 1920, 1080, 'YouTube'], ['1:1', 1080, 1080, 'Quadrato'], ['4:5', 1080, 1350, 'Feed']];
-  const VSTYLES = [['photo', 'Cinematico realistico', 'Camera', 'Foto realistiche animate con movimenti di macchina'], ['shader', 'Procedurale 3D', 'Aperture', 'Mondi generati sulla GPU, illimitati'], ['graphic', 'Grafica animata', 'Shapes', 'Gradienti, tipografia cinetica, istantaneo']];
+  const VSTYLES = [['photo', 'Cinematico realistico', 'Camera', 'Foto realistiche dalla rete GPU comunitaria, animate con camera e pellicola'], ['shader', 'Procedurale 3D', 'Aperture', 'Mondi generati sulla GPU, illimitati'], ['graphic', 'Grafica animata', 'Shapes', 'Gradienti, tipografia cinetica, istantaneo']];
 
   B.view('motion', {
     title: 'Video AI', icon: 'Film', group: 'ai', desc: 'Video da testo o da foto', badge: 'AI',
@@ -468,7 +468,7 @@
 
       /* ---- left controls ---- */
       const modeSeg = B.h('div', { class: 'seg' });
-      [['text', 'Da testo', 'Type'], ['photo', 'Da foto', 'Image'], ['real', 'Realistico HF', 'Camera']].forEach(([k, l, ic]) => modeSeg.append(B.h('button', { type: 'button', 'data-m': k, class: k === st.mode ? 'on' : '', onclick: () => setMode(k) }, B.h('span', { 'data-i': ic }), l)));
+      [['text', 'Da testo', 'Type'], ['photo', 'Da foto', 'Image'], ['real', 'Ultra realistico', 'Sparkles']].forEach(([k, l, ic]) => modeSeg.append(B.h('button', { type: 'button', 'data-m': k, class: k === st.mode ? 'on' : '', onclick: () => setMode(k) }, B.h('span', { 'data-i': ic }), l)));
       const ta = B.h('textarea', { class: 'textarea', id: 'moPrompt', rows: 4, placeholder: 'Racconta il video: es. “spot di 15 secondi per una torrefazione artigianale: chicchi che tostano, mani dell’artigiano, tazza fumante all’alba, logo finale”' });
       const photoBox = B.h('div', { class: 'dropzone', hidden: true }, B.h('span', { 'data-i': 'ImagePlus' }), B.h('b', { text: 'Trascina una foto o clicca' }), B.h('small', { text: 'JPG, PNG, WebP' }));
       const photoPrev = B.h('img', { class: 'mo-photo', hidden: true, alt: 'Foto da animare' });
@@ -483,7 +483,7 @@
       const moodSel = B.h('select', { class: 'select sm', id: 'moMood' }, Object.entries(MOODS).map(([k, m]) => B.h('option', { value: k, selected: k === st.mood }, m.label)));
       moodSel.addEventListener('change', () => { st.mood = moodSel.value; st.audioDirty = true; if (st.story) st.story.music = st.mood; });
       const goBtn = B.h('button', { class: 'btn gold lg block', type: 'button', onclick: generate }, B.h('span', { 'data-i': 'Sparkles' }), 'Genera video');
-      const realNote = B.h('div', { class: 'mini-note', hidden: true, html: 'Il video realistico usa Z-Image + <b>Wan 2.2</b> sul tuo connettore Hugging Face (quota GPU gratuita giornaliera). Il file si apre su Hugging Face; scaricalo e importalo nel Video Editor.' });
+      const realNote = B.h('div', { class: 'mini-note', hidden: true, html: 'Ultra realistico: Iris scrive lo storyboard, ogni scena viene scattata dalla <b>rete GPU comunitaria</b> (gratuita e illimitata), rifinita a tasselli e sviluppata con la finitura pellicola “Cinema”; poi la anima con camera, luce e musica nel browser. Di solito 4–8 minuti.' });
       const styleField = B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Stile visivo' }), styleWrap);
       left.append(
         B.h('div', { class: 'gen-head' }, B.h('span', { class: 'eyebrow', text: 'Iris Motion' }), B.h('h1', { text: 'Video AI' })),
@@ -497,6 +497,7 @@
         st.mode = k; B.$$('[data-m]', modeSeg).forEach((c) => c.classList.toggle('on', c.dataset.m === k));
         photoBox.hidden = k !== 'photo' || !!st.img; photoPrev.hidden = k !== 'photo' || !st.img; realNote.hidden = k !== 'real';
         styleField.hidden = k !== 'text';
+        if (k === 'real' && !B.ai.engines.horde) B.toast('Le scene ultra realistiche usano la rete GPU comunitaria della versione web di Breye: qui userò scene 3D.');
         ta.placeholder = k === 'photo' ? 'Testo da mostrare sul video (facoltativo) e tipo di movimento, es. “zoom lento, pulviscolo dorato, titolo: Nuova collezione”' : k === 'real' ? 'Descrivi la scena realistica: soggetto, azione, ambiente, luce' : ta.placeholder;
       }
       async function setPhoto(f) { st.img = f; photoPrev.src = URL.createObjectURL(f); photoPrev.hidden = false; photoBox.hidden = true; }
@@ -609,7 +610,7 @@
         const prompt = sc.visual || sc.title || st.story.title || ta.value;
         B.toast('Iris sta creando lo sfondo della scena…');
         try {
-          if (kind === 'photo') { const r = await B.ai.image(prompt, { engine: B.ai.engines.web ? 'web' : B.ai.engines.hf ? 'hf' : 'vector', w: st.story.w > st.story.h ? 1344 : 768, h: st.story.w > st.story.h ? 768 : 1344, style: 'cinema' }); sc.bg = { type: 'image', blob: r.blob }; sc._img = await B.loadImage(r.blob); }
+          if (kind === 'photo') { const r = await B.ai.image(prompt, { engine: B.ai.photoEngine(true) || 'vector', w: st.story.w, h: st.story.h, style: 'cinema', look: 'cinema' }); sc.bg = { type: 'image', blob: r.blob }; sc._img = await B.loadImage(r.blob); }
           else { sc.bg = { type: 'shader', code: await B.ai.shader(prompt) }; sc._img = null; }
           draw(); sc._paint && sc._paint(); B.toast('Scena aggiornata', 'ok');
         } catch (e) { B.err(e); }
@@ -643,18 +644,16 @@
         }
         if (!prompt) { ta.focus(); return B.toast('Descrivi il video che vuoi'); }
         st.busy = true; goBtn.disabled = true;
-        try {
-          if (st.mode === 'real') await generateReal(prompt, W, H);
-          else await generateStory(prompt, W, H);
-        } catch (e) { if (e.code !== 'cancelled') B.err(e); setStatus(''); }
+        try { await generateStory(prompt, W, H, st.mode === 'real'); }
+        catch (e) { if (e.code !== 'cancelled') B.err(e); setStatus(''); }
         st.busy = false; goBtn.disabled = false;
       }
 
-      async function generateStory(prompt, W, H) {
+      async function generateStory(prompt, W, H, ultra) {
         setStatus('<div class="iris-spin sm"></div><span>Iris scrive lo storyboard…</span>');
         await B.ai.init();
         let plan;
-        const ask = 'Sei un regista e motion designer pluripremiato. Crea lo storyboard di un video di ' + st.dur + ' secondi in formato ' + st.fmt + ' su: "' + prompt + '".\nRispondi SOLO con JSON valido con questa forma:\n{"title":"titolo breve","palette":["#hex scuro","#hex","#hex","#hex chiaro"],"music":"cinematic|upbeat|lofi|ambient|epic|corporate","scenes":[{"dur":numero di secondi,"visual":"descrizione visiva DETTAGLIATA in inglese per un generatore di immagini fotorealistiche (soggetto, luogo, luce, obiettivo, atmosfera)","title":"testo a schermo breve (max 6 parole) nella lingua della richiesta, oppure stringa vuota","subtitle":"testo secondario breve o vuoto","text":"cinematic|bold|elegant|typewriter|lower","camera":"zoomIn|zoomOut|panLeft|panRight|orbit|still","particles":"none|dust|bokeh|sparks|snow|rain|stars","transition":"fade|iris|blink|zoom|slide|flash"}]}\nRegole: da 3 a 7 scene, durate che sommano esattamente a ' + st.dur + '; ritmo narrativo con apertura forte e chiusura con messaggio o call to action; varia camera e transizioni.';
+        const ask = 'Sei un regista e motion designer pluripremiato. Crea lo storyboard di un video di ' + st.dur + ' secondi in formato ' + st.fmt + ' su: "' + prompt + '".\nRispondi SOLO con JSON valido con questa forma:\n{"title":"titolo breve","palette":["#hex scuro","#hex","#hex","#hex chiaro"],"music":"cinematic|upbeat|lofi|ambient|epic|corporate","scenes":[{"dur":numero di secondi,"visual":"descrizione visiva DETTAGLIATA in inglese per un generatore di immagini fotorealistiche (soggetto, luogo, luce, obiettivo, atmosfera)","title":"testo a schermo breve (max 6 parole) nella lingua della richiesta, oppure stringa vuota","subtitle":"testo secondario breve o vuoto","text":"cinematic|bold|elegant|typewriter|lower","camera":"zoomIn|zoomOut|panLeft|panRight|orbit|still","particles":"none|dust|bokeh|sparks|snow|rain|stars","transition":"fade|iris|blink|zoom|slide|flash"}]}\nRegole: da ' + (ultra ? '2 a 4' : '3 a 7') + ' scene, durate che sommano esattamente a ' + st.dur + '; ritmo narrativo con apertura forte e chiusura con messaggio o call to action; varia camera e transizioni.';
         if (B.ai.textEngine()) {
           try { plan = await B.ai.json(ask, { system: false, tier: 'default' }); } catch (e) { B.toast('Storyboard AI non disponibile, uso un modello automatico'); }
         }
@@ -662,29 +661,43 @@
         const scenes = plan.scenes.slice(0, 8).map((s) => ({ dur: B.clamp(+s.dur || st.dur / plan.scenes.length, 1.5, 20), visual: s.visual || prompt, title: s.title || '', subtitle: s.subtitle || '', text: TEXT_STYLES[s.text] ? s.text : 'cinematic', camera: CAMERAS[s.camera] ? s.camera : 'zoomIn', particles: PARTICLES[s.particles] ? s.particles : 'dust', transition: TRANS[s.transition] ? s.transition : 'fade', bg: { type: 'gradient' } }));
         const sum = scenes.reduce((a, s) => a + s.dur, 0); scenes.forEach((s) => (s.dur = Math.round(s.dur * st.dur / sum * 10) / 10));
         const pal = (Array.isArray(plan.palette) && plan.palette.filter((c) => /^#[0-9a-f]{6}$/i.test(c)).length >= 3) ? plan.palette : ['#120a06', '#7a3d16', '#e3a94a', '#f3d088'];
-        const story = { w: W, h: H, title: plan.title || prompt.slice(0, 40), palette: pal, music: st.mood !== 'cinematic' ? st.mood : (MOODS[plan.music] ? plan.music : st.mood), seed: Date.now() % 1000, scenes, lightLeak: st.style === 'photo' };
+        const style = ultra ? 'photo' : st.style;
+        const story = { w: W, h: H, title: plan.title || prompt.slice(0, 40), palette: pal, music: st.mood !== 'cinematic' ? st.mood : (MOODS[plan.music] ? plan.music : st.mood), seed: Date.now() % 1000, scenes, lightLeak: style === 'photo', letterbox: !!ultra && W > H };
         moodSel.value = story.music;
         await B.prepareStory(story);
         setStory(story);
-        if (st.style === 'graphic') { setStatus(''); return; }
+        if (style === 'graphic') { setStatus(''); return; }
         const n = scenes.length;
-        for (let i = 0; i < n; i++) {
-          const sc = scenes[i];
-          setStatus('<div class="iris-spin sm"></div><span>Scena ' + (i + 1) + ' di ' + n + ': ' + (st.style === 'photo' ? 'Iris fotografa' : 'Iris costruisce il mondo 3D') + '…</span>');
-          try {
-            if (st.style === 'photo') {
-              const engine = B.ai.engines.web ? 'web' : B.ai.engines.hf ? 'hf' : null;
-              if (!engine) { sc.bg = { type: 'preset', preset: Object.keys(B.shader.presets)[i % 5] }; continue; }
-              const r = await B.ai.image(sc.visual, { engine, w: W > H ? 1344 : W === H ? 1024 : 768, h: W > H ? 768 : W === H ? 1024 : 1344, style: 'cinema' });
-              sc.bg = { type: 'image', blob: r.blob }; sc._img = await B.loadImage(r.blob);
-            } else {
-              sc.bg = { type: 'shader', code: await B.ai.shader(sc.visual) };
-            }
-          } catch (e) {
-            sc.bg = { type: 'preset', preset: Object.keys(B.shader.presets)[i % 5] };
-            if (i === 0) B.toast(B.ai.errorText(e) + ' Uso scene pronte dove serve.');
+        if (style === 'photo') {
+          const engine = B.ai.photoEngine(!ultra);
+          if (!engine || engine === 'web') {
+            scenes.forEach((sc, i) => { sc.bg = { type: 'preset', preset: Object.keys(B.shader.presets)[i % 5] }; });
+            draw(); scenes.forEach((sc) => sc._paint && sc._paint());
+            setStatus('<span data-i="Info"></span><span>Le foto realistiche delle scene arrivano dalla rete GPU comunitaria, disponibile nella versione web di Breye. Qui ho usato scene 3D pronte.</span> <a class="btn sm gold" target="_blank" rel="noopener" href="' + B.esc(B.PUBLIC_URL + '?p=' + encodeURIComponent(prompt) + '#imagine') + '">Apri Breye sul web</a>');
+            return;
           }
-          draw(); sc._paint && sc._paint();
+          // every scene develops in parallel on the community network; the story plays meanwhile with placeholder backgrounds
+          let ready = 0;
+          const tick = () => setStatus('<div class="iris-spin sm"></div><span>' + (ultra ? 'Ultra realistico' : 'Cinematico') + ': ' + ready + ' di ' + n + ' scene sviluppate sulla rete GPU comunitaria… (di solito ' + (ultra ? '4–8' : '2–4') + ' minuti, puoi già modificare testi e camera)</span>');
+          tick();
+          scenes.forEach((sc, i) => { sc.bg = { type: 'preset', preset: Object.keys(B.shader.presets)[i % 5] }; });
+          draw();
+          let failed = 0;
+          await Promise.all(scenes.map(async (sc, i) => {
+            try {
+              const r = await B.ai.image('RAW photo, cinematic film still, ' + sc.visual + ', anamorphic lens, natural light, subtle film grain, highly detailed', { engine, w: W, h: H, look: 'cinema', rawPrompt: true, negative: 'cartoon, illustration, 3d render, cgi, plastic skin, blurry, deformed, watermark, text, logo' });
+              sc.bg = { type: 'image', blob: r.blob }; sc._img = await B.loadImage(r.blob);
+            } catch (e) { failed++; if (failed === 1) B.toast(B.ai.errorText(e) + ' Per questa scena tengo uno sfondo 3D.'); }
+            ready++; tick(); draw(); sc._paint && sc._paint();
+          }));
+        } else {
+          for (let i = 0; i < n; i++) {
+            const sc = scenes[i];
+            setStatus('<div class="iris-spin sm"></div><span>Scena ' + (i + 1) + ' di ' + n + ': Iris costruisce il mondo 3D…</span>');
+            try { sc.bg = { type: 'shader', code: await B.ai.shader(sc.visual) }; }
+            catch (e) { sc.bg = { type: 'preset', preset: Object.keys(B.shader.presets)[i % 5] }; if (i === 0) B.toast(B.ai.errorText(e) + ' Uso scene pronte dove serve.'); }
+            draw(); sc._paint && sc._paint();
+          }
         }
         setStatus('<span data-i="CheckCircle2"></span><span>Video pronto. Modifica le scene qui sotto o esportalo.</span>');
         setTimeout(() => setStatus(''), 5000);
@@ -694,22 +707,6 @@
         const words = prompt.split(/[,.;]/).map((s) => s.trim()).filter(Boolean);
         const cams = ['zoomIn', 'panRight', 'orbit', 'zoomOut', 'panLeft', 'still'], tr = ['iris', 'fade', 'blink', 'zoom', 'flash', 'slide'];
         return { title: words[0] || 'Video', scenes: Array.from({ length: n }, (_, i) => ({ dur: st.dur / n, visual: prompt + ', cinematic shot ' + (i + 1), title: i === 0 ? (words[0] || '').slice(0, 40) : i === n - 1 ? 'Breye' : (words[i] || '').slice(0, 40), subtitle: '', text: i === 0 ? 'cinematic' : i === n - 1 ? 'elegant' : 'bold', camera: cams[i % 6], particles: ['dust', 'bokeh', 'sparks', 'dust', 'stars', 'bokeh'][i % 6], transition: tr[i % 6] })) };
-      }
-
-      async function generateReal(prompt, W, H) {
-        await B.ai.init();
-        if (!B.ai.engines.hf) {
-          B.toast('Il video realistico richiede Breye dentro Claude con il connettore Hugging Face. Creo la versione cinematica locale.');
-          st.mode = 'text'; st.style = 'photo'; return generateStory(prompt, W, H);
-        }
-        setStatus('<div class="iris-spin sm"></div><span>1/2 · Z-Image crea il fotogramma iniziale…</span>');
-        let en = prompt; try { en = await B.ai.enhancePrompt(prompt, 'video'); } catch (e) { /* keep */ }
-        const img = await B.ai.image(en, { engine: 'hf', w: W > H ? 1280 : 720, h: W > H ? 720 : 1280, style: 'cinema' });
-        if (!img.remoteUrl) throw Object.assign(new Error('no url'), { userMessage: 'Il fotogramma è stato creato ma senza un indirizzo pubblico da animare.' });
-        if (img.blob) { const story = { w: W, h: H, music: st.mood, seed: 3, title: prompt.slice(0, 40), scenes: [{ dur: 6, title: '', text: 'none', camera: 'zoomIn', particles: 'dust', transition: 'fade', bg: { type: 'image', blob: img.blob } }] }; await B.prepareStory(story); setStory(story); }
-        setStatus('<div class="iris-spin sm"></div><span>2/2 · Wan 2.2 anima la scena (1–3 minuti)…</span>');
-        const v = await B.ai.realVideo({ prompt: en, imageUrl: img.remoteUrl, seconds: 4 });
-        setStatus('<span data-i="CheckCircle2"></span><span>Video realistico pronto.</span> <a class="btn sm gold" target="_blank" rel="noopener" href="' + B.esc(v.url) + '">Apri e scarica il video</a>');
       }
 
       async function exportVideo() {

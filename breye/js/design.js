@@ -82,7 +82,7 @@
         txt('Strategia creativa 2026', { top: h * 0.28, fontSize: px(land ? 120 : 110), fontFamily: 'Bricolage Grotesque', fontWeight: 800, fill: '#fffaf1', width: w * 0.8, lineHeight: 1 }),
         txt('Obiettivi, pubblico e piano editoriale', { top: h * (land ? 0.62 : 0.55), fontSize: px(38), fill: '#cfb89d' }),
         { type: 'rect', left: w * 0.08, top: h * 0.86, width: w * 0.84, height: px(2), fill: '#4f3523' },
-        txt('Breye Studio', { top: h * 0.88, fontSize: px(24), fill: '#957c64' })
+        txt('Thorion', { top: h * 0.88, fontSize: px(24), fill: '#957c64' })
       ] },
       { id: 'menu', name: 'Menù', bg: { type: 'solid', color: '#f6eee2' }, objs: [
         txt('Caffetteria Ambra', { top: h * 0.07, fontSize: px(80), fontFamily: 'Great Vibes', fill: '#7a3d16', textAlign: 'center' }),
@@ -442,7 +442,7 @@
           catch (e) { B.err(e); }
           go.disabled = false; go.innerHTML = ''; go.append(B.h('span', { 'data-i': 'Sparkles' }), 'Genera e inserisci'); B.hydrateIcons(go);
         } }, B.h('span', { 'data-i': 'Sparkles' }), 'Genera e inserisci');
-        ai.append(B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Sparkles' }), 'Immagine con Iris'), p, engSel, go);
+        ai.append(B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Sparkles' }), 'Immagine con Thorion'), p, engSel, go);
         dBody.append(ai);
         const list = await B.gallery.list();
         if (list.length) {
@@ -470,12 +470,12 @@
       }
       function fillPage(img) { const s = Math.max(st.w / img.width, st.h / img.height); img.set({ scaleX: s, scaleY: s, left: (st.w - img.width * s) / 2, top: (st.h - img.height * s) / 2 }); cv.sendToBack(img); img.setCoords(); cv.requestRenderAll(); snap(); }
       function pBrand() {
-        dBody.append(B.h('p', { class: 'mini-note', text: 'Applica una palette a tutto il design: Iris ricolora sfondo, testi e forme mantenendo il contrasto.' }));
+        dBody.append(B.h('p', { class: 'mini-note', text: 'Applica una palette a tutto il design: Thorion ricolora sfondo, testi e forme mantenendo il contrasto.' }));
         PALETTES.forEach(([n, cols]) => dBody.append(B.h('button', { class: 'pal', type: 'button', onclick: () => applyPalette(cols) }, B.h('span', { class: 'pal-n', text: n }), B.h('span', { class: 'pal-c' }, cols.map((c) => B.h('i', { style: { background: c } }))))));
         const gen = B.h('div', { class: 'ai-box' });
         const p = B.h('input', { class: 'input sm', id: 'dsPalP', placeholder: 'es. “bosco autunnale”, “caffè e panna”' });
         const go = B.h('button', { class: 'btn gold sm', type: 'button', onclick: async () => { if (!p.value.trim()) return; go.disabled = true; try { const r = await B.ai.json('Crea una palette di 6 colori HEX ordinati dal più scuro al più chiaro ispirata a: "' + p.value + '". Rispondi solo con JSON: {"name":"nome","colors":["#..."]}', { system: false, tier: 'quick' }); if (r && r.colors) { PALETTES.unshift([r.name || p.value, r.colors.slice(0, 6)]); openPanel('brand'); } } catch (e) { B.err(e); } go.disabled = false; } }, 'Crea');
-        gen.append(B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Sparkles' }), 'Palette con Iris'), B.h('div', { class: 'row' }, p, go));
+        gen.append(B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Sparkles' }), 'Palette con Thorion'), B.h('div', { class: 'row' }, p, go));
         dBody.append(gen);
       }
       function applyPalette(cols) {
@@ -516,7 +516,7 @@
         const p = B.h('textarea', { class: 'textarea', id: 'dsMagicP', placeholder: 'Descrivi il design: es. “post per l’apertura di una gelateria artigianale a Napoli, colori pastello, tono allegro”' });
         const imgs = B.h('label', { class: 'row', style: 'gap:8px;font-size:13px' }, B.h('span', { class: 'switch' }, B.h('input', { type: 'checkbox', id: 'dsMagicImg', checked: true }), B.h('span')), 'Genera anche le immagini');
         const go = B.h('button', { class: 'btn gold block', type: 'button', onclick: () => magicDesign(p.value.trim(), go) }, B.h('span', { 'data-i': 'Wand2' }), 'Magic Design');
-        box.append(B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Wand2' }), 'Magic Design'), B.h('p', { class: 'mini-note', text: 'Iris impagina testi, colori, forme e immagini per il formato ' + st.w + '×' + st.h + '. Ogni elemento resta modificabile.' }), p, imgs, go);
+        box.append(B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Wand2' }), 'Magic Design'), B.h('p', { class: 'mini-note', text: 'Thorion impagina testi, colori, forme e immagini per il formato ' + st.w + '×' + st.h + '. Ogni elemento resta modificabile.' }), p, imgs, go);
         dBody.append(box);
         // agent
         const ag = B.h('div', { class: 'ai-box' });
@@ -524,7 +524,7 @@
         const q = B.h('input', { class: 'input sm', id: 'dsAgentQ', placeholder: 'es. “rendi il titolo più grande e dorato”' });
         const send = B.h('button', { class: 'btn gold sm icon', type: 'button', 'aria-label': 'Invia', 'data-i': 'Send', onclick: () => agent(q, log, send) });
         q.addEventListener('keydown', (e) => { if (e.key === 'Enter') agent(q, log, send); });
-        ag.append(B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Bot' }), 'Assistente di design'), B.h('p', { class: 'mini-note', text: 'Chiedi modifiche a parole: Iris sposta, ricolora, riscrive e aggiunge elementi per te.' }), log, B.h('div', { class: 'row' }, q, send));
+        ag.append(B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Bot' }), 'Assistente di design'), B.h('p', { class: 'mini-note', text: 'Chiedi modifiche a parole: Thorion sposta, ricolora, riscrive e aggiunge elementi per te.' }), log, B.h('div', { class: 'row' }, q, send));
         ['Rendi il design più elegante', 'Traduci i testi in inglese', 'Aggiungi un bottone “Prenota ora”', 'Usa colori più caldi'].forEach((s) => log.append(B.h('button', { class: 'chip', type: 'button', onclick: () => { q.value = s; agent(q, log, send); } }, s)));
         dBody.append(ag);
         // magic write
@@ -550,7 +550,7 @@
       const LAYOUT_SPEC = 'Coordinate in pixel nella tela {W}×{H} (origine in alto a sinistra). Elementi ammessi:\n- {"type":"text","text":"...","x":n,"y":n,"w":n,"fontSize":n,"fontFamily":"uno tra: ' + FONTS.map((f) => f[0]).join(', ') + '","fontWeight":400|600|700|800,"italic":bool,"color":"#hex","align":"left|center|right","letterSpacing":n (0-600),"lineHeight":n,"uppercase":bool}\n- {"type":"rect","x":n,"y":n,"w":n,"h":n,"color":"#hex","radius":n,"opacity":0-1,"stroke":"#hex","strokeWidth":n}\n- {"type":"circle","x":n,"y":n,"r":n,"color":"#hex","opacity":0-1,"stroke":"#hex","strokeWidth":n}\n- {"type":"line","x":n,"y":n,"w":n,"color":"#hex","strokeWidth":n}\n- {"type":"image","x":n,"y":n,"w":n,"h":n,"prompt":"descrizione in inglese della foto","shape":"rect|circle|rounded"}\n- {"type":"icon","name":"una icona Lucide in PascalCase (es. Coffee, Heart, Star, MapPin, Phone, Calendar, Sparkles)","x":n,"y":n,"size":n,"color":"#hex"}';
       async function magicDesign(prompt, btn) {
         if (!prompt) return B.toast('Descrivi il design che vuoi');
-        btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Iris impagina…';
+        btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Thorion impagina…';
         try {
           const spec = LAYOUT_SPEC.replace('{W}', st.w).replace('{H}', st.h);
           const r = await B.ai.json('Sei un art director di livello mondiale. Progetta un design grafico per: "' + prompt + '".\nTela: ' + st.w + '×' + st.h + ' px.\nRispondi SOLO con JSON: {"background":{"type":"solid|linear|radial","colors":["#hex",...],"angle":gradi},"elements":[...]}\n' + spec + '\nRegole: i testi non devono MAI sovrapporsi tra loro (la y di ogni testo deve essere maggiore della y del testo precedente più fontSize × numero di righe × lineHeight più uno spazio); gerarchia tipografica forte (un titolo grande), margini di almeno il 7% della larghezza, tutti i testi scritti in ' + (/[àèéìòù]|\b(il|lo|la|per|con|una|di|che|del|della)\b/i.test(prompt) ? 'italiano' : 'nella lingua della richiesta') + ', contrasto leggibile, massimo 12 elementi, al massimo 2 immagini, composizione bilanciata e moderna. Ordina gli elementi dal fondo al primo piano.', { system: false, tier: 'complex' });
@@ -572,7 +572,7 @@
         return null;
       }
       async function renderLayout(r, withImages) {
-        if (!r || !Array.isArray(r.elements)) throw Object.assign(new Error('layout'), { userMessage: 'Iris non ha restituito un layout valido. Riprova.' });
+        if (!r || !Array.isArray(r.elements)) throw Object.assign(new Error('layout'), { userMessage: 'Thorion non ha restituito un layout valido. Riprova.' });
         cv.clear();
         const bg = r.background || {};
         const cols = (bg.colors || []).filter((c) => /^#[0-9a-f]{3,8}$/i.test(c));
@@ -587,10 +587,10 @@
         fitInside(); fixOverlaps(); clearTexts();
         cv.requestRenderAll(); snap();
         const eng = B.ai.photoEngine(true);
-        if (pending.length && !eng) B.toast('Le foto dei segnaposto arrivano dalla rete GPU comunitaria, disponibile nella versione web di Breye. Puoi sostituirle con le tue immagini.');
+        if (pending.length && !eng) B.toast('Le foto dei segnaposto arrivano dalla rete GPU comunitaria, disponibile nella versione web di Thorion. Puoi sostituirle con le tue immagini.');
         if (pending.length && eng) {
           let warned = false;
-          B.toast('Iris sta scattando ' + (pending.length === 1 ? 'la foto' : 'le ' + pending.length + ' foto') + ' del design sulla rete GPU comunitaria: compariranno da sole (1–3 minuti).');
+          B.toast('Thorion sta scattando ' + (pending.length === 1 ? 'la foto' : 'le ' + pending.length + ' foto') + ' del design sulla rete GPU comunitaria: compariranno da sole (1–3 minuti).');
           await Promise.all(pending.map(async (ph) => {
             try {
               const res = await B.ai.image(ph.bxPrompt, { engine: eng, w: ph.width || 1024, h: ph.height || 1024, style: 'photo' });
@@ -817,7 +817,7 @@
       }
       async function removeBg(o) {
         try {
-          B.toast('Iris scontorna l’immagine…');
+          B.toast('Thorion scontorna l’immagine…');
           const src = o.getElement(); const c = document.createElement('canvas'); c.width = src.naturalWidth || src.width; c.height = src.naturalHeight || src.height; c.getContext('2d').drawImage(src, 0, 0);
           const out = await B.removeBackground(c);
           const url = out.toDataURL('image/png');

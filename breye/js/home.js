@@ -21,7 +21,7 @@
   ];
 
   const TOOLS = [
-    { v: 'chat', t: 'Iris Chat', d: 'Domande, testi, traduzioni, analisi di immagini e file.', like: 'ChatGPT', ic: 'MessagesSquare', c: 'linear-gradient(140deg,#c98a2e,#7a3d16)' },
+    { v: 'chat', t: 'Thorion Chat', d: 'Domande, testi, traduzioni, analisi di immagini e file.', like: 'ChatGPT', ic: 'MessagesSquare', c: 'linear-gradient(140deg,#c98a2e,#7a3d16)' },
     { v: 'imagine', t: 'Immagini AI', d: 'Foto realistiche, illustrazioni vettoriali e scene 3D da una frase.', like: 'Firefly, Midjourney', ic: 'ImagePlus', c: 'linear-gradient(140deg,#f3d088,#c98a2e)' },
     { v: 'motion', t: 'Video AI', d: 'Video da testo: scene cinematiche, foto animate, spot con musica.', like: 'Sora, Runway', ic: 'Film', c: 'linear-gradient(140deg,#a8642a,#3b2314)' },
     { v: 'design', t: 'Design Studio', d: 'Post, poster, loghi e presentazioni con modelli e Magic Design.', like: 'Canva, Express', ic: 'LayoutTemplate', c: 'linear-gradient(140deg,#e3a94a,#a8642a)' },
@@ -63,9 +63,9 @@
       const go = B.h('button', { class: 'btn gold', type: 'button', onclick: submit }, B.h('span', { 'data-i': 'Sparkles' }), 'Crea');
       modeRow.append(go);
       copy.append(
-        B.h('span', { class: 'eyebrow', text: 'Breye Studio · Iris AI' }),
+        B.h('span', { class: 'eyebrow', text: 'Thorion · Thorion AI' }),
         B.h('h1', { html: 'Guarda. Immagina.<br><span class="serif">Crea.</span>' }),
-        B.h('p', { text: 'Design, foto, video, immagini, codice e documenti in un solo studio, guidato da Iris: l’intelligenza artificiale che vede quello che immagini.' }),
+        B.h('p', { text: 'Design, foto, video, immagini, codice e documenti in un solo studio, guidato da Thorion: l’intelligenza artificiale che vede quello che immagini.' }),
         B.h('div', { class: 'prompt-box' }, ta, modeRow)
       );
       const eyeHost = B.h('div', { class: 'hero-eye' });
@@ -124,13 +124,13 @@
 
       /* engines */
       const eng = B.h('div', { class: 'stat-strip' });
-      inner.append(B.h('div', { class: 'section-title' }, B.h('h2', { text: 'Motori di Iris' }), B.h('a', { href: '#settings', onclick: (e) => { e.preventDefault(); B.go('settings'); }, text: 'Dettagli' })), eng);
+      inner.append(B.h('div', { class: 'section-title' }, B.h('h2', { text: 'Motori di Thorion' }), B.h('a', { href: '#settings', onclick: (e) => { e.preventDefault(); B.go('settings'); }, text: 'Dettagli' })), eng);
       function renderEng() {
         const e = B.ai.engines;
         const items = [
           ['Brain', 'Testo, codice e visione', e.claude ? 'Attivo con Claude: nessuna chiave, nessun costo extra.' : e.web ? 'Skyfall 31B e altri modelli aperti sulla rete GPU comunitaria: senza chiave, illimitato.' : 'In attesa di connessione…', e.claude || e.web],
-          ['Camera', 'Foto ultra realistiche', e.horde ? 'Rete GPU comunitaria AI Horde + finitura locale: illimitata, senza chiave.' : 'Disponibili nella versione web di Breye (rete GPU comunitaria, illimitata).', e.horde],
-          ['PenTool', 'Vettoriale e 3D procedurale', 'Disegni SVG e scene GPU scritte da Iris: illimitati.', e.claude || e.web],
+          ['Camera', 'Foto ultra realistiche', e.horde ? 'Rete GPU comunitaria AI Horde + finitura locale: illimitata, senza chiave.' : 'Disponibili nella versione web di Thorion (rete GPU comunitaria, illimitata).', e.horde],
+          ['PenTool', 'Vettoriale e 3D procedurale', 'Disegni SVG e scene GPU scritte da Thorion: illimitati.', e.claude || e.web],
           ['Cpu', 'Strumenti locali', 'Ritocco, montaggio, export, PDF e musica girano nel tuo browser.', true]
         ];
         eng.innerHTML = '';

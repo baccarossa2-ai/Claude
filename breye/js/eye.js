@@ -1,4 +1,4 @@
-/* The Breye eye: follows the pointer, blinks, dilates while Iris thinks. */
+/* The Thorion eye: follows the pointer, blinks, dilates while Thorion thinks. */
 (function () {
   'use strict';
   const B = window.B;

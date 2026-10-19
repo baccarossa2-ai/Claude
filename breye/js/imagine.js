@@ -46,11 +46,11 @@
       const goBtn = B.h('button', { class: 'btn gold lg block', type: 'button', onclick: generate }, B.h('span', { 'data-i': 'Sparkles' }), 'Genera');
       const stopBtn = B.h('button', { class: 'btn lg block', type: 'button', hidden: true, onclick: () => st.ctl && st.ctl.abort() }, B.h('span', { 'data-i': 'StopCircle' }), 'Ferma');
       const lookWrap = B.h('div', { class: 'chips' });
-      [['auto', 'Scelto da Iris']].concat(Object.entries(B.realism.LOOKS).map(([k, l]) => [k, l.label])).forEach(([k, l]) => lookWrap.append(B.h('button', { class: 'chip' + (k === st.look ? ' on' : ''), type: 'button', 'data-l': k, onclick: () => { st.look = k; B.$$('[data-l]', lookWrap).forEach((c) => c.classList.toggle('on', c.dataset.l === k)); } }, l)));
+      [['auto', 'Scelto da Thorion']].concat(Object.entries(B.realism.LOOKS).map(([k, l]) => [k, l.label])).forEach(([k, l]) => lookWrap.append(B.h('button', { class: 'chip' + (k === st.look ? ' on' : ''), type: 'button', 'data-l': k, onclick: () => { st.look = k; B.$$('[data-l]', lookWrap).forEach((c) => c.classList.toggle('on', c.dataset.l === k)); } }, l)));
       const lookField = B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Look pellicola (finitura locale)' }), lookWrap);
       const engNote = B.h('div', { class: 'mini-note' });
       left.append(
-        B.h('div', { class: 'gen-head' }, B.h('span', { class: 'eyebrow', text: 'Iris Vision' }), B.h('h1', { text: 'Immagini AI' })),
+        B.h('div', { class: 'gen-head' }, B.h('span', { class: 'eyebrow', text: 'Thorion Vision' }), B.h('h1', { text: 'Immagini AI' })),
         B.h('div', { class: 'field' }, B.h('label', { for: 'imgPrompt', text: 'Prompt' }), ta, B.h('div', { class: 'row' }, enh, ideaBtn)),
         B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Motore' }), engWrap, engNote),
         lookField,
@@ -71,8 +71,8 @@
         const iris = /^iris/.test(st.engine);
         lookField.hidden = !iris;
         engNote.innerHTML = '';
-        if (iris) engNote.append(B.h('span', { text: st.engine === 'iris' ? 'Iris scrive lo scatto, lo fa sviluppare dalla rete GPU comunitaria (gratuita e illimitata), rifinisce il dettaglio a tasselli e applica la finitura pellicola nel browser. Di solito 3–6 minuti: puoi continuare a lavorare, l’immagine arriva in galleria.' : 'Uno scatto realistico dalla rete GPU comunitaria con ingrandimento e finitura locali. Di solito 1–3 minuti.' }));
-        else if (!B.ai.engines.horde && B.ai.textEngine()) engNote.append(B.h('span', { text: 'Le foto ultra realistiche illimitate sono nella versione web di Breye. ' }), B.h('a', { href: B.PUBLIC_URL + '#imagine', target: '_blank', rel: 'noopener', onclick: (ev) => { ev.currentTarget.href = B.PUBLIC_URL + (ta.value.trim() ? '?p=' + encodeURIComponent(ta.value.trim()) : '') + '#imagine'; }, text: 'Apri Breye sul web →' }));
+        if (iris) engNote.append(B.h('span', { text: st.engine === 'iris' ? 'Thorion scrive lo scatto, lo fa sviluppare dalla rete GPU comunitaria (gratuita e illimitata), rifinisce il dettaglio a tasselli e applica la finitura pellicola nel browser. Di solito 3–6 minuti: puoi continuare a lavorare, l’immagine arriva in galleria.' : 'Uno scatto realistico dalla rete GPU comunitaria con ingrandimento e finitura locali. Di solito 1–3 minuti.' }));
+        else if (!B.ai.engines.horde && B.ai.textEngine()) engNote.append(B.h('span', { text: 'Le foto ultra realistiche illimitate sono nella versione web di Thorion. ' }), B.h('a', { href: B.PUBLIC_URL + '#imagine', target: '_blank', rel: 'noopener', onclick: (ev) => { ev.currentTarget.href = B.PUBLIC_URL + (ta.value.trim() ? '?p=' + encodeURIComponent(ta.value.trim()) : '') + '#imagine'; }, text: 'Apri Thorion sul web →' }));
         engNote.hidden = !engNote.childNodes.length;
         B.hydrateIcons(engWrap);
       }
@@ -126,7 +126,7 @@
         const grid = B.h('div', { class: 'batch-grid n' + n });
         batch.append(grid);
         const slots = [];
-        for (let i = 0; i < n; i++) { const s = B.h('div', { class: 'slot', style: { aspectRatio: W + '/' + H } }, B.h('div', { class: 'slot-load' }, B.h('div', { class: 'iris-spin' }), B.h('span', { text: n > 1 ? 'Variante ' + (i + 1) : 'Iris sta creando…' }))); slots.push(s); grid.append(s); }
+        for (let i = 0; i < n; i++) { const s = B.h('div', { class: 'slot', style: { aspectRatio: W + '/' + H } }, B.h('div', { class: 'slot-load' }, B.h('div', { class: 'iris-spin' }), B.h('span', { text: n > 1 ? 'Variante ' + (i + 1) : 'Thorion sta creando…' }))); slots.push(s); grid.append(s); }
         const fail = (i, e) => { slots[i].innerHTML = ''; slots[i].append(B.h('div', { class: 'slot-err' }, B.h('span', { 'data-i': e.code === 'cancelled' ? 'StopCircle' : 'AlertTriangle' }), B.h('span', { text: e.code === 'cancelled' ? 'Interrotto' : B.ai.errorText(e) }))); B.hydrateIcons(slots[i]); };
         const done = async (i, res) => {
           const item = await B.gallery.add({ blob: res.blob, prompt, engine: res.engine, kind: res.kind, svg: res.svg, code: res.code, remoteUrl: res.remoteUrl, w: res.w || W, h: res.h || H, style: st.style, model: res.model, finalPrompt: res.finalPrompt });
@@ -137,7 +137,7 @@
           // one plan for every variant, then the variants develop in parallel on the network
           let plan = null;
           try {
-            stepsIn(slots[0], [{ label: 'Iris scrive lo scatto (luce, obiettivo, pellicola)', status: 'run' }]);
+            stepsIn(slots[0], [{ label: 'Thorion scrive lo scatto (luce, obiettivo, pellicola)', status: 'run' }]);
             plan = await B.craftPrompt(prompt, st.style, st.ctl.signal);
             if (neg.value.trim()) plan.negative += ', ' + neg.value.trim();
             planNote.hidden = false; planNote.innerHTML = ''; planNote.append(B.h('span', { 'data-i': 'Clapperboard' }), B.h('span', { text: plan.prompt })); B.hydrateIcons(planNote);
@@ -186,7 +186,7 @@
           iconBtn('Film', 'Anima in video', () => B.go('motion', { galleryId: item.id, prompt: item.prompt })),
           iconBtn('RefreshCw', 'Altre varianti', () => { ta.value = item.prompt; generate(); }),
           iconBtn('Trash2', 'Elimina', async () => { await B.gallery.remove(item.id); card.remove(); }));
-        card.append(media, B.h('figcaption', null, B.h('span', { class: 'res-p', text: item.prompt }), B.h('span', { class: 'badge', text: { iris: 'Iris Pro', 'iris-fast': 'Iris Foto', web: 'Lampo', vector: 'SVG', shader: 'GPU', finish: 'Pellicola', refine: 'Rifinita', upscale: '2×' }[item.engine] || item.engine })), acts);
+        card.append(media, B.h('figcaption', null, B.h('span', { class: 'res-p', text: item.prompt }), B.h('span', { class: 'badge', text: { iris: 'Thorion Pro', 'iris-fast': 'Thorion Foto', web: 'Lampo', vector: 'SVG', shader: 'GPU', finish: 'Pellicola', refine: 'Rifinita', upscale: '2×' }[item.engine] || item.engine })), acts);
         B.hydrateIcons(card);
         return card;
       }

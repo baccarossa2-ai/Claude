@@ -1,31 +1,25 @@
-/* Boot sequence */
+/* Boot sequence — Thorion opens straight into the chat (the whole app is the chat) */
 (function () {
   'use strict';
   const B = window.B;
   function start() {
+    document.body.classList.add('solo'); // chat-only shell: the studio nav is hidden
     const saved = B.ls.get('theme', null);
     if (saved) B.theme.set(saved);
     B.hydrateIcons(document);
-    B.eye(B.$('#brandEye'), { range: 0.1, lid: 'var(--bg-elev)' });
-    B.$('#themeBtn').addEventListener('click', () => B.theme.toggle());
-    B.$('#cmdBtn').addEventListener('click', () => B.openCmdk());
-    B.$('#aiPill').addEventListener('click', () => B.go('settings'));
-    B.$('#side').addEventListener('click', (e) => { if (innerWidth > 760 && e.target.closest('.brand')) { e.preventDefault(); B.go('home'); } });
-    const ic = B.$('#themeBtn [data-i]'); if (ic) { ic.dataset.i = B.theme.get() === 'light' ? 'Sun' : 'Moon'; B.hydrateIcons(B.$('#themeBtn')); }
+    B.$('#themeBtn') && B.$('#themeBtn').addEventListener('click', () => B.theme.toggle());
 
+    // land on the chat; a ?p= deep link asks Thorion for that photo
+    let ask = null;
+    try { const qp = new URLSearchParams(location.search).get('p'); if (qp) { ask = 'Crea una foto ultra realistica: ' + qp.slice(0, 1500); history.replaceState(null, '', location.pathname); } } catch (e) { /* ignore */ }
+    if (location.hash.slice(1) !== 'chat') history.replaceState(null, '', '#chat');
     B.start();
-    try { const qp = new URLSearchParams(location.search).get('p'); if (qp) { history.replaceState(null, '', location.pathname + '#imagine'); B.go('imagine', { prompt: qp.slice(0, 2000) }); } } catch (e) { /* ignore */ }
-    B.ai.init().then((e) => {
-      const pill = B.$('#aiPill');
-      const any = e.claude || e.web;
-      pill.classList.toggle('ready', !!any && !!e.horde);
-      pill.classList.toggle('partial', !!any && !e.horde);
-      pill.querySelector('.ai-pill-tx').textContent = any ? (e.claude ? 'Iris · Claude' : 'Iris · Web') : 'Iris offline';
-      pill.dataset.tip = B.ai.engineLabel();
-    });
+    if (B.current() !== 'chat') B.go('chat', ask ? { ask } : null); else if (ask) B.go('chat', { ask });
+
+    B.ai.init();
     setTimeout(() => B.$('#boot').classList.add('gone'), 900);
     setTimeout(() => B.$('#boot').remove(), 1700);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  window.addEventListener('error', (e) => { if (e && e.message && !/ResizeObserver/.test(e.message)) console.warn('Breye:', e.message); });
+  window.addEventListener('error', (e) => { if (e && e.message && !/ResizeObserver/.test(e.message)) console.warn('Thorion:', e.message); });
 })();

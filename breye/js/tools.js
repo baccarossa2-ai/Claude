@@ -8,7 +8,7 @@
     ['bg', 'Rimuovi sfondo', 'Scissors', 'Scontorna soggetti e prodotti in un clic, con PNG trasparente.'],
     ['convert', 'Converti e comprimi', 'ImageDown', 'PNG, JPG e WebP, ridimensiona e alleggerisci anche in blocco.'],
     ['palette', 'Palette da foto', 'Palette', 'Estrai i colori dominanti di un’immagine con codici HEX.'],
-    ['aipalette', 'Palette AI', 'Sparkles', 'Descrivi un’atmosfera: Iris crea la palette perfetta.'],
+    ['aipalette', 'Palette AI', 'Sparkles', 'Descrivi un’atmosfera: Thorion crea la palette perfetta.'],
     ['qr', 'Codice QR', 'QrCode', 'QR per link, Wi-Fi e contatti, con i colori del tuo brand.'],
     ['gradient', 'Gradienti', 'Blend', 'Crea sfondi sfumati e copia il CSS pronto.'],
     ['music', 'Musica AI', 'Music', 'Componi colonne sonore originali senza copyright.'],
@@ -150,11 +150,11 @@
         if (type.value === 'mail') v = 'mailto:' + a.value;
         const q = new window.QRious({ value: v || ' ', size: 600, level: 'H', foreground: fg.value, background: bg.value, padding: 30 });
         const x = cv.getContext('2d'); x.clearRect(0, 0, 600, 600); x.drawImage(q.canvas || q.image, 0, 0, 600, 600);
-        if (logo.checked) { const im = await B.loadImage('assets/breye-logo-256.webp').catch(() => null); if (im) { x.fillStyle = bg.value; x.beginPath(); x.arc(300, 300, 70, 0, 7); x.fill(); x.drawImage(im, 240, 240, 120, 120); } }
+        if (logo.checked) { const im = await B.loadImage('assets/thorion-logo-256.webp').catch(() => null); if (im) { x.fillStyle = bg.value; x.beginPath(); x.arc(300, 300, 70, 0, 7); x.fill(); x.drawImage(im, 240, 240, 120, 120); } }
       } catch (e) { B.err(e); }
     }, 120);
     [type, a, b2, fg, bg, logo].forEach((i) => i.addEventListener('input', () => { b2.hidden = !['wifi', 'vcard'].includes(type.value); a.placeholder = type.value === 'wifi' ? 'Nome rete' : type.value === 'vcard' ? 'Nome e cognome' : type.value === 'mail' ? 'indirizzo@email.it' : 'https://'; draw(); }));
-    body.append(B.h('div', { class: 'tl-box' }, type, a, b2, B.h('div', { class: 'row' }, fg, B.h('span', { class: 'mini-note', text: 'Colore' }), bg, B.h('span', { class: 'mini-note', text: 'Sfondo' })), B.h('label', { class: 'row', style: 'gap:8px;font-size:13px' }, B.h('span', { class: 'switch' }, logo, B.h('span')), 'Occhio Breye al centro'),
+    body.append(B.h('div', { class: 'tl-box' }, type, a, b2, B.h('div', { class: 'row' }, fg, B.h('span', { class: 'mini-note', text: 'Colore' }), bg, B.h('span', { class: 'mini-note', text: 'Sfondo' })), B.h('label', { class: 'row', style: 'gap:8px;font-size:13px' }, B.h('span', { class: 'switch' }, logo, B.h('span')), 'Occhio Thorion al centro'),
       B.h('button', { class: 'btn gold', type: 'button', onclick: async () => B.save(await B.canvasToBlob(cv), 'qr-breye.png') }, B.h('span', { 'data-i': 'Download' }), 'Scarica PNG')), cv);
     B.modal({ title: 'Codice QR', icon: 'QrCode', body, wide: true }); B.hydrateIcons(body); draw();
   }
@@ -186,7 +186,7 @@
     let blob = null;
     const acts = B.h('div', { class: 'chips', hidden: true }, B.h('button', { class: 'btn', type: 'button', onclick: () => B.save(blob, 'musica-breye-' + cur + '.wav') }, B.h('span', { 'data-i': 'Download' }), 'Scarica WAV'), B.h('button', { class: 'btn', type: 'button', onclick: () => { m.close(); B.go('video', { importBlob: blob, name: 'Musica ' + cur + '.wav' }); } }, B.h('span', { 'data-i': 'Clapperboard' }), 'Usa nel Video Editor'));
     const go = B.h('button', { class: 'btn gold', type: 'button', onclick: async () => { go.disabled = true; go.textContent = 'Compongo…'; try { const buf = await B.music.render({ mood: cur, duration: +dur.input.value, seed: Math.floor(Math.random() * 9999) }); blob = B.music.toWav(buf); player.src = URL.createObjectURL(blob); player.hidden = false; acts.hidden = false; player.play().catch(() => {}); } catch (e) { B.err(e); } go.disabled = false; go.textContent = 'Componi di nuovo'; } }, 'Componi');
-    body.append(B.h('p', { class: 'mini-note', text: 'Ogni brano è unico, generato al momento dal sintetizzatore di Breye: puoi usarlo liberamente nei tuoi video.' }), mood, dur, go, player, acts);
+    body.append(B.h('p', { class: 'mini-note', text: 'Ogni brano è unico, generato al momento dal sintetizzatore di Thorion: puoi usarlo liberamente nei tuoi video.' }), mood, dur, go, player, acts);
     const m = B.modal({ title: 'Musica AI', icon: 'Music', body, wide: true }); B.hydrateIcons(body);
   }
 
@@ -194,7 +194,7 @@
   function tOcr() {
     const body = B.h('div', { class: 'tl-box' }); const out = B.h('textarea', { class: 'textarea', rows: 10, id: 'tlOcrOut', placeholder: 'Il testo estratto comparirà qui', hidden: true });
     // Claude reads the pixels; elsewhere Tesseract runs locally in the browser (Italian + English), free and unlimited
-    const note = B.h('p', { class: 'mini-note', text: B.ai.canRead() ? 'Iris legge il testo dall’immagine mantenendo paragrafi ed elenchi.' : 'Lettura locale con Tesseract (italiano e inglese): gratuita, illimitata, la foto non lascia il tuo dispositivo. Al primo uso scarica circa 6 MB.' });
+    const note = B.h('p', { class: 'mini-note', text: B.ai.canRead() ? 'Thorion legge il testo dall’immagine mantenendo paragrafi ed elenchi.' : 'Lettura locale con Tesseract (italiano e inglese): gratuita, illimitata, la foto non lascia il tuo dispositivo. Al primo uso scarica circa 6 MB.' });
     body.append(note, zone('Scegli una foto, uno screenshot o una scansione', 'image/*', false, async (fs) => {
       out.hidden = false; out.value = 'Lettura in corso…';
       try {
@@ -248,7 +248,7 @@
   function tVoice() {
     const body = B.h('div', { class: 'tl-box' });
     if (!('speechSynthesis' in window)) { body.append(B.h('p', { text: 'Il tuo browser non offre la sintesi vocale.' })); B.modal({ title: 'Lettura vocale', body }); return; }
-    const ta = B.h('textarea', { class: 'textarea', id: 'tlVoiceT', rows: 5 }); ta.value = 'Ciao! Sono Iris, l’intelligenza artificiale di Breye. Posso leggere ad alta voce i tuoi testi.';
+    const ta = B.h('textarea', { class: 'textarea', id: 'tlVoiceT', rows: 5 }); ta.value = 'Ciao! Sono Thorion, l’intelligenza artificiale di Thorion. Posso leggere ad alta voce i tuoi testi.';
     const vs = B.h('select', { class: 'select sm', 'aria-label': 'Voce' });
     const fill = () => { vs.innerHTML = ''; speechSynthesis.getVoices().sort((a, b) => (b.lang.startsWith('it') ? 1 : 0) - (a.lang.startsWith('it') ? 1 : 0)).forEach((v) => vs.append(B.h('option', { value: v.name }, v.name + ' · ' + v.lang))); };
     fill(); speechSynthesis.onvoiceschanged = fill;

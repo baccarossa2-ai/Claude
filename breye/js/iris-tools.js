@@ -1,4 +1,4 @@
-/* Iris tools — unlimited photoreal generation on the AI Horde community GPU network (free, no account),
+/* Thorion tools — unlimited photoreal generation on the AI Horde community GPU network (free, no account),
    local realism finishing, tiled detail refinement and a tool-using agent.
    Low GPU by design: the network renders small images (≤ 576×576, the free tier's cheapest size) and the
    browser does the rest — upscaling, film finishing and blending the detail tiles. */
@@ -260,12 +260,12 @@
     return base;
   };
 
-  /* ================= Iris Pro pipeline ================= */
+  /* ================= Thorion Pro pipeline ================= */
   B.irisPro = async function (o) {
     const step = (id, label, status, extra) => o.onStep && o.onStep(Object.assign({ id, label, status }, extra || {}));
     let plan;
     if (o.rawPrompt) plan = { prompt: o.prompt, negative: o.negative || 'blurry, deformed, watermark, text', look: o.look || 'natural', kind: KIND_OF_STYLE[o.style] || 'photo' };
-    else { step('plan', 'Iris scrive lo scatto (luce, obiettivo, pellicola)', 'run'); plan = await B.craftPrompt(o.prompt, o.style, o.signal); step('plan', 'Scatto pianificato', 'done', { detail: plan.prompt }); }
+    else { step('plan', 'Thorion scrive lo scatto (luce, obiettivo, pellicola)', 'run'); plan = await B.craftPrompt(o.prompt, o.style, o.signal); step('plan', 'Scatto pianificato', 'done', { detail: plan.prompt }); }
     if (o.negative && !o.rawPrompt) plan.negative += ', ' + o.negative;
     const look = o.look || plan.look;
     if (o.signal && o.signal.aborted) throw Object.assign(new Error('Interrotto'), { code: 'cancelled' });
@@ -347,9 +347,10 @@
         const ids = (a.image_ids || []).filter((id) => store.has(String(id))).slice(0, 6); if (!ids.length) throw new Error('nessuna immagine valida');
         step('Monto il video', 'run');
         const [aw, ah] = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] }[a.aspect || '9:16'];
-        const per = B.clamp((+a.seconds || 4 * ids.length) / ids.length, 2.5, 10);
+        const total = B.clamp(+a.seconds || Math.max(6, 4 * ids.length), 3, 120); // seconds from the prompt; default well above 0
+        const per = B.clamp(total / ids.length, 2.5, 20);
         const cams = ['zoomIn', 'panRight', 'orbit', 'zoomOut', 'panLeft'], trans = ['iris', 'fade', 'blink', 'zoom'];
-        const story = { w: aw, h: ah, music: a.music || 'cinematic', seed: 9, title: a.title || 'Breye', lightLeak: true, scenes: ids.map((id, i) => ({ dur: per, title: i === 0 ? (a.title || '') : '', subtitle: '', text: 'cinematic', camera: a.camera || cams[i % cams.length], particles: a.particles || 'dust', transition: trans[i % trans.length], bg: { type: 'image', blob: get(id).blob } })) };
+        const story = { w: aw, h: ah, music: a.music || 'cinematic', seed: 9, title: a.title || 'Thorion', lightLeak: true, scenes: ids.map((id, i) => ({ dur: per, title: i === 0 ? (a.title || '') : '', subtitle: '', text: 'cinematic', camera: a.camera || cams[i % cams.length], particles: a.particles || 'dust', transition: trans[i % trans.length], bg: { type: 'image', blob: get(id).blob } })) };
         await B.prepareStory(story);
         const audio = story.music !== 'none' ? await B.music.render({ mood: story.music, duration: B.storyDuration(story), seed: 9 }) : null;
         const res = await B.exportVideo({ w: aw, h: ah, fps: 30, duration: B.storyDuration(story), audio, signal: c && c.signal, draw: (cx, t) => B.renderStory(cx, story, t, false) });
@@ -358,11 +359,118 @@
         step('Video pronto', 'done');
         return { video_id: vid, seconds: B.storyDuration(story), format: res.ext };
       } });
+    tools.push({ name: 'make_3d', description: 'Costruisce una scena 3D reale, interattiva ed esplorabile (Three.js/WebGL) con luci, ombre e materiali PBR. Usa come texture le foto già create (passa i loro image_id) per un look ultra realistico. Modalità "fps" per un piccolo gioco esplorabile con WASD e mouse, "orbit" per ruotare un oggetto/scena. Restituisce scene_id.', schema: { type: 'object', properties: {
+        mode: { type: 'string', enum: ['orbit', 'fps'], description: 'orbit = ruoti attorno; fps = cammini dentro la scena (gioco)' },
+        sky: { type: 'string', enum: ['day', 'sunset', 'night', 'studio', 'space'] },
+        ground: { type: 'object', description: 'pavimento: color (#hex) o texture (image_id di una foto, es. di pietra/erba/legno)', properties: { color: { type: 'string' }, texture: { type: 'string' }, tiles: { type: 'number' }, size: { type: 'number' } } },
+        fog: { type: 'boolean' },
+        objects: { type: 'array', description: 'da 1 a 24 oggetti', items: { type: 'object', properties: { shape: { type: 'string', enum: ['box', 'sphere', 'cylinder', 'cone', 'torus', 'plane'] }, pos: { type: 'array', items: { type: 'number' }, description: '[x,y,z]' }, size: { type: 'array', items: { type: 'number' }, description: 'dimensioni o [raggio]' }, color: { type: 'string' }, texture: { type: 'string', description: 'image_id di una foto da usare come texture' }, metal: { type: 'number' }, rough: { type: 'number' }, spin: { type: 'number', description: 'rotazione automatica, 0 = ferma' } }, required: ['shape', 'pos'] } },
+        title: { type: 'string' }
+      }, required: ['objects'] },
+      execute: async (a, c) => {
+        step('Costruisco la scena 3D', 'run'); await B.sleep(10);
+        const assets = {}; const want = new Set();
+        (a.objects || []).forEach((o) => o && o.texture && want.add(String(o.texture)));
+        if (a.ground && a.ground.texture) want.add(String(a.ground.texture));
+        for (const id of want) { const it = store.get(id); if (it) { try { assets[id] = texData(it.canvas); } catch (e) { /* skip */ } } }
+        const html = B.scene3d(a, assets);
+        const vid = 'scene' + ((ctx.scenes = (ctx.scenes || 0) + 1));
+        if (ctx.onScene) await ctx.onScene(vid, new Blob([html], { type: 'text/html' }), a.title || 'Scena 3D');
+        step('Scena 3D pronta', 'done');
+        return { scene_id: vid, mode: a.mode || 'orbit', objects: (a.objects || []).length };
+      } });
     return tools;
   };
+  // downscale a texture canvas and return a data URL small enough to inline in the scene HTML
+  function texData(canvas) {
+    const L = Math.max(canvas.width, canvas.height), f = Math.min(1, 512 / L);
+    const c = mk(Math.round(canvas.width * f), Math.round(canvas.height * f));
+    c.getContext('2d').drawImage(canvas, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.82);
+  }
 
-  B.agentSystem = 'Sei Iris, l’intelligenza artificiale di Breye Studio: direttrice creativa, fotografa e montatrice. Hai strumenti reali che producono immagini e video. ' +
-    'Per una foto ultra realistica a basso consumo di GPU segui questa sequenza: 1) generate_photo con un prompt fotografico in inglese molto dettagliato (inizia con "RAW photo", poi soggetto, azione, ambiente, luce, obiettivo e diaframma, pellicola, texture della pelle o dei materiali); 2) refine_detail sull’image_id ottenuto; 3) finish_photo con il look più adatto. ' +
-    'Per grafiche, loghi o icone usa create_vector. Per modifiche usa edit_photo. Per animare usa make_video con gli image_id. Non generare più di 3 foto per richiesta salvo esplicita domanda. ' +
-    'Le immagini e i video creati vengono mostrati automaticamente all’utente: alla fine rispondi in italiano con 1-3 frasi su cosa hai creato e come migliorarlo, senza elencare gli id. Per domande normali rispondi senza usare strumenti.';
+  /* ================= real 3D scenes (Three.js) ================= */
+  B.scene3d = function (spec, assets) {
+    const data = JSON.stringify({ spec: spec || {}, assets: assets || {} }).replace(/</g, '\\u003c');
+    return '<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+      + '<title>' + String(spec && spec.title || 'Scena 3D Thorion').replace(/[<>&]/g, '') + '</title>'
+      + '<style>html,body{margin:0;height:100%;overflow:hidden;background:#05070b;font-family:system-ui,sans-serif}#c{display:block;width:100%;height:100%}'
+      + '#hint{position:fixed;left:14px;bottom:14px;color:#ffffffcc;font-size:13px;background:#0008;padding:7px 11px;border-radius:10px;pointer-events:none;backdrop-filter:blur(6px)}'
+      + '#play{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05070bcc;color:#fff;cursor:pointer;font-size:18px;font-weight:600;letter-spacing:.3px}</style></head>'
+      + '<body><canvas id="c"></canvas><div id="hint"></div>'
+      + '<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</' + 'script>'
+      + '<script type="module">' + SCENE_JS + '\nboot(' + data + ');</' + 'script></body></html>';
+  };
+  const SCENE_JS = `
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+function boot(D){
+  const spec=D.spec||{}, A=D.assets||{};
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05; renderer.outputColorSpace=THREE.SRGBColorSpace;
+  const scene=new THREE.Scene();
+  const SKY={day:['#bfe3ff','#7fb2e6','#f6f2e8'],sunset:['#2a1830','#ff9a52','#ffd9a0'],night:['#05070f','#0b1026','#1b2550'],studio:['#1a1a1e','#2a2a30','#3a3a42'],space:['#02030a','#05030f','#0a0820']}[spec.sky||'day'];
+  scene.background=new THREE.Color(SKY[1]);
+  if(spec.fog) scene.fog=new THREE.Fog(new THREE.Color(SKY[1]), 14, 90);
+  const hemi=new THREE.HemisphereLight(new THREE.Color(SKY[0]), new THREE.Color('#2a2016'), 1.05); scene.add(hemi);
+  const sun=new THREE.DirectionalLight(new THREE.Color(SKY[2]), spec.sky==='night'?1.1:2.2);
+  sun.position.set(18,26,12); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+  const sc=sun.shadow.camera; sc.near=1; sc.far=140; sc.left=sc.bottom=-40; sc.right=sc.top=40; scene.add(sun);
+  scene.add(new THREE.AmbientLight(0xffffff,0.18));
+  const L=new THREE.TextureLoader(); const T={};
+  for(const k in A){ try{const t=L.load(A[k]); t.colorSpace=THREE.SRGBColorSpace; t.wrapS=t.wrapT=THREE.RepeatWrapping; T[k]=t;}catch(e){} }
+  // ground
+  const g=spec.ground||{}; const gsize=Math.max(10, +g.size||60);
+  const gmat=new THREE.MeshStandardMaterial({color:new THREE.Color(g.color||'#6b6b72'), roughness:0.95, metalness:0.0});
+  if(g.texture&&T[g.texture]){ const tt=T[g.texture].clone(); tt.needsUpdate=true; tt.repeat.set(+g.tiles||8,+g.tiles||8); gmat.map=tt; gmat.color.set('#ffffff'); }
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(gsize,gsize), gmat); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+  // objects
+  const spinners=[];
+  (spec.objects||[]).slice(0,24).forEach((o)=>{ if(!o) return; let geo; const s=o.size||[];
+    if(o.shape==='sphere') geo=new THREE.SphereGeometry(s[0]||1,48,32);
+    else if(o.shape==='cylinder') geo=new THREE.CylinderGeometry(s[0]||1,s[1]||s[0]||1,s[2]||2,40);
+    else if(o.shape==='cone') geo=new THREE.ConeGeometry(s[0]||1,s[1]||2,40);
+    else if(o.shape==='torus') geo=new THREE.TorusGeometry(s[0]||1,s[1]||0.35,24,80);
+    else if(o.shape==='plane') geo=new THREE.PlaneGeometry(s[0]||2,s[1]||2);
+    else geo=new THREE.BoxGeometry(s[0]||1,s[1]||1,s[2]||1);
+    const m=new THREE.MeshStandardMaterial({color:new THREE.Color(o.color||'#d9a05a'), metalness:o.metal==null?0.1:+o.metal, roughness:o.rough==null?0.7:+o.rough});
+    if(o.texture&&T[o.texture]){ m.map=T[o.texture]; m.color.set('#ffffff'); }
+    const mesh=new THREE.Mesh(geo,m); const p=o.pos||[0,1,0]; mesh.position.set(p[0]||0,p[1]||0,p[2]||0); mesh.castShadow=true; mesh.receiveShadow=true;
+    if(o.shape==='plane') mesh.rotation.x=-Math.PI/2; scene.add(mesh); if(+o.spin) spinners.push([mesh,+o.spin]);
+  });
+  // camera + controls
+  const camera=new THREE.PerspectiveCamera(58, innerWidth/innerHeight, 0.05, 2000);
+  function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+  addEventListener('resize',resize); resize();
+  const hint=document.getElementById('hint');
+  let fps=spec.mode==='fps', controls, pl, vel=new THREE.Vector3(), keys={};
+  if(fps){
+    camera.position.set(0,1.7,6); pl=new PointerLockControls(camera, renderer.domElement);
+    const ov=document.createElement('div'); ov.id='play'; ov.textContent='▶  Clicca per esplorare (WASD + mouse)'; document.body.appendChild(ov);
+    ov.addEventListener('click',()=>pl.lock()); pl.addEventListener('lock',()=>ov.style.display='none'); pl.addEventListener('unlock',()=>ov.style.display='flex');
+    addEventListener('keydown',e=>keys[e.code]=true); addEventListener('keyup',e=>keys[e.code]=false);
+    hint.textContent='WASD per muoverti · Mouse per guardarti attorno';
+  } else {
+    camera.position.set(5,4,8); controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.target.set(0,1,0); controls.maxPolarAngle=Math.PI*0.495;
+    hint.textContent='Trascina per ruotare · scorri per lo zoom';
+  }
+  const clock=new THREE.Clock();
+  (function loop(){ requestAnimationFrame(loop); const dt=Math.min(0.05,clock.getDelta());
+    spinners.forEach(([m,sp])=>m.rotation.y+=sp*dt);
+    if(fps&&pl&&pl.isLocked){ const sp=6; const d=new THREE.Vector3((keys.KeyD?1:0)-(keys.KeyA?1:0),0,(keys.KeyS?1:0)-(keys.KeyW?1:0)); vel.x=d.x*sp; vel.z=d.z*sp; pl.moveRight(vel.x*dt); pl.moveForward(-vel.z*dt); camera.position.y=1.7; }
+    controls&&controls.update(); renderer.render(scene,camera);
+  })();
+}
+`;
+
+  B.agentSystem = 'Sei Thorion Three 3.3: regista, fotografa, montatrice e artista 3D con strumenti reali che producono foto, video, scene 3D e grafica. ' +
+    'Ragiona SEMPRE prima di agire: in poche righe pensa a cosa serve davvero (soggetto, luce, inquadratura, durata, texture, materiali) e scegli gli strumenti giusti; poi agisci. Punta sempre al massimo realismo. ' +
+    'FOTO ultra realistica: 1) generate_photo con un prompt in inglese molto dettagliato (inizia con "RAW photo", poi soggetto, azione, ambiente, luce con direzione e qualità, obiettivo e diaframma, pellicola o sensore, texture di pelle/materiali, "photorealistic, sharp focus, high detail"); 2) refine_detail sull’image_id; 3) finish_photo con il look adatto. Per una texture da usare in 3D, chiedi "seamless tileable PBR texture of …". ' +
+    'VIDEO: crea prima 1–4 foto realistiche (con refine_detail), poi make_video con i loro image_id. Leggi dal messaggio quanti secondi vuole l’utente e passali in "seconds"; se non lo dice, usa circa 8–12 secondi. Il video ha già musica/audio: scegli il "music" più adatto. ' +
+    'SCENE/GIOCHI 3D: usa make_3d. Per oggetti o materiali realistici genera prima le texture con generate_photo (es. pietra, legno, metallo, erba) e passa i loro image_id nel campo "texture" degli oggetti o del pavimento. Usa mode "fps" per un piccolo gioco esplorabile (WASD + mouse), "orbit" per mostrare un oggetto. ' +
+    'GRAFICA/loghi/icone: create_vector. MODIFICHE a una foto: edit_photo. Scontorno: remove_background. ' +
+    'CODICE e app/giochi web: scrivi tu codice completo e funzionante in un unico file (HTML+CSS+JS), moderno e animato; per il 3D nel codice usa Three.js via importmap. Non chiamare strumenti per il puro codice: scrivilo direttamente nel blocco ```html. ' +
+    'Non generare più di 3 foto per richiesta salvo richiesta esplicita. Foto, video e scene creati vengono mostrati automaticamente: alla fine rispondi in italiano con 1-3 frasi su cosa hai creato e un consiglio per migliorarlo, senza elencare gli id.';
 })();

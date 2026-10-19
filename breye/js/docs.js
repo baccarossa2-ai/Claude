@@ -37,7 +37,7 @@
 
       /* ================= writer ================= */
       const page = B.h('div', { class: 'dc-page md', contenteditable: 'true', spellcheck: 'true', 'aria-label': 'Documento' });
-      page.innerHTML = '<h1>Benvenuto nel tuo documento</h1><p>Scrivi qui, oppure chiedi a <b>Iris</b> di scrivere per te usando il pannello a destra. Seleziona un paragrafo per riscriverlo, tradurlo o riassumerlo.</p>';
+      page.innerHTML = '<h1>Benvenuto nel tuo documento</h1><p>Scrivi qui, oppure chiedi a <b>Thorion</b> di scrivere per te usando il pannello a destra. Seleziona un paragrafo per riscriverlo, tradurlo o riassumerlo.</p>';
       const tb = B.h('div', { class: 'dc-tb' });
       const cmd = (c, v) => { page.focus(); document.execCommand(c, false, v); };
       const T = (ic, tip, fn) => B.h('button', { class: 'btn icon ghost sm', type: 'button', 'data-tip': tip, 'aria-label': tip, 'data-i': ic, onmousedown: (e) => e.preventDefault(), onclick: fn });
@@ -64,7 +64,7 @@
 
       /* AI panel */
       const gen = B.h('textarea', { class: 'textarea', id: 'dcGen', rows: 4, placeholder: 'Cosa vuoi scrivere? es. “lettera di presentazione per un posto da barista”, “articolo di 600 parole sui benefici del caffè”' });
-      const genBtn = B.h('button', { class: 'btn gold block', type: 'button', onclick: () => generate() }, B.h('span', { 'data-i': 'Sparkles' }), 'Scrivi con Iris');
+      const genBtn = B.h('button', { class: 'btn gold block', type: 'button', onclick: () => generate() }, B.h('span', { 'data-i': 'Sparkles' }), 'Scrivi con Thorion');
       const tone = B.h('select', { class: 'select sm', 'aria-label': 'Tono' }, ['Professionale', 'Amichevole', 'Persuasivo', 'Formale', 'Ironico', 'Poetico', 'Semplice e chiaro'].map((t) => B.h('option', { value: t }, t)));
       const len = B.h('select', { class: 'select sm', 'aria-label': 'Lunghezza' }, [['breve', 'Breve'], ['media', 'Media'], ['lunga', 'Lunga']].map(([v, l]) => B.h('option', { value: v, selected: v === 'media' }, l)));
       aiPanel.append(B.h('div', { class: 'ai-box' }, B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': 'Feather' }), 'Scrittura magica'), gen, B.h('div', { class: 'grid2' }, tone, len), genBtn));
@@ -80,7 +80,7 @@
       async function generate(promptOverride) {
         const p = (promptOverride || gen.value).trim(); if (!p) return B.toast('Descrivi cosa scrivere');
         genBtn.disabled = true; const old = page.innerHTML;
-        page.innerHTML = '<p class="muted">Iris sta scrivendo…</p>';
+        page.innerHTML = '<p class="muted">Thorion sta scrivendo…</p>';
         try {
           const t = await B.ai.text('Scrivi in Markdown il seguente documento: ' + p + '\nTono: ' + tone.value + '. Lunghezza: ' + len.value + '. Usa titoli, paragrafi ben strutturati ed elenchi dove servono. Rispondi solo con il documento.', { tier: 'default', onText: async ({ text }) => { page.innerHTML = await B.md(text); } });
           page.innerHTML = await B.md(t); updStats();

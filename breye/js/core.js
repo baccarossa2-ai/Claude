@@ -1,4 +1,4 @@
-/* Breye core: helpers, storage, router, overlays, command palette */
+/* Thorion core: helpers, storage, router, overlays, command palette */
 (function () {
   'use strict';
   const B = (window.B = {});
@@ -346,7 +346,7 @@
     void v.el.offsetWidth; v.el.classList.add('enter');
     const prev = current; current = name;
     B.$$('#nav .nav-item').forEach((n) => n.classList.toggle('on', n.dataset.nav === name));
-    document.title = (v.title ? v.title + ' · ' : '') + 'Breye Studio';
+    document.title = (v.title ? v.title + ' · ' : '') + 'Thorion';
     const params = pending[name]; pending[name] = null;
     try { v.onShow && v.onShow(params || {}, prev); } catch (e) { console.error(e); }
     B.hydrateIcons(v.el);
@@ -401,7 +401,7 @@
     try { projs = (await B.projects.list()).slice(0, 30); } catch (e) { /* ignore */ }
     projs.forEach((p) => items.push({ group: 'Progetti', title: p.name, sub: (B.projects.TYPES[p.type] || ['Progetto'])[0] + ' · ' + B.fmtDate(p.updated), icon: (B.projects.TYPES[p.type] || [0, 'Folder'])[1], run: () => B.projects.open(p) }));
     cmdItems = items.filter((it) => !q || (it.title + ' ' + (it.sub || '') + ' ' + (it.keywords || '')).toLowerCase().includes(q));
-    if (q) cmdItems.push({ group: 'Iris AI', title: 'Chiedi a Iris: “' + q + '”', sub: 'Apre la chat con questa domanda', icon: 'Sparkles', run: () => B.go('chat', { ask: B.$('#cmdkInput').value.trim() }) });
+    if (q) cmdItems.push({ group: 'Thorion AI', title: 'Chiedi a Thorion: “' + q + '”', sub: 'Apre la chat con questa domanda', icon: 'Sparkles', run: () => B.go('chat', { ask: B.$('#cmdkInput').value.trim() }) });
     cmdSel = B.clamp(cmdSel, 0, Math.max(0, cmdItems.length - 1));
     let g = null;
     cmdItems.forEach((it, i) => {

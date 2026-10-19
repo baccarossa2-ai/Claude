@@ -412,7 +412,7 @@
     const fin = B.clamp(t / 0.6, 0, 1), fout = B.clamp((total - t) / 0.8, 0, 1), f = Math.min(fin, fout);
     if (f < 1) { ctx.fillStyle = 'rgba(0,0,0,' + (1 - f) + ')'; ctx.fillRect(0, 0, w, h); }
     if (story.letterbox) { const bh = Math.max(0, (h - w / 2.39) / 2); if (bh > 0 && w > h) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, bh); ctx.fillRect(0, h - bh, w, bh); } }
-    if (story.watermark) { ctx.save(); ctx.globalAlpha = 0.75; ctx.font = '700 ' + Math.round(Math.min(w, h) * 0.026) + 'px "Bricolage Grotesque", sans-serif'; ctx.fillStyle = '#f3d088'; ctx.textAlign = 'right'; ctx.fillText('Breye', w - Math.min(w, h) * 0.04, h - Math.min(w, h) * 0.04); ctx.restore(); }
+    if (story.watermark) { ctx.save(); ctx.globalAlpha = 0.75; ctx.font = '700 ' + Math.round(Math.min(w, h) * 0.026) + 'px "Bricolage Grotesque", sans-serif'; ctx.fillStyle = '#f3d088'; ctx.textAlign = 'right'; ctx.fillText('Thorion', w - Math.min(w, h) * 0.04, h - Math.min(w, h) * 0.04); ctx.restore(); }
   };
   function transition(ctx, A, Bc, kind, p, w, h) {
     switch (kind) {
@@ -483,10 +483,10 @@
       const moodSel = B.h('select', { class: 'select sm', id: 'moMood' }, Object.entries(MOODS).map(([k, m]) => B.h('option', { value: k, selected: k === st.mood }, m.label)));
       moodSel.addEventListener('change', () => { st.mood = moodSel.value; st.audioDirty = true; if (st.story) st.story.music = st.mood; });
       const goBtn = B.h('button', { class: 'btn gold lg block', type: 'button', onclick: generate }, B.h('span', { 'data-i': 'Sparkles' }), 'Genera video');
-      const realNote = B.h('div', { class: 'mini-note', hidden: true, html: 'Ultra realistico: Iris scrive lo storyboard, ogni scena viene scattata dalla <b>rete GPU comunitaria</b> (gratuita e illimitata), rifinita a tasselli e sviluppata con la finitura pellicola “Cinema”; poi la anima con camera, luce e musica nel browser. Di solito 4–8 minuti.' });
+      const realNote = B.h('div', { class: 'mini-note', hidden: true, html: 'Ultra realistico: Thorion scrive lo storyboard, ogni scena viene scattata dalla <b>rete GPU comunitaria</b> (gratuita e illimitata), rifinita a tasselli e sviluppata con la finitura pellicola “Cinema”; poi la anima con camera, luce e musica nel browser. Di solito 4–8 minuti.' });
       const styleField = B.h('div', { class: 'field' }, B.h('span', { class: 'lbl', text: 'Stile visivo' }), styleWrap);
       left.append(
-        B.h('div', { class: 'gen-head' }, B.h('span', { class: 'eyebrow', text: 'Iris Motion' }), B.h('h1', { text: 'Video AI' })),
+        B.h('div', { class: 'gen-head' }, B.h('span', { class: 'eyebrow', text: 'Thorion Motion' }), B.h('h1', { text: 'Video AI' })),
         modeSeg,
         B.h('div', { class: 'field' }, B.h('label', { for: 'moPrompt', text: 'Descrizione' }), ta),
         photoBox, photoPrev, realNote,
@@ -497,7 +497,7 @@
         st.mode = k; B.$$('[data-m]', modeSeg).forEach((c) => c.classList.toggle('on', c.dataset.m === k));
         photoBox.hidden = k !== 'photo' || !!st.img; photoPrev.hidden = k !== 'photo' || !st.img; realNote.hidden = k !== 'real';
         styleField.hidden = k !== 'text';
-        if (k === 'real' && !B.ai.engines.horde) B.toast('Le scene ultra realistiche usano la rete GPU comunitaria della versione web di Breye: qui userò scene 3D.');
+        if (k === 'real' && !B.ai.engines.horde) B.toast('Le scene ultra realistiche usano la rete GPU comunitaria della versione web di Thorion: qui userò scene 3D.');
         ta.placeholder = k === 'photo' ? 'Testo da mostrare sul video (facoltativo) e tipo di movimento, es. “zoom lento, pulviscolo dorato, titolo: Nuova collezione”' : k === 'real' ? 'Descrivi la scena realistica: soggetto, azione, ambiente, luce' : ta.placeholder;
       }
       async function setPhoto(f) { st.img = f; photoPrev.src = URL.createObjectURL(f); photoPrev.hidden = false; photoBox.hidden = true; }
@@ -506,7 +506,7 @@
       /* ---- right: player + scenes ---- */
       const cv = B.h('canvas', { class: 'mo-canvas' });
       const stage = B.h('div', { class: 'mo-stage' }, cv);
-      const empty = B.h('div', { class: 'mo-empty' }, B.h('div', { class: 'mo-empty-eye' }), B.h('h2', { html: 'Il tuo prossimo video <span class="serif">inizia qui</span>.' }), B.h('p', { class: 'muted', text: 'Scrivi un’idea a sinistra: Iris crea lo storyboard, le immagini, il movimento, i testi e la musica. Poi puoi modificare ogni scena ed esportare in MP4.' }));
+      const empty = B.h('div', { class: 'mo-empty' }, B.h('div', { class: 'mo-empty-eye' }), B.h('h2', { html: 'Il tuo prossimo video <span class="serif">inizia qui</span>.' }), B.h('p', { class: 'muted', text: 'Scrivi un’idea a sinistra: Thorion crea lo storyboard, le immagini, il movimento, i testi e la musica. Poi puoi modificare ogni scena ed esportare in MP4.' }));
       stage.append(empty);
       const playBtn = B.h('button', { class: 'btn icon gold', type: 'button', 'aria-label': 'Play', 'data-i': 'Play', onclick: togglePlay });
       const scrub = B.h('input', { class: 'range', type: 'range', min: 0, max: 1000, value: 0, 'aria-label': 'Posizione' });
@@ -598,8 +598,8 @@
       function bgMenu(sc, at) {
         const items = [
           { label: 'Carica una foto…', icon: 'Upload', fn: async () => { const [f] = await B.pickFiles('image/*'); if (!f) return; sc.bg = { type: 'image', blob: f }; sc._img = await B.loadImage(f); draw(); sc._paint && sc._paint(); } },
-          { label: 'Genera foto con Iris', icon: 'Camera', fn: () => regenScene(sc, 'photo') },
-          { label: 'Genera scena 3D con Iris', icon: 'Aperture', fn: () => regenScene(sc, 'shader') },
+          { label: 'Genera foto con Thorion', icon: 'Camera', fn: () => regenScene(sc, 'photo') },
+          { label: 'Genera scena 3D con Thorion', icon: 'Aperture', fn: () => regenScene(sc, 'shader') },
           '-', { header: 'Scene pronte' }
         ];
         Object.entries(B.shader.presets).forEach(([k, p]) => items.push({ label: p.label, icon: 'Sparkle', fn: () => { sc.bg = { type: 'preset', preset: k }; sc._img = null; draw(); sc._paint && sc._paint(); } }));
@@ -608,7 +608,7 @@
       }
       async function regenScene(sc, kind) {
         const prompt = sc.visual || sc.title || st.story.title || ta.value;
-        B.toast('Iris sta creando lo sfondo della scena…');
+        B.toast('Thorion sta creando lo sfondo della scena…');
         try {
           if (kind === 'photo') { const r = await B.ai.image(prompt, { engine: B.ai.photoEngine(true) || 'vector', w: st.story.w, h: st.story.h, style: 'cinema', look: 'cinema' }); sc.bg = { type: 'image', blob: r.blob }; sc._img = await B.loadImage(r.blob); }
           else { sc.bg = { type: 'shader', code: await B.ai.shader(prompt) }; sc._img = null; }
@@ -622,7 +622,7 @@
           { label: (s.grain !== false ? '✓ ' : '') + 'Grana pellicola', icon: 'Sparkle', fn: () => { s.grain = s.grain === false; draw(); } },
           { label: (s.lightLeak ? '✓ ' : '') + 'Light leak caldo', icon: 'Sun', fn: () => { s.lightLeak = !s.lightLeak; draw(); } },
           { label: (s.grade !== false ? '✓ ' : '') + 'Color grading ambra', icon: 'Palette', fn: () => { s.grade = s.grade === false; draw(); } },
-          { label: (s.watermark ? '✓ ' : '') + 'Firma Breye', icon: 'Eye', fn: () => { s.watermark = !s.watermark; draw(); } },
+          { label: (s.watermark ? '✓ ' : '') + 'Firma Thorion', icon: 'Eye', fn: () => { s.watermark = !s.watermark; draw(); } },
           '-', { label: 'Salva come progetto', icon: 'Save', fn: saveProject }
         ]);
       }
@@ -650,7 +650,7 @@
       }
 
       async function generateStory(prompt, W, H, ultra) {
-        setStatus('<div class="iris-spin sm"></div><span>Iris scrive lo storyboard…</span>');
+        setStatus('<div class="iris-spin sm"></div><span>Thorion scrive lo storyboard…</span>');
         await B.ai.init();
         let plan;
         const ask = 'Sei un regista e motion designer pluripremiato. Crea lo storyboard di un video di ' + st.dur + ' secondi in formato ' + st.fmt + ' su: "' + prompt + '".\nRispondi SOLO con JSON valido con questa forma:\n{"title":"titolo breve","palette":["#hex scuro","#hex","#hex","#hex chiaro"],"music":"cinematic|upbeat|lofi|ambient|epic|corporate","scenes":[{"dur":numero di secondi,"visual":"descrizione visiva DETTAGLIATA in inglese per un generatore di immagini fotorealistiche (soggetto, luogo, luce, obiettivo, atmosfera)","title":"testo a schermo breve (max 6 parole) nella lingua della richiesta, oppure stringa vuota","subtitle":"testo secondario breve o vuoto","text":"cinematic|bold|elegant|typewriter|lower","camera":"zoomIn|zoomOut|panLeft|panRight|orbit|still","particles":"none|dust|bokeh|sparks|snow|rain|stars","transition":"fade|iris|blink|zoom|slide|flash"}]}\nRegole: da ' + (ultra ? '2 a 4' : '3 a 7') + ' scene, durate che sommano esattamente a ' + st.dur + '; ritmo narrativo con apertura forte e chiusura con messaggio o call to action; varia camera e transizioni.';
@@ -673,7 +673,7 @@
           if (!engine || engine === 'web') {
             scenes.forEach((sc, i) => { sc.bg = { type: 'preset', preset: Object.keys(B.shader.presets)[i % 5] }; });
             draw(); scenes.forEach((sc) => sc._paint && sc._paint());
-            setStatus('<span data-i="Info"></span><span>Le foto realistiche delle scene arrivano dalla rete GPU comunitaria, disponibile nella versione web di Breye. Qui ho usato scene 3D pronte.</span> <a class="btn sm gold" target="_blank" rel="noopener" href="' + B.esc(B.PUBLIC_URL + '?p=' + encodeURIComponent(prompt) + '#imagine') + '">Apri Breye sul web</a>');
+            setStatus('<span data-i="Info"></span><span>Le foto realistiche delle scene arrivano dalla rete GPU comunitaria, disponibile nella versione web di Thorion. Qui ho usato scene 3D pronte.</span> <a class="btn sm gold" target="_blank" rel="noopener" href="' + B.esc(B.PUBLIC_URL + '?p=' + encodeURIComponent(prompt) + '#imagine') + '">Apri Thorion sul web</a>');
             return;
           }
           // every scene develops in parallel on the community network; the story plays meanwhile with placeholder backgrounds
@@ -693,7 +693,7 @@
         } else {
           for (let i = 0; i < n; i++) {
             const sc = scenes[i];
-            setStatus('<div class="iris-spin sm"></div><span>Scena ' + (i + 1) + ' di ' + n + ': Iris costruisce il mondo 3D…</span>');
+            setStatus('<div class="iris-spin sm"></div><span>Scena ' + (i + 1) + ' di ' + n + ': Thorion costruisce il mondo 3D…</span>');
             try { sc.bg = { type: 'shader', code: await B.ai.shader(sc.visual) }; }
             catch (e) { sc.bg = { type: 'preset', preset: Object.keys(B.shader.presets)[i % 5] }; if (i === 0) B.toast(B.ai.errorText(e) + ' Uso scene pronte dove serve.'); }
             draw(); sc._paint && sc._paint();
@@ -706,7 +706,7 @@
         const n = st.dur <= 10 ? 3 : st.dur <= 20 ? 4 : 6;
         const words = prompt.split(/[,.;]/).map((s) => s.trim()).filter(Boolean);
         const cams = ['zoomIn', 'panRight', 'orbit', 'zoomOut', 'panLeft', 'still'], tr = ['iris', 'fade', 'blink', 'zoom', 'flash', 'slide'];
-        return { title: words[0] || 'Video', scenes: Array.from({ length: n }, (_, i) => ({ dur: st.dur / n, visual: prompt + ', cinematic shot ' + (i + 1), title: i === 0 ? (words[0] || '').slice(0, 40) : i === n - 1 ? 'Breye' : (words[i] || '').slice(0, 40), subtitle: '', text: i === 0 ? 'cinematic' : i === n - 1 ? 'elegant' : 'bold', camera: cams[i % 6], particles: ['dust', 'bokeh', 'sparks', 'dust', 'stars', 'bokeh'][i % 6], transition: tr[i % 6] })) };
+        return { title: words[0] || 'Video', scenes: Array.from({ length: n }, (_, i) => ({ dur: st.dur / n, visual: prompt + ', cinematic shot ' + (i + 1), title: i === 0 ? (words[0] || '').slice(0, 40) : i === n - 1 ? 'Thorion' : (words[i] || '').slice(0, 40), subtitle: '', text: i === 0 ? 'cinematic' : i === n - 1 ? 'elegant' : 'bold', camera: cams[i % 6], particles: ['dust', 'bokeh', 'sparks', 'dust', 'stars', 'bokeh'][i % 6], transition: tr[i % 6] })) };
       }
 
       async function exportVideo() {

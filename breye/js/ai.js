@@ -1,4 +1,4 @@
-/* Iris — the Breye AI engine.
+/* Thorion — the Thorion AI engine.
    Text, code, tools and vision: Claude inside claude.ai (no key), or on the public web open models running on the
    AI Horde community GPU network (Skyfall 31B and its Mistral family, or a large Qwen whenever a volunteer hosts one):
    free, keyless, no quota.
@@ -13,7 +13,7 @@
     engines: { claude: false, web: false, horde: false, vision: false, tools: false },
     ready: null,
     busy: 0,
-    persona: 'Sei Iris, l’intelligenza artificiale di Breye Studio, uno studio creativo tutto-in-uno (design grafico, fotoritocco, montaggio video, generazione di immagini e video, codice, documenti e PDF). Rispondi nella lingua dell’utente (di default in italiano), con tono caldo, preciso e professionale. Usa Markdown quando aiuta: titoli brevi, elenchi, tabelle e blocchi di codice con il linguaggio indicato. Quando scrivi codice, scrivilo completo e funzionante. Non inventare fatti: se non sei sicuro, dillo.'
+    persona: 'Sei Thorion Three 3.3, un modello di frontiera: ragioni in profondità prima di rispondere, sei fortissimo in matematica, scienze, ingegneria e programmazione, e sai creare foto e video ultra realistici, modelli e scene 3D. Ti presenti come "Thorion Three 3.3". Rispondi nella lingua dell’utente (di default in italiano), con tono caldo, preciso e sicuro. Prima pensa passo per passo al problema, poi dai una risposta chiara e completa. Usa Markdown quando aiuta: titoli brevi, elenchi, tabelle, formule e blocchi di codice con il linguaggio indicato; quando scrivi codice, scrivilo completo, moderno e funzionante in un unico file. Non inventare fatti: se non sei sicuro, dillo. Aiuti la ricerca scientifica e lo studio in modo responsabile e per fini legittimi; non fornisci istruzioni per creare armi, agenti patogeni o altro materiale pericoloso.'
   });
 
   let sample = null;
@@ -50,23 +50,23 @@
   };
 
   ai.textEngine = () => (ai.engines.claude ? 'claude' : ai.engines.web ? 'web' : null);
-  ai.engineLabel = () => ai.engines.claude ? 'Iris · motore Claude' : ai.engines.web ? 'Iris · ' + (ai.gate ? ai.gate.label : 'GPU comunitaria') : 'Iris non collegata';
+  ai.engineLabel = () => ai.engines.claude ? 'Thorion · motore Claude' : ai.engines.web ? 'Thorion · ' + (ai.gate ? ai.gate.label : 'GPU comunitaria') : 'Thorion non collegata';
 
   /* ---------- errors ---------- */
   const MSG = {
-    not_granted: 'Iris non ha il permesso di usare l’AI in questa pagina. Riapri l’app e consenti l’accesso quando richiesto.',
+    not_granted: 'Thorion non ha il permesso di usare l’AI in questa pagina. Riapri l’app e consenti l’accesso quando richiesto.',
     sampling_disabled: 'L’AI non è disponibile per questo account.',
     rate_limited: 'Troppe richieste ravvicinate. Attendi qualche secondo e riprova.',
     session_expired: 'Sessione scaduta: accedi di nuovo a Claude e ricarica.',
-    refused: 'Iris non può aiutarti con questa richiesta. Prova a riformularla.',
-    empty_completion: 'Iris non ha prodotto testo. Prova a semplificare la richiesta.',
+    refused: 'Thorion non può aiutarti con questa richiesta. Prova a riformularla.',
+    empty_completion: 'Thorion non ha prodotto testo. Prova a semplificare la richiesta.',
     invalid_json: 'La risposta non era nel formato atteso. Riprova.',
     prompt_too_large: 'Il testo è troppo lungo: inviane una parte più breve.',
     images_unavailable: 'L’invio di immagini non è disponibile qui.',
     image_rejected: 'Immagine non accettata: usa JPG, PNG, WebP o GIF più piccola.',
     upstream_error: 'Il servizio AI non ha risposto. Riprova tra poco.',
-    no_engine: 'Nessun motore AI raggiungibile. Apri Breye dentro Claude oppure online con connessione attiva.',
-    no_photo: 'Le foto realistiche usano la rete GPU comunitaria, raggiungibile solo dalla versione web di Breye. Qui puoi usare i motori Vettoriale e Procedurale.',
+    no_engine: 'Nessun motore AI raggiungibile. Apri Thorion dentro Claude oppure online con connessione attiva.',
+    no_photo: 'Le foto realistiche usano la rete GPU comunitaria, raggiungibile solo dalla versione web di Thorion. Qui puoi usare i motori Vettoriale e Procedurale.',
     horde_busy: 'La rete GPU comunitaria è molto occupata in questo momento. Riprova tra poco oppure usa la qualità Rapida.',
     horde_error: 'La rete GPU comunitaria non ha completato il lavoro. Riprova: verrà scelto un altro computer.'
   };
@@ -190,7 +190,7 @@
     while (kept.length && kept[0].role === 'assistant') kept.shift();
     return T.head + T.sys(sys) + kept.map((x) => T.turn(x.role, x.content)).join('') + T.open;
   }
-  const clean = (t) => String(t).replace(/<(think|thought)>[\s\S]*?<\/\1>/gi, '').replace(/<\|im_end\|>|<\|im_start\|>|<\|eot_id\|>|<end_of_turn>|<\/s>|\[\/?INST\]/g, '').replace(/^\s*(Iris|assistant)\s*:\s*/i, '').trim();
+  const clean = (t) => String(t).replace(/<(think|thought)>[\s\S]*?<\/\1>/gi, '').replace(/<\|im_end\|>|<\|im_start\|>|<\|eot_id\|>|<end_of_turn>|<\/s>|\[\/?INST\]/g, '').replace(/^\s*(Thorion|assistant)\s*:\s*/i, '').trim();
   let tInflight = 0; const tWaiting = [];
   const tAcquire = () => new Promise((res) => { if (tInflight < 3) { tInflight++; res(); } else tWaiting.push(res); });
   const tRelease = () => { const n = tWaiting.shift(); if (n) n(); else tInflight--; };
@@ -326,7 +326,7 @@
         const r = await sample(turns, opts);
         return r.text;
       }
-      // open models have no native tools: Iris describes them in the prompt and reads <tool>{json}</tool> blocks
+      // open models have no native tools: Thorion describes them in the prompt and reads <tool>{json}</tool> blocks
       const argDoc = (sc) => Object.entries((sc && sc.properties) || {}).map(([k, p]) => k + ((sc.required || []).includes(k) ? '' : '?') + ': ' + (p.enum ? p.enum.join('|') : p.type === 'array' ? 'array di ' + ((p.items && p.items.type) || 'valori') : p.type) + (p.description ? ' — ' + p.description : '')).join('; ');
       const sys = (o.system || ai.persona) + '\n\n## Strumenti\nPuoi usare questi strumenti reali. Per usarne uno rispondi SOLO con un blocco:\n<tool>{"name":"NOME","arguments":{...}}</tool>\nUn solo strumento per risposta, argomenti in JSON valido. Riceverai il risultato in un messaggio <tool_result>; poi usa un altro strumento oppure rispondi all’utente normalmente, senza blocchi <tool>.\n' + tools.map((t) => '- ' + t.name + ': ' + t.description + '\n  argomenti: ' + argDoc(t.schema)).join('\n');
       const conv = msgs.slice();
@@ -407,7 +407,7 @@
     const req = 'Disegna in SVG: ' + prompt + '\n\nRequisiti:\n- Un solo elemento <svg> con xmlns="http://www.w3.org/2000/svg" e viewBox="0 0 ' + w + ' ' + h + '".\n- Stile: ' + style + '. Composizione ricca e curata: sfondo pieno, profondità con sfumature (linearGradient/radialGradient), luci e ombre morbide, dettagli, filtri leggeri ammessi (feGaussianBlur, feDropShadow).\n- Niente <script>, niente immagini esterne, niente <foreignObject>, testo solo se richiesto.\n- Rispondi SOLO con il codice SVG completo.';
     const txt = await ai.text(req, { system: 'Sei un illustratore e designer vettoriale esperto. Produci SVG validi, eleganti e dettagliati.', tier: o.tier || 'default', signal: o.signal, onText: o.onText });
     const m = String(txt).match(/<svg[\s\S]*<\/svg>/i);
-    if (!m) { const e = new Error('Nessun SVG'); e.userMessage = 'Iris non ha restituito un disegno valido. Riprova.'; throw e; }
+    if (!m) { const e = new Error('Nessun SVG'); e.userMessage = 'Thorion non ha restituito un disegno valido. Riprova.'; throw e; }
     return ai.cleanSVG(m[0], w, h);
   };
   ai.cleanSVG = function (svg, w, h) {
@@ -452,8 +452,8 @@
   ai.imageEngines = function () {
     const list = [];
     if (ai.engines.horde) {
-      list.push({ id: 'iris', label: 'Iris Pro · ultra realistico', sub: 'Scatto + rifinitura del dettaglio + finitura pellicola · illimitato', icon: 'Sparkles' });
-      list.push({ id: 'iris-fast', label: 'Iris Foto · rapido', sub: 'Uno scatto realistico in 1–3 minuti · illimitato', icon: 'Camera' });
+      list.push({ id: 'iris', label: 'Thorion Pro · ultra realistico', sub: 'Scatto + rifinitura del dettaglio + finitura pellicola · illimitato', icon: 'Sparkles' });
+      list.push({ id: 'iris-fast', label: 'Thorion Foto · rapido', sub: 'Uno scatto realistico in 1–3 minuti · illimitato', icon: 'Camera' });
     }
     if (ai.engines.web) list.push({ id: 'web', label: 'Lampo', sub: 'Modello Sana, istantaneo · con filigrana', icon: 'Zap' });
     if (ai.textEngine()) {

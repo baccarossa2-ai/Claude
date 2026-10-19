@@ -43,7 +43,7 @@
         B.h('button', { class: 'btn', type: 'button', onclick: importProj }, B.h('span', { 'data-i': 'Upload' }), 'Importa file progetto')));
       async function importProj() {
         const [f] = await B.pickFiles('.json,application/json'); if (!f) return;
-        try { const p = JSON.parse(await f.text()); if (!p.type || !p.data) throw new Error('formato'); p.id = B.uid('p'); await B.projects.save(p); B.toast('Progetto importato', 'ok'); } catch (e) { B.toast('File non valido: serve un .breye.json esportato da Breye', 'err'); }
+        try { const p = JSON.parse(await f.text()); if (!p.type || !p.data) throw new Error('formato'); p.id = B.uid('p'); await B.projects.save(p); B.toast('Progetto importato', 'ok'); } catch (e) { B.toast('File non valido: serve un .breye.json esportato da Thorion', 'err'); }
       }
       B.on('projects', render); render();
     }

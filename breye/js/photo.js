@@ -411,7 +411,7 @@
         if (st.tool === 'text') { const fs = B.h('select', { class: 'select sm', style: 'width:180px' }, ['Bricolage Grotesque', 'Figtree', 'Instrument Serif', 'Playfair Display', 'Montserrat', 'Anton', 'Bebas Neue', 'Great Vibes', 'Pacifico', 'Permanent Marker', 'JetBrains Mono'].map((f) => B.h('option', { value: f, selected: f === st.font }, f))); fs.addEventListener('change', () => { st.font = fs.value; B.loadFont(st.font, '400;700;800'); }); opts.append(fs, sl('Dimensione', 'fontSize', 8, 600, 'px'), B.h('span', { class: 'mini-note', text: 'Clicca sull’immagine per scrivere' })); }
         if (st.tool === 'crop') opts.append(B.h('button', { class: 'btn sm gold', type: 'button', onclick: applyCrop }, B.h('span', { 'data-i': 'Check' }), 'Applica ritaglio'), B.h('button', { class: 'btn sm', type: 'button', onclick: () => { st.overlay = null; schedule(); } }, 'Annulla'), B.h('span', { class: 'mini-note', text: 'Trascina per scegliere l’area, poi Invio' }));
         if (st.tool === 'clone') opts.append(B.h('span', { class: 'mini-note', text: st.cloneSrc ? 'Origine impostata. Dipingi per clonare.' : 'Alt+clic (o clic lungo) per scegliere l’origine' }));
-        if (st.tool === 'heal') opts.append(B.h('span', { class: 'mini-note', text: 'Dipingi sopra un difetto o un oggetto: Iris lo rimuove ricostruendo i pixel intorno.' }));
+        if (st.tool === 'heal') opts.append(B.h('span', { class: 'mini-note', text: 'Dipingi sopra un difetto o un oggetto: Thorion lo rimuove ricostruendo i pixel intorno.' }));
         if (['marquee', 'ellipse', 'lasso', 'wand'].includes(st.tool)) opts.append(B.h('button', { class: 'btn sm', type: 'button', onclick: selectAll }, 'Seleziona tutto'), B.h('button', { class: 'btn sm', type: 'button', onclick: invertSel }, 'Inverti'), B.h('button', { class: 'btn sm', type: 'button', onclick: clearSel }, 'Deseleziona'));
         B.hydrateIcons(opts);
       }
@@ -610,7 +610,7 @@
       function pAI() {
         const L = active();
         const card = (icon, title, text, btnLabel, fn, extra) => { const b = B.h('button', { class: 'btn gold sm', type: 'button' }, B.h('span', { 'data-i': 'Sparkles' }), btnLabel); b.addEventListener('click', async () => { b.disabled = true; const old = b.innerHTML; b.innerHTML = '<span class="spin"></span> Lavoro…'; try { await fn(); } catch (e) { B.err(e); } b.disabled = false; b.innerHTML = old; }); const c = B.h('div', { class: 'ai-box' }, B.h('div', { class: 'ai-h' }, B.h('span', { 'data-i': icon }), title), B.h('p', { class: 'mini-note', text }), extra || null, b); panel.append(c); return c; };
-        card('Wand2', 'Auto-migliora', 'Iris analizza la foto e regola luce, colore e nitidezza. Con un motore che vede le immagini, la regolazione è ragionata sul contenuto.', 'Migliora', async () => {
+        card('Wand2', 'Auto-migliora', 'Thorion analizza la foto e regola luce, colore e nitidezza. Con un motore che vede le immagini, la regolazione è ragionata sul contenuto.', 'Migliora', async () => {
           let p = B.px.autoTune(L.canvas);
           if (B.ai.canSee()) {
             try {
@@ -623,7 +623,7 @@
           st.adj = p; previewAdj(); setPanel('adjust');
         });
         const gIn = B.h('input', { class: 'input sm', id: 'phGrade', placeholder: 'es. “luce dorata del tramonto”, “film anni ’70”' });
-        card('Palette', 'Color grading da testo', 'Descrivi l’atmosfera: Iris la traduce in regolazioni.', 'Applica atmosfera', async () => {
+        card('Palette', 'Color grading da testo', 'Descrivi l’atmosfera: Thorion la traduce in regolazioni.', 'Applica atmosfera', async () => {
           if (!gIn.value.trim()) throw Object.assign(new Error(''), { userMessage: 'Descrivi prima l’atmosfera' });
           const r = await B.ai.json('Traduci questa atmosfera fotografica in regolazioni. Atmosfera: "' + gIn.value + '". Rispondi SOLO con JSON con campi numerici (-100..100; hue -30..30): ' + Object.keys(ADJ0).join(', '), { system: false, tier: 'quick' });
           st.adj = Object.assign({}, ADJ0); Object.keys(ADJ0).forEach((k) => { if (typeof r[k] === 'number') st.adj[k] = B.clamp(r[k], -100, 180); }); previewAdj(); setPanel('adjust');
@@ -633,7 +633,7 @@
         });
         if (B.ai.canSee()) {
           const out = B.h('div', { class: 'md mini-note' });
-          card('ScanFace', 'Descrivi la foto', 'Iris descrive soggetto, luce e composizione e suggerisce come migliorarla.', 'Descrivi', async () => {
+          card('ScanFace', 'Descrivi la foto', 'Thorion descrive soggetto, luce e composizione e suggerisce come migliorarla.', 'Descrivi', async () => {
             const small = mk(1024 * Math.min(1, L.canvas.width / L.canvas.height), 1024 * Math.min(1, L.canvas.height / L.canvas.width)); small.getContext('2d').drawImage(L.canvas, 0, 0, small.width, small.height);
             const t = await B.ai.text('Descrivi questa foto in modo conciso (soggetto, luce, colori, composizione) e dai 3 consigli di ritocco.', { images: [await B.canvasToBlob(small, 'image/jpeg', 0.85)], tier: 'default' });
             out.innerHTML = await B.md(t);
@@ -642,7 +642,7 @@
         const fIn = B.h('input', { class: 'input sm', id: 'phGen', placeholder: doc.sel ? 'Cosa mettere nella selezione?' : 'es. “aggiungi un cappello”, “cielo stellato”' });
         const progress = (b) => (p) => { if (b) b.lastChild && (b.lastChild.textContent = ' ' + (p.processing ? 'Sviluppo…' : 'In coda ' + (p.elapsed || 0) + ' s…')); };
         const noGPU = () => Object.assign(new Error(''), { userMessage: B.ai.MSG.no_photo });
-        const genCard = card('Wand2', 'Riempimento generativo', B.ai.engines.horde ? 'Modifica la foto a parole sulla rete GPU comunitaria (gratuita, illimitata). Con una selezione Iris rigenera solo quella zona (inpainting); senza selezione trasforma l’intera foto in modo realistico.' : 'Usa la rete GPU comunitaria della versione web di Breye. Qui puoi usare lo strumento Rimuovi oggetti (J) e il Timbro clone.', 'Genera', async () => {
+        const genCard = card('Wand2', 'Riempimento generativo', B.ai.engines.horde ? 'Modifica la foto a parole sulla rete GPU comunitaria (gratuita, illimitata). Con una selezione Thorion rigenera solo quella zona (inpainting); senza selezione trasforma l’intera foto in modo realistico.' : 'Usa la rete GPU comunitaria della versione web di Thorion. Qui puoi usare lo strumento Rimuovi oggetti (J) e il Timbro clone.', 'Genera', async () => {
           if (!B.ai.engines.horde) throw noGPU();
           if (!fIn.value.trim()) throw Object.assign(new Error(''), { userMessage: 'Scrivi cosa generare' });
           if (needComp) composite();
@@ -679,7 +679,7 @@
           doc.layers = [layer('Espansa', final)]; doc.active = doc.layers[0].id; doc.w = W; doc.h = H; doc.sel = null; commit(); fit();
         }, xIn);
         const lookSel = B.h('select', { class: 'select sm', id: 'phLook', 'aria-label': 'Look pellicola' }, Object.entries(B.realism.LOOKS).map(([k, l]) => B.h('option', { value: k }, l.label)));
-        const relCard = card('Aperture', 'Realismo Pro', (B.ai.engines.horde ? 'Rifinisci il dettaglio: la rete GPU comunitaria rigenera la foto a tasselli (pelle, tessuti, materiali) e Iris tiene colori e luce dell’originale. ' : '') + 'Finitura pellicola: curva filmica, micro-contrasto, grana, halation e vignettatura, calcolate sul tuo dispositivo.', 'Applica finitura', async () => {
+        const relCard = card('Aperture', 'Realismo Pro', (B.ai.engines.horde ? 'Rifinisci il dettaglio: la rete GPU comunitaria rigenera la foto a tasselli (pelle, tessuti, materiali) e Thorion tiene colori e luce dell’originale. ' : '') + 'Finitura pellicola: curva filmica, micro-contrasto, grana, halation e vignettatura, calcolate sul tuo dispositivo.', 'Applica finitura', async () => {
           const L2 = active();
           begin('Finitura ' + B.realism.LOOKS[lookSel.value].label, [L2.id]);
           await B.sleep(20); L2.canvas = B.realism.finish(L2.canvas, lookSel.value); commit(); B.toast('Finitura applicata', 'ok');

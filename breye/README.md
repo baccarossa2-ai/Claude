@@ -56,6 +56,10 @@ Le richieste anonime possono chiedere al massimo 512 token: le risposte più lun
 
 Ogni foto diventa una scena 3D: **Depth Anything V2** calcola la profondità direttamente nel browser (WebGPU o WASM) e un renderer WebGL a ray-marching muove una vera camera dentro la foto (dolly, carrello, orbita, gru, messa a fuoco con profondità di campo, camera a mano), con atmosfera (pioggia, neve, polvere, braci) e grana di pellicola a 24 fps. La **colonna sonora** è sintetizzata sulla scena (pioggia e tuoni, mare, vento, bosco con uccelli, città con auto e clacson, folla, fuoco, ruscello, grilli, ambienti interni), con **voce narrante naturale** e musica facoltative, e viene inserita nell’MP4 (AAC/Opus).
 
+### Accesso con Google e priorità
+
+AI Horde è gratuita e illimitata, ma le richieste anonime condividono un unico account in fondo alla coda. Con **Accedi con Google** (barra laterale) si entra su AI Horde con Google, si copia la propria API key e la si incolla in Thorion: da quel momento foto, fotogrammi e risposte hanno la precedenza sulla coda anonima, sempre gratis e senza limiti. Mentre lo scatto ultra realistico è in coda compare un'**anteprima istantanea**. Le chat restano salvate sul dispositivo e dal menu “…” si possono esportare e ripristinare.
+
 ### Voce naturale
 
 La lettura ad alta voce usa voci neurali **Piper** (Paola, Serena HD, Serena, Riccardo; Emma e Ryan HD per l’inglese) sintetizzate sul dispositivo con onnxruntime-web in un worker: frase per frase, senza server e senza limiti. Il modello si scarica una sola volta e resta in cache; senza rete si usa la voce migliore del sistema.

@@ -67,7 +67,7 @@
     }
     async function call(method, path, body, signal) {
       for (let attempt = 0; attempt < 4; attempt++) {
-        const r = await fetch(API + path, { method, headers: HEAD, body: body ? JSON.stringify(body) : undefined, signal });
+        const r = await fetch(API + path, { method, headers: Object.assign({}, HEAD, { apikey: B.hordeKey ? B.hordeKey() : '0000000000' }), body: body ? JSON.stringify(body) : undefined, signal });
         if (r.status === 429) { const ra = +(r.headers.get('Retry-After') || 0); await B.sleep(Math.max(3, Math.min(20, ra || 3 * (attempt + 1))) * 1000); continue; }
         let j = null; try { j = await r.json(); } catch (e) { /* empty */ }
         if (!r.ok) { const e = new Error((j && j.message) || 'HTTP ' + r.status); e.status = r.status; e.rc = j && j.rc; throw e; }
@@ -353,10 +353,13 @@
     const look = o.look || plan.look;
     if (o.signal && o.signal.aborted) throw Object.assign(new Error('Interrotto'), { code: 'cancelled' });
     step('shot', 'Scatto sulla rete GPU comunitaria', 'run');
+    let landed = false;
+    if (plan.kind === 'photo') B.quickPreview(plan.prompt, o.w || 1024, o.h || 1024, o.signal).then((b) => { if (b && !landed) step('shot', 'Scatto sulla rete GPU comunitaria', 'run', { detail: 'Anteprima istantanea · la foto ultra realistica arriva appena la GPU è libera', preview: b }); });
     const prog = (p) => step('shot', 'Scatto sulla rete GPU comunitaria', 'run', { detail: p.processing ? 'in elaborazione su ' + p.model + ' · ' + p.elapsed + ' s' : 'in coda da ' + p.elapsed + ' s' + (p.racers > 1 ? ' · due modelli fotografici in gara' : '') });
     const shot = plan.kind === 'photo'
       ? await B.horde.photo({ prompt: plan.prompt, negative: plan.negative, w: o.w || 1, h: o.h || 1, kind: 'photo', people: plan.people, quality: o.quality === 'fast' ? 'high' : 'max', seed: o.seed, signal: o.signal, onProgress: prog })
       : await B.horde.generate({ prompt: plan.prompt, negative: plan.negative, w: o.w || 1, h: o.h || 1, kind: plan.kind, seed: o.seed, signal: o.signal, onProgress: prog });
+    landed = true;
     step('shot', 'Scatto pronto · ' + shot.model + (shot.post && shot.post.length ? ' · ' + (shot.post.includes('CodeFormers') ? 'volti ritoccati, ' : '') + 'ingrandita a ' + shot.w + ' px' : ''), 'done', { preview: shot.blob });
     let canvas = shot.canvas || await toCanvas(shot.blob);
     if (plan.kind === 'photo') { /* already native 1 MP from a modern photo model, upscaled on the network */ }
@@ -407,6 +410,18 @@
     return B.canvasToBlob(out, 'image/png');
   };
 
+  /* instant preview while the photoreal shot waits for a GPU: free, unlimited, a few seconds */
+  B.quickPreview = async function (prompt, w, h, signal) {
+    try {
+      const s = Math.min(1, 768 / Math.max(w || 1, h || 1)), W = Math.round((w || 1024) * s / 64) * 64 || 768, H = Math.round((h || 1024) * s / 64) * 64 || 768;
+      const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(String(prompt).slice(0, 420)) + '?width=' + W + '&height=' + H + '&nologo=true&private=true&seed=' + Math.floor(Math.random() * 1e6);
+      let r = await fetch(url, { signal });
+      if (r.status === 429) { await B.sleep(5000); r = await fetch(url, { signal }); } // the free endpoint takes one image at a time per visitor
+      const b = r.ok ? await r.blob() : null;
+      return b && /^image\//.test(b.type) && b.size > 2000 ? b : null;
+    } catch (e) { return null; }
+  };
+
   /* ================= tools for the agent ================= */
   const ASPECTS = { '1:1': [1, 1], '3:2': [3, 2], '2:3': [2, 3], '16:9': [16, 9], '9:16': [9, 16], '4:5': [4, 5], '5:4': [5, 4] };
   B.irisTools = function (ctx) {
@@ -421,10 +436,12 @@
           const kind = a.kind || 'photo'; const [aw, ah] = ASPECTS[a.aspect] || [1, 1];
           const label = 'Scatto: ' + String(a.prompt).slice(0, 70);
           step(label, 'run');
+          let shot = null;
+          if (kind === 'photo') B.quickPreview(a.prompt, ASPECTS[a.aspect] ? ASPECTS[a.aspect][0] * 512 : 1024, ASPECTS[a.aspect] ? ASPECTS[a.aspect][1] * 512 : 1024, c && c.signal).then((b) => { if (b && !shot && ctx.onStep) ctx.onStep({ label, status: 'run', detail: 'Anteprima istantanea · la foto ultra realistica arriva appena la GPU è libera', preview: b }); });
           const r = kind === 'photo'
             ? await B.horde.photo({ prompt: a.prompt, negative: a.negative, w: aw, h: ah, kind, people: a.people, quality: a.quality === 'high' ? 'high' : 'max', signal: c && c.signal, onProgress: (p) => ctx.onStep && ctx.onStep({ label, status: 'run', detail: p.processing ? 'in elaborazione su ' + p.model : 'in coda da ' + p.elapsed + ' s' + (p.racers > 1 ? ' · due modelli in gara' : '') }) })
             : await B.horde.generate({ prompt: a.prompt, negative: a.negative || 'blurry, deformed, watermark, text', w: aw, h: ah, kind, signal: c && c.signal });
-          step('Scatto pronto · ' + r.model + ' · ' + r.w + '×' + r.h, 'done');
+          shot = r; step('Scatto pronto · ' + r.model + ' · ' + r.w + '×' + r.h, 'done');
           return Object.assign(await put(r.blob, a.prompt, { prompt: a.prompt, negative: a.negative, kind, model: r.model, url: r.url, max: kind === 'photo' && a.quality !== 'high' }), { model: r.model });
         } });
       tools.push({ name: 'refine_detail', description: 'Aggiunge dettaglio reale (pelle, capelli, tessuti, materiali) e raddoppia la risoluzione fino a 2K con un passaggio leggero di un modello fotografico SDXL e un ingrandimento nitido. Utile per immagini allegate o scatti "high"; gli scatti "max" sono già al massimo.', schema: { type: 'object', properties: { image_id: { type: 'string' }, strength: { type: 'number', description: '0.15 delicato – 0.4 marcato, default 0.24' } }, required: ['image_id'] },

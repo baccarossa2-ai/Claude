@@ -498,6 +498,26 @@ body.solo .main { height: 100%; }
 .cs-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 6px; }
 .cs-head b { font: 800 19px/1 var(--f-display); letter-spacing: -.01em; flex: 1; }
 .cs-logo { flex: none; display: block; }
+.cs-acct { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); text-align: left; cursor: pointer; transition: border-color .2s; }
+.cs-acct:hover { border-color: var(--gold); }
+.acct-av { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--gold-grad); color: var(--on-gold); font: 800 13px var(--f-ui); }
+.acct-av.g { background: #fff; border: 1px solid var(--line-2); }
+.acct-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.acct-tx b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acct-tx small { font-size: 11px; color: var(--text-3); }
+.acct { display: flex; flex-direction: column; gap: 14px; }
+.acct-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 14px; }
+.acct-steps li > div { margin-top: 8px; }
+.acct-row { display: flex; gap: 8px; }
+.acct-row .input { flex: 1; min-width: 0; }
+.acct-err { color: var(--err); font-size: 13px; margin: 6px 0 0; }
+.acct-me { display: flex; align-items: center; gap: 12px; }
+.acct-me .acct-av { width: 42px; height: 42px; font-size: 18px; }
+.acct-me b { display: block; font-size: 16px; }
+.acct-me small { color: var(--text-3); }
+.g-btn { background: #fff; color: #1f1f1f; border-color: #dadce0; }
+.g-btn:hover { background: #f8f9fa; border-color: #c6c9cc; }
+.g-logo { display: grid; place-items: center; }
 .cs-foot { padding: 10px 4px 2px; border-top: 1px solid var(--line); color: var(--text-3); font-size: 11.5px; }
 .cs-foot b { color: var(--gold); font-weight: 700; }
 

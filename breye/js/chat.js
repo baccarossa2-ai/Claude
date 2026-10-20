@@ -28,7 +28,14 @@
       const newBtn = B.h('button', { class: 'btn gold block', type: 'button', onclick: () => newChat() }, B.h('span', { 'data-i': 'MessageCirclePlus' }), 'Nuova chat');
       const search = B.h('input', { class: 'input sm', id: 'chatSearch', placeholder: 'Cerca nelle chat' });
       const list = B.h('div', { class: 'chat-list scroll' });
-      side.append(sideHead, newBtn, search, list, B.h('div', { class: 'cs-foot', html: 'Powered by <b>Thorion Three&nbsp;3.3</b> ✦' }));
+      const acct = B.h('button', { class: 'cs-acct', type: 'button', onclick: () => B.account && B.account.open() });
+      const paintAcct = () => {
+        const u = B.account && B.account.signedIn && B.account.user;
+        acct.replaceChildren(u ? B.h('span', { class: 'acct-av', text: u.name.slice(0, 1).toUpperCase() }) : B.h('span', { class: 'acct-av g', html: '<svg viewBox="0 0 48 48" width="16" height="16"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>' }),
+          B.h('span', { class: 'acct-tx' }, B.h('b', { text: u ? u.name.replace(/#\d+$/, '') : 'Accedi con Google' }), B.h('small', { text: u ? 'Priorità attiva · ' + u.kudos + ' kudos' : 'Immagini senza coda anonima' })));
+      };
+      paintAcct(); B.on('account', paintAcct);
+      side.append(sideHead, newBtn, search, list, acct, B.h('div', { class: 'cs-foot', html: 'Powered by <b>Thorion Three&nbsp;3.3</b> ✦' }));
       search.addEventListener('input', renderList);
       logoInto(sideHead.querySelector('.cs-logo'), 22);
 
@@ -42,6 +49,9 @@
         { label: 'Esporta in Markdown', icon: 'Download', fn: exportMd },
         { label: 'Copia tutta la chat', icon: 'Copy', fn: () => cur && B.copy(cur.messages.map((m) => (m.role === 'user' ? 'Tu: ' : 'Thorion: ') + m.content).join('\n\n')) },
         { label: 'Voce di lettura…', icon: 'Volume2', fn: () => B.voicePicker && B.voicePicker() },
+        { label: 'Account e priorità…', icon: 'User', fn: () => B.account && B.account.open() },
+        { label: 'Esporta tutte le chat', icon: 'Download', fn: exportAll },
+        { label: 'Ripristina chat da file', icon: 'Upload', fn: importAll },
         '-', { label: 'Tema chiaro / scuro', icon: 'Moon', fn: () => B.theme.toggle() },
         { label: 'Elimina chat', icon: 'Trash2', fn: () => cur && delChat(cur) }
       ], { align: 'right' }) });
@@ -410,6 +420,20 @@
         const cmd = last && last.content.match(/^\/(immagine|img|image|disegna)\s+([\s\S]+)/i);
         renderThread();
         if (cmd) genImage(cmd[2]); else answer();
+      }
+      async function exportAll() {
+        const all = (await B.db.all('chats')).filter((c) => c.messages && c.messages.length);
+        if (!all.length) return B.toast('Non ci sono ancora chat da esportare');
+        B.save(new Blob([JSON.stringify({ app: 'thorion', version: 1, exported: new Date().toISOString(), chats: all })], { type: 'application/json' }), 'thorion-chat-' + new Date().toISOString().slice(0, 10) + '.json');
+      }
+      async function importAll() {
+        const [f] = await B.pickFiles('.json,application/json'); if (!f) return;
+        let data; try { data = JSON.parse(await f.text()); } catch (e) { return B.toast('Il file non è un backup di Thorion', 'err'); }
+        const list2 = Array.isArray(data) ? data : data && data.chats; if (!Array.isArray(list2)) return B.toast('Il file non è un backup di Thorion', 'err');
+        let n = 0;
+        for (const c of list2) { if (!c || !c.id || !Array.isArray(c.messages)) continue; const old = chats.find((x) => x.id === c.id); if (old && old.updated >= c.updated) continue; await B.db.put('chats', c); n++; }
+        chats = (await B.db.all('chats')).sort((a, b) => b.updated - a.updated); renderList();
+        B.toast(n ? n + (n === 1 ? ' chat ripristinata' : ' chat ripristinate') : 'Le chat del file sono già presenti', n ? 'ok' : undefined);
       }
       function exportMd() { if (!cur) return; const md = '# ' + cur.title + '\n\n' + cur.messages.map((m) => '**' + (m.role === 'user' ? 'Tu' : 'Thorion') + ':**\n\n' + m.content).join('\n\n---\n\n'); B.save(new Blob([md], { type: 'text/markdown' }), B.slug(cur.title) + '.md'); }
 

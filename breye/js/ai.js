@@ -119,7 +119,8 @@
 
   /* ---------- AI Horde text: open models on volunteer GPUs, free and keyless ---------- */
   const HORDE = 'https://aihorde.net/api/v2';
-  const HHEAD = { 'Content-Type': 'application/json', apikey: '0000000000', 'Client-Agent': 'breye-studio:1.2:github.com/baccarossa2-ai/Claude' };
+  const HAGENT = 'thorion:2.0:github.com/baccarossa2-ai/Claude';
+  const hh = () => ({ 'Content-Type': 'application/json', apikey: B.hordeKey ? B.hordeKey() : '0000000000', 'Client-Agent': HAGENT }); // a signed-in key gets priority over the anonymous queue
   const CHUNK = 512; // the most an anonymous request may ask for: longer answers continue in several chunks
   // model families on the network, best first. A request names a whole family: the first free GPU running any of
   // its models takes the job, so answers stay fast while the network stays fair (one prompt format per family)
@@ -144,7 +145,7 @@
   ai.textModels = async function () {
     if (tstat && tstat.length && Date.now() - tstatT < 180000) return tstat;
     try {
-      const get = (p) => fetch(HORDE + p, { headers: { 'Client-Agent': HHEAD['Client-Agent'] } }).then((r) => r.json());
+      const get = (p) => fetch(HORDE + p, { headers: { 'Client-Agent': HAGENT } }).then((r) => r.json());
       const [ms, ws] = await Promise.all([get('/status/models?type=text'), get('/workers?type=text').catch(() => [])]);
       const lim = {};
       (Array.isArray(ws) ? ws : []).forEach((w) => { if ((w.max_length || 0) < CHUNK) return; (w.models || []).forEach((n) => { const l = lim[n] || (lim[n] = { ctx: 0, n: 0 }); l.ctx = Math.max(l.ctx, w.max_context_length || 0); l.n++; }); });
@@ -200,18 +201,18 @@
       const body = { prompt, params: { n: 1, max_length: CHUNK, max_context_length: pool.ctx, temperature: 0.6, top_p: 0.92, rep_pen: 1.05, stop_sequence: stop }, models: pool.models.map((m) => m.name), trusted_workers: false, slow_workers: true };
       let j = null, r = null;
       for (let attempt = 0; attempt < 4; attempt++) {
-        r = await fetch(HORDE + '/generate/text/async', { method: 'POST', headers: HHEAD, body: JSON.stringify(body), signal });
+        r = await fetch(HORDE + '/generate/text/async', { method: 'POST', headers: hh(), body: JSON.stringify(body), signal });
         j = await r.json().catch(() => ({}));
         if (r.status === 429) { await nap(2500 * (attempt + 1), signal); continue; }
         break;
       }
       if (!r.ok) throw Object.assign(new Error((j && j.message) || 'HTTP ' + r.status), { code: r.status === 429 ? 'rate_limited' : 'upstream_error', retryOther: true });
       const id = j.id, t0 = Date.now();
-      const drop = () => fetch(HORDE + '/generate/text/status/' + id, { method: 'DELETE', headers: HHEAD }).catch(() => {});
+      const drop = () => fetch(HORDE + '/generate/text/status/' + id, { method: 'DELETE', headers: hh() }).catch(() => {});
       for (;;) {
         try { await nap(1100, signal); } catch (e) { drop(); throw e; }
         let c;
-        try { c = await (await fetch(HORDE + '/generate/text/status/' + id, { headers: HHEAD, signal })).json(); }
+        try { c = await (await fetch(HORDE + '/generate/text/status/' + id, { headers: hh(), signal })).json(); }
         catch (e) { if (e.name === 'AbortError') { drop(); throw Object.assign(new Error('Interrotto'), { code: 'cancelled', name: 'AbortError' }); } continue; }
         if (c.faulted || c.is_possible === false) { drop(); throw Object.assign(new Error('Il modello non è disponibile ora'), { code: 'upstream_error', retryOther: true }); }
         if (c.done) { const g = (c.generations || [])[0] || {}; return { text: g.text || '', model: g.model || pool.models[0].name }; }
@@ -234,13 +235,13 @@
   ai.caption = async function (blob, signal) {
     const im = await B.loadImage(blob); const sc = Math.min(1, 768 / Math.max(im.naturalWidth, im.naturalHeight));
     const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.naturalWidth * sc)); c.height = Math.max(1, Math.round(im.naturalHeight * sc)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-    const r = await fetch(HORDE + '/interrogate/async', { method: 'POST', headers: HHEAD, body: JSON.stringify({ forms: [{ name: 'caption' }], source_image: c.toDataURL('image/webp', 0.9).split(',')[1], slow_workers: true }), signal });
+    const r = await fetch(HORDE + '/interrogate/async', { method: 'POST', headers: hh(), body: JSON.stringify({ forms: [{ name: 'caption' }], source_image: c.toDataURL('image/webp', 0.9).split(',')[1], slow_workers: true }), signal });
     const j = await r.json().catch(() => ({})); if (!r.ok || !j.id) return '';
-    const t0 = Date.now(), drop = () => fetch(HORDE + '/interrogate/status/' + j.id, { method: 'DELETE', headers: HHEAD }).catch(() => {});
+    const t0 = Date.now(), drop = () => fetch(HORDE + '/interrogate/status/' + j.id, { method: 'DELETE', headers: hh() }).catch(() => {});
     try {
       while (Date.now() - t0 < 120000) {
         await nap(1500, signal);
-        try { const st = await (await fetch(HORDE + '/interrogate/status/' + j.id, { headers: HHEAD, signal })).json(); if (st.state === 'done') { const f = (st.forms || [])[0]; return (f && f.result && f.result.caption) || ''; } if (st.state === 'faulted') return ''; } catch (e) { if (e.name === 'AbortError') throw e; }
+        try { const st = await (await fetch(HORDE + '/interrogate/status/' + j.id, { headers: hh(), signal })).json(); if (st.state === 'done') { const f = (st.forms || [])[0]; return (f && f.result && f.result.caption) || ''; } if (st.state === 'faulted') return ''; } catch (e) { if (e.name === 'AbortError') throw e; }
       }
       drop(); return '';
     } catch (e) { drop(); throw e; }

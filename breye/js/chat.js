@@ -41,6 +41,7 @@
         { label: 'Rinomina', icon: 'Pencil', fn: rename },
         { label: 'Esporta in Markdown', icon: 'Download', fn: exportMd },
         { label: 'Copia tutta la chat', icon: 'Copy', fn: () => cur && B.copy(cur.messages.map((m) => (m.role === 'user' ? 'Tu: ' : 'Thorion: ') + m.content).join('\n\n')) },
+        { label: 'Voce di lettura…', icon: 'Volume2', fn: () => B.voicePicker && B.voicePicker() },
         '-', { label: 'Tema chiaro / scuro', icon: 'Moon', fn: () => B.theme.toggle() },
         { label: 'Elimina chat', icon: 'Trash2', fn: () => cur && delChat(cur) }
       ], { align: 'right' }) });
@@ -50,6 +51,12 @@
       const scroller = B.h('div', { class: 'chat-scroll scroll' });
       const thread = B.h('div', { class: 'chat-thread' });
       scroller.append(thread);
+      // only the thread scrolls; it follows new content while the reader is at the bottom
+      let near = true;
+      const toBottom = (smooth) => scroller.scrollTo({ top: scroller.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+      const downBtn = B.h('button', { class: 'to-bottom', type: 'button', 'aria-label': 'Vai all’ultimo messaggio', 'data-i': 'ArrowDown', hidden: true, onclick: () => { near = true; toBottom(true); } });
+      scroller.addEventListener('scroll', () => { near = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120; downBtn.hidden = near; }, { passive: true });
+      if (window.ResizeObserver) new ResizeObserver(() => { if (near) toBottom(); }).observe(thread);
 
       /* ---- composer ---- */
       const ta = B.h('textarea', { id: 'chatInput', rows: 1, placeholder: 'Scrivi un messaggio…' });
@@ -60,7 +67,7 @@
       const plusBtn = B.h('button', { class: 'btn icon ghost', type: 'button', 'aria-label': 'Nuova chat', 'data-i': 'Plus', onclick: () => newChat() });
       const focusPill = B.h('button', { class: 'focus-pill', type: 'button', 'data-tip': 'Thorion ragiona sempre al massimo prima di rispondere', onclick: (e) => e.preventDefault() }, B.h('span', { 'data-i': 'Star' }), B.h('span', { class: 'fp-tx', text: 'Three 3.3 · Focus' }));
       const composer = B.h('div', { class: 'composer' }, attBar, ta, B.h('div', { class: 'composer-row' }, plusBtn, attachBtn, B.h('div', { class: 'bar-sp' }), focusPill, stopBtn, sendBtn));
-      const composerWrap = B.h('div', { class: 'composer-wrap' }, composer, B.h('div', { class: 'composer-note', text: 'Thorion può sbagliare: verifica le informazioni importanti.' }));
+      const composerWrap = B.h('div', { class: 'composer-wrap' }, downBtn, composer, B.h('div', { class: 'composer-note', text: 'Thorion può sbagliare: verifica le informazioni importanti.' }));
       main.append(head, scroller, composerWrap);
       B.dropzone(composer, addFiles);
       ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
@@ -97,11 +104,11 @@
         if (holdSwitch()) return;
         if (cur && !cur.messages.length) { open(cur); ta.focus(); return; }
         cur = { id: B.uid('c'), title: 'Nuova chat', messages: [], updated: Date.now() };
-        chats.unshift(cur); renderList(); renderThread(); if (!silent) ta.focus();
+        chats.unshift(cur); renderList(); renderThread(true); if (!silent) ta.focus();
       }
       const SKIP = new Set(['blob', '_store', 'preview']);
       async function persist() { if (!cur) return; cur.updated = Date.now(); if (cur.messages.length) await B.db.put('chats', JSON.parse(JSON.stringify(cur, (k, v) => (SKIP.has(k) ? undefined : v)))); renderList(); }
-      function open(c) { if (c !== cur && holdSwitch()) return; cur = c; el.classList.remove('side-open'); renderList(); renderThread(); }
+      function open(c) { if (c !== cur && holdSwitch()) return; cur = c; el.classList.remove('side-open'); renderList(); renderThread(true); }
       const dropVideos = (msgs) => msgs.forEach((m) => (m.media || []).forEach((x) => { if (x.key) { B.db.del('blobs', x.key).catch(() => {}); vidCache.delete(x.key); } }));
       async function delChat(c) { if (c === cur && holdSwitch()) return; if (!(await B.confirm('Eliminare questa chat?', '“' + c.title + '” verrà eliminata.', 'Elimina', true))) return; dropVideos(c.messages); await B.db.del('chats', c.id); chats = chats.filter((x) => x !== c); if (c === cur) { cur = null; if (chats[0]) open(chats[0]); else newChat(); } else renderList(); }
       async function rename() { if (!cur) return; const n = await B.prompt('Rinomina chat', cur.title); if (n) { cur.title = n; persist(); } }
@@ -120,13 +127,14 @@
         });
         B.hydrateIcons(list);
       }
-      function renderThread() {
+      function renderThread(force) {
+        if (force) near = true;
         thread.innerHTML = '';
-        el.classList.toggle('empty', !cur || !cur.messages.length);
+        el.classList.toggle('is-empty', !cur || !cur.messages.length);
         if (!cur || !cur.messages.length) { thread.append(emptyState()); B.hydrateIcons(thread); return; }
         cur.messages.forEach((m, i) => thread.append(bubble(m, i)));
         B.hydrateIcons(thread);
-        scroller.scrollTop = scroller.scrollHeight;
+        if (near) toBottom();
       }
       function emptyState() {
         const wrap = B.h('div', { class: 'chat-empty' });
@@ -143,7 +151,7 @@
         if (m.images && m.images.length) body.append(B.h('div', { class: 'msg-imgs' }, m.images.map((src) => B.h('img', { src, alt: 'Immagine allegata' }))));
         if (m.files && m.files.length) body.append(B.h('div', { class: 'msg-files' }, m.files.map((n) => B.h('span', { class: 'chip' }, B.h('span', { 'data-i': 'FileText' }), n))));
         const content = B.h('div', { class: 'msg-content md' });
-        if (isUser) content.textContent = m.content; else renderMd(content, m.content);
+        if (isUser) content.textContent = m.content; else if (m.pending) renderMd(content, m.content); else mdNow(content, m.content);
         body.append(content);
         if (m.steps && m.steps.length) body.append(stepsBlock(m));
         if (m.media && m.media.length) body.append(mediaBlock(m));
@@ -191,7 +199,9 @@
           B.h('button', { class: 'btn sm', type: 'button', onclick: () => B.save(B.dataURLToBlob(g.src), B.slug(g.prompt) + '.png') }, B.h('span', { 'data-i': 'Download' }), 'Scarica')));
         return box;
       }
-      const renderMd = B.throttle(async (node, text) => { node.innerHTML = await B.md(text || ''); B.enhanceCode(node, codeExtras); }, 90);
+      const mdNow = async (node, text) => { node.innerHTML = await B.md(text || ''); B.enhanceCode(node, codeExtras); B.hydrateIcons(node); };
+      const mdLive = new WeakMap();
+      const renderMd = (node, text) => { let f = mdLive.get(node); if (!f) mdLive.set(node, (f = B.throttle(mdNow, 90))); f(node, text); };
       function codeExtras(acts, code, lang) {
         if (/^(html|xml|svg)$/i.test(lang) || (/<!doctype|<html|<svg/i.test(code) && /<\/(body|html|svg)>/i.test(code))) {
           acts.append(B.h('button', { class: 'btn ghost sm', type: 'button', onclick: () => runCode(code) }, B.h('span', { 'data-i': 'Play' }), 'Anteprima'));
@@ -204,16 +214,17 @@
       function actions(m, i) {
         const a = B.h('div', { class: 'msg-acts' });
         a.append(B.h('button', { class: 'btn ghost sm icon', type: 'button', 'data-tip': 'Copia', 'aria-label': 'Copia', 'data-i': 'Copy', onclick: () => B.copy(m.content) }));
-        a.append(B.h('button', { class: 'btn ghost sm icon', type: 'button', 'data-tip': 'Leggi ad alta voce', 'aria-label': 'Leggi', 'data-i': 'Volume2', onclick: () => speak(m.content) }));
+        a.append(B.h('button', { class: 'btn ghost sm icon', type: 'button', 'data-tip': 'Leggi ad alta voce (premi di nuovo per fermare)', 'aria-label': 'Leggi', 'data-i': 'Volume2', onclick: (e) => speak(m.content, e.currentTarget) }));
         if (i === cur.messages.length - 1) a.append(B.h('button', { class: 'btn ghost sm icon', type: 'button', 'data-tip': 'Rigenera', 'aria-label': 'Rigenera', 'data-i': 'RefreshCw', onclick: regenerate }));
         return a;
       }
-      function speak(text) {
-        if (!('speechSynthesis' in window)) return B.toast('Sintesi vocale non disponibile in questo browser');
-        speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text.replace(/[#*`>_|-]/g, ' ').slice(0, 4000));
-        u.lang = /[àèéìòù]|\b(il|la|che|non|per)\b/i.test(text) ? 'it-IT' : 'en-US';
-        speechSynthesis.speak(u);
+      let reading = null;
+      function speak(text, btn) {
+        const again = reading === btn && B.voice.speaking();
+        B.voice.stop(); if (reading) reading.classList.remove('on'); reading = null;
+        if (again) return;
+        reading = btn; if (btn) btn.classList.add('on');
+        B.voice.speak(text).catch((e) => B.err(e, 'Non riesco a leggere ad alta voce')).finally(() => { if (reading === btn) { if (btn) btn.classList.remove('on'); reading = null; } });
       }
 
       /* ---- sending ---- */
@@ -230,7 +241,7 @@
         userMsg._atts = atts;
         cur.messages.push(userMsg);
         if (cur.messages.length === 1) cur.title = (imgCmd ? '🖼 ' + imgCmd[2] : text).slice(0, 48) || 'Chat';
-        renderThread();
+        renderThread(true);
         if (imgCmd) return genImage(imgCmd[2]);
         await answer();
       }
@@ -390,7 +401,7 @@
           cur.title = t.replace(/["“”.]/g, '').trim().slice(0, 48) || cur.title; persist();
         } catch (e) { /* ignore */ }
       }
-      function stick() { if (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 160) scroller.scrollTop = scroller.scrollHeight; }
+      function stick() { if (near) toBottom(); }
       function busy(on) { sendBtn.hidden = on; stopBtn.hidden = !on; ta.classList.toggle('busy', on); }
       async function regenerate() {
         if (ctl || !cur) return;

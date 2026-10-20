@@ -479,12 +479,20 @@ body.solo .side { display: none !important; }
 body.solo .app { grid-template-columns: minmax(0, 1fr); }
 body.solo .main { height: 100%; }
 
-.solo-chat { position: relative; flex-direction: column !important; overflow: hidden; }
-.solo-chat .chat-main { flex: 1; width: 100%; min-width: 0; display: flex; flex-direction: column; }
+.solo-chat { position: absolute; inset: 0; flex-direction: column !important; overflow: hidden; }
+/* fixed frame: header on top, composer at the bottom, only the thread scrolls */
+.solo-chat .chat-main { flex: 1 1 auto; width: 100%; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.solo-chat .chat-head, .solo-chat .composer-wrap { flex: none; }
+.solo-chat .chat-scroll { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scroll-padding-bottom: 24px; }
+.solo-chat .composer-wrap { position: relative; padding-top: 6px; background: linear-gradient(to bottom, transparent, var(--bg) 14px); }
+.to-bottom { position: absolute; z-index: 3; left: 50%; top: -46px; width: 38px; height: 38px; margin-left: -19px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); box-shadow: var(--shadow-sm); cursor: pointer; animation: rise .25s var(--ease); }
+.to-bottom[hidden] { display: none; }
+.to-bottom:hover { border-color: var(--gold); color: var(--gold); }
+.to-bottom [data-i] svg { width: 18px; height: 18px; }
 
 /* conversations drawer: hidden overlay on every size, opened by the hamburger */
-.solo-chat .chat-side { position: absolute; z-index: 40; top: 0; bottom: 0; left: 0; width: min(300px, 86vw); margin: 0; background: linear-gradient(180deg, var(--bg-elev), var(--bg)); border-right: 1px solid var(--line); box-shadow: 30px 0 70px rgba(0,0,0,.5); transform: translateX(-102%); opacity: 1; pointer-events: none; transition: transform .32s var(--ease); display: flex; flex-direction: column; gap: 10px; padding: 14px 12px calc(14px + env(safe-area-inset-bottom,0px)); }
-.solo-chat.side-open .chat-side { transform: none; pointer-events: auto; }
+.solo-chat .chat-side { position: absolute; z-index: 40; top: 0; bottom: 0; left: 0; width: min(300px, 86vw); margin: 0; background: linear-gradient(180deg, var(--bg-elev), var(--bg)); border-right: 1px solid var(--line); box-shadow: none; transform: translateX(-102%); opacity: 1; visibility: hidden; pointer-events: none; transition: transform .32s var(--ease), visibility 0s linear .32s; display: flex; flex-direction: column; gap: 10px; padding: 14px 12px calc(14px + env(safe-area-inset-bottom,0px)); }
+.solo-chat.side-open .chat-side { transform: none; visibility: visible; pointer-events: auto; box-shadow: 30px 0 70px rgba(0,0,0,.35); transition: transform .32s var(--ease); }
 .solo-chat.side-open::before { content: ''; position: absolute; inset: 0; z-index: 30; background: var(--veil); animation: fade .25s var(--ease); }
 .solo-chat.side-open .chat-main { pointer-events: none; }
 .cs-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 6px; }
@@ -500,7 +508,7 @@ body.solo .main { height: 100%; }
 .cb-logo { flex: none; display: block; }
 
 /* welcome */
-.solo-chat.empty .chat-scroll { display: flex; align-items: center; }
+.solo-chat.is-empty .chat-thread { min-height: 100%; justify-content: center; padding-top: 18px; padding-bottom: 18px; }
 .chat-empty { max-width: 760px; margin: 0 auto; }
 .ce-logo { width: 88px; height: 88px; margin-bottom: 4px; animation: floaty 6s ease-in-out infinite; }
 .ce-title { font-size: clamp(2rem, 6vw, 3.1rem); font-weight: 400; color: var(--text); line-height: 1.05; }
@@ -523,9 +531,21 @@ body.solo .main { height: 100%; }
 .solo-chat .msg.error .msg-content { color: var(--err); }
 
 /* composer: focus pill */
-.focus-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: color-mix(in srgb, var(--gold) 10%, var(--panel)); color: var(--gold); font-size: 12.5px; font-weight: 700; cursor: default; }
+.focus-pill { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line-2); background: color-mix(in srgb, var(--gold) 10%, var(--panel)); color: var(--gold); font-size: 12.5px; font-weight: 700; cursor: default; }
 .focus-pill [data-i] svg { width: 14px; height: 14px; }
 .solo-chat .composer { border-radius: 26px; padding: 12px 12px 10px; }
+/* one size system: 36px icon buttons with 18px icons in the header and the composer, 30px for message actions */
+.solo-chat .chat-head { min-height: 56px; gap: 4px; }
+.solo-chat .chat-head .btn.icon, .solo-chat .composer-row .btn.icon { width: 36px; height: 36px; border-radius: 12px; }
+.solo-chat .chat-head .btn [data-i] svg, .solo-chat .chat-head .btn svg, .solo-chat .composer-row .btn svg { width: 18px; height: 18px; stroke-width: 2; }
+.solo-chat .chat-head .btn.ghost, .solo-chat .composer-row .btn.ghost { color: var(--text-2); }
+.solo-chat .composer-row { gap: 6px; min-height: 36px; }
+.solo-chat .composer-row .btn.gold { box-shadow: 0 4px 14px var(--glow); }
+.solo-chat .composer-row .btn.gold svg { color: var(--on-gold); stroke-width: 2.6; }
+.solo-chat .msg-acts .btn.icon { width: 30px; height: 30px; border-radius: 9px; }
+.solo-chat .msg-acts .btn svg { width: 16px; height: 16px; }
+.solo-chat .ce-chip { height: 38px; padding: 0 16px; }
+.solo-chat .cs-head .btn.icon { width: 32px; height: 32px; }
 
 /* runnable code + 3D scene */
 .gen-img.d3 .gen-3d, .run-frame { width: 100%; border: 1px solid var(--line); border-radius: 16px; background: #05070b; }

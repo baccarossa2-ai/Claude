@@ -22,12 +22,14 @@ Thorion è un'app web con un'unica interfaccia: la chat. Scrivi quello che vuoi 
 | Descrizione di immagini | didascalie generate dalla stessa rete, lette dal modello linguistico | Claude (visione) |
 | Testo da immagine (OCR) | Tesseract nel browser (italiano e inglese) | Claude (visione) |
 | Agente con strumenti | strumenti descritti nel prompt, chiamati con blocchi `<tool>` | Claude (strumenti nativi) |
-| Foto ultra realistiche | AI Horde (ICBINP, Realistic Vision, AbsoluteReality…) + finitura locale | collegamento alla versione web |
+| Foto ultra realistiche | AI Horde: Z-Image-Turbo, FLUX.1 Schnell e SDXL fotografici (Juggernaut XL, ICBINP XL…) a ~1 MP nativi, volti ritoccati, 2K nitida in locale | collegamento alla versione web |
 | Ritocco generativo, inpainting, outpainting | AI Horde | collegamento alla versione web |
 | Foto istantanee (motore Lampo) | Pollinations, modello Sana, con filigrana | non disponibile |
 | Illustrazioni vettoriali | SVG scritti dal modello linguistico | idem |
 | Scene 3D procedurali | shader GLSL scritti dal modello, resi sulla GPU | idem |
-| Video | foto realistiche animate in locale (camera, particelle, pellicola, musica) | scene 3D animate in locale |
+| Video con audio | Thorion Cinema: profondità 3D (Depth Anything V2 nel browser), vera camera 2.5D, suono d’ambiente sintetizzato, voce narrante, MP4 | stesso motore, profondità stimata |
+| Voce | voci neurali Piper (Paola, Serena HD, Riccardo…) generate sul dispositivo | voce migliore del dispositivo |
+| Mondi e giochi 3D | Thorion Engine (three.js): cielo fisico, PBR Poly Haven, ombre, SSAO, città open world, natura, auto guidabili | materiali e cielo procedurali |
 | Ritocco, montaggio, musica, PDF | nel browser | nel browser |
 
 Nessun motore richiede chiavi o account e nessuno ha una quota. AI Horde è una rete di GPU messe a disposizione da volontari: i modelli sono quelli che i volontari ospitano in quel momento, e le richieste anonime hanno la priorità più bassa. Una risposta in chat arriva di solito in 20–60 secondi, uno scatto in 1–3 minuti, una foto Thorion Pro in 3–6 minuti.
@@ -43,16 +45,31 @@ Ogni richiesta nomina un'intera famiglia di modelli con lo stesso formato di pro
 
 Le richieste anonime possono chiedere al massimo 512 token: le risposte più lunghe continuano da sole in più pezzi. Il modello Gemma 4 31B presente sulla rete è escluso, perché la sua catena di ragionamento ricomincia a ogni pezzo e non arriva alla risposta. In Impostazioni si può fissare un modello preferito.
 
-### Realismo a basso consumo di GPU
+### Foto indistinguibili da quelle vere
 
-Thorion chiede alla rete solo immagini piccole (al massimo 576×576, il formato più economico) e fa il resto sul tuo dispositivo:
+1. **Piano dello scatto**: il modello linguistico descrive una vera fotografia (soggetto, luce, inquadratura, fotocamera e obiettivo, texture reali) e sceglie un look.
+2. **Due modelli in gara**: la richiesta parte insieme verso il miglior modello di ultima generazione disponibile (Z-Image-Turbo o FLUX.1 Schnell) e verso il miglior SDXL fotografico (Juggernaut XL, ICBINP XL, AlbedoBase XL): vince il primo scatto pronto, l’altro viene annullato. Ogni famiglia usa i parametri per cui è stata addestrata (passi, CFG, campionatore, scheduler) alla sua risoluzione nativa (~1 MP, 16:9, 9:16, 3:2…).
+3. **Volti**: con persone in scena i modelli SDXL passano per CodeFormers sulla rete.
+4. **2K nitida** sul dispositivo (ricampionamento di qualità e maschera di contrasto fine) e **finitura pellicola** delicata (Naturale, Portra 400, Cinestill, Ora d'oro, Cinema, Noir, Nitida).
 
-1. **Piano dello scatto**: il modello linguistico scrive un prompt fotografico (luce, obiettivo, diaframma, pellicola, texture) e sceglie un look.
-2. **Scatto** con un modello fotografico sulla rete comunitaria.
-3. **Rifinitura a tasselli** (qualità Pro): l'immagine viene ingrandita e rigenerata a tasselli di 576 px con bassa intensità; la separazione delle frequenze tiene colori e luce dell'originale e prende solo il dettaglio nuovo (pelle, tessuti, materiali).
-4. **Finitura pellicola** locale: curva filmica, micro-contrasto, halation, aberrazione cromatica, split toning, vignettatura e grana (Naturale, Portra 400, Cinestill, Ora d'oro, Cinema, Noir, Nitida).
+### Thorion Cinema: video realistici con audio
 
-In chat Thorion usa questi passaggi come **strumenti** (`generate_photo`, `refine_detail`, `finish_photo`, `edit_photo`, `upscale_photo`, `remove_background`, `create_vector`, `make_video` (con audio), `make_3d` (scene e giochi Three.js)) e decide da sola la sequenza; i passaggi compaiono dal vivo nel messaggio.
+Ogni foto diventa una scena 3D: **Depth Anything V2** calcola la profondità direttamente nel browser (WebGPU o WASM) e un renderer WebGL a ray-marching muove una vera camera dentro la foto (dolly, carrello, orbita, gru, messa a fuoco con profondità di campo, camera a mano), con atmosfera (pioggia, neve, polvere, braci) e grana di pellicola a 24 fps. La **colonna sonora** è sintetizzata sulla scena (pioggia e tuoni, mare, vento, bosco con uccelli, città con auto e clacson, folla, fuoco, ruscello, grilli, ambienti interni), con **voce narrante naturale** e musica facoltative, e viene inserita nell’MP4 (AAC/Opus).
+
+### Voce naturale
+
+La lettura ad alta voce usa voci neurali **Piper** (Paola, Serena HD, Serena, Riccardo; Emma e Ryan HD per l’inglese) sintetizzate sul dispositivo con onnxruntime-web in un worker: frase per frase, senza server e senza limiti. Il modello si scarica una sola volta e resta in cache; senza rete si usa la voce migliore del sistema.
+
+### Thorion Engine
+
+Un motore 3D realistico costruito su three.js, usato dall’agente con `make_3d` e scaricabile come **HTML autonomo** da inserire in qualsiasi sito:
+- cielo fisico con ora del giorno e ciclo giorno/notte; il cielo illumina la scena (IBL), sole con ombre morbide che seguono il giocatore, SSAO, bloom, tone mapping filmico;
+- materiali PBR reali di Poly Haven (asfalto, cemento, erba, roccia, legno, marmo…), alberi con chiome di foglie, erba mossa dal vento, lago con riflessi;
+- **città open world** con traffico, pedoni animati, lampioni e finestre accese di notte, supercar realistica guidabile (E per salire/scendere); **natura**; **showroom**; scene **personalizzate**;
+- terza persona, prima persona, orbita, guida; tastiera, mouse e comandi touch; pioggia, nebbia e neve;
+- `custom_code` per programmare il mondo con l’API `E` (aggiungere oggetti, personaggi, auto, luci, regole di gioco).
+
+In chat Thorion usa tutto come **strumenti** (`generate_photo`, `refine_detail`, `finish_photo`, `edit_photo`, `upscale_photo`, `remove_background`, `create_vector`, `make_video`, `make_3d`) e decide da sola la sequenza; i passaggi compaiono dal vivo nel messaggio.
 
 ## Cosa fa Thorion (strumenti dell'agente in chat)
 
@@ -75,7 +92,10 @@ breye/
   css/studios.css     stili delle sezioni
   js/core.js          utilità, archivio IndexedDB, router, finestre, comandi
   js/ai.js            motore Thorion (testo, strumenti, immagini) e runner degli shader
-  js/iris-tools.js    rete GPU comunitaria, rifinitura a tasselli, finitura pellicola, strumenti dell'agente
+  js/iris-tools.js    rete GPU comunitaria, foto in gara tra modelli, finitura pellicola, strumenti dell'agente
+  js/voice.js         voce neurale Piper sul dispositivo (con riserva sulla voce di sistema)
+  js/cinema.js        Thorion Cinema: profondità, camera 2.5D, suono d'ambiente, MP4 con audio
+  js/engine/          Thorion Engine: motore 3D realistico che genera pagine HTML autonome
   js/*.js             una sezione per file
   assets/             logo e iride (sfondo trasparente, anello dorato)
 ```

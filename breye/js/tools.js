@@ -247,18 +247,20 @@
   /* ---------- voice ---------- */
   function tVoice() {
     const body = B.h('div', { class: 'tl-box' });
-    if (!('speechSynthesis' in window)) { body.append(B.h('p', { text: 'Il tuo browser non offre la sintesi vocale.' })); B.modal({ title: 'Lettura vocale', body }); return; }
-    const ta = B.h('textarea', { class: 'textarea', id: 'tlVoiceT', rows: 5 }); ta.value = 'Ciao! Sono Thorion, l’intelligenza artificiale di Thorion. Posso leggere ad alta voce i tuoi testi.';
+    const ta = B.h('textarea', { class: 'textarea', id: 'tlVoiceT', rows: 5 }); ta.value = 'Ciao! Sono Thorion. Da oggi leggo i tuoi testi con una voce naturale, generata direttamente sul tuo dispositivo.';
     const vs = B.h('select', { class: 'select sm', 'aria-label': 'Voce' });
-    const fill = () => { vs.innerHTML = ''; speechSynthesis.getVoices().sort((a, b) => (b.lang.startsWith('it') ? 1 : 0) - (a.lang.startsWith('it') ? 1 : 0)).forEach((v) => vs.append(B.h('option', { value: v.name }, v.name + ' · ' + v.lang))); };
-    fill(); speechSynthesis.onvoiceschanged = fill;
-    const rate = B.slider({ label: 'Velocità', min: 50, max: 200, value: 100, unit: '%' }), pitch = B.slider({ label: 'Tono', min: 50, max: 150, value: 100, unit: '%' });
-    body.append(ta, vs, B.h('div', { class: 'grid2' }, rate, pitch), B.h('div', { class: 'chips' },
-      B.h('button', { class: 'btn gold', type: 'button', onclick: () => { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(ta.value); const v = speechSynthesis.getVoices().find((x) => x.name === vs.value); if (v) { u.voice = v; u.lang = v.lang; } u.rate = +rate.input.value / 100; u.pitch = +pitch.input.value / 100; speechSynthesis.speak(u); } }, B.h('span', { 'data-i': 'Play' }), 'Leggi'),
-      B.h('button', { class: 'btn', type: 'button', onclick: () => speechSynthesis.cancel() }, B.h('span', { 'data-i': 'StopCircle' }), 'Ferma')),
-      B.h('p', { class: 'mini-note', text: 'Usa le voci installate sul dispositivo: ascolto immediato, senza invio del testo a server esterni.' }));
-    B.modal({ title: 'Lettura vocale', icon: 'Volume2', body, wide: true, onClose: () => speechSynthesis.cancel() }); B.hydrateIcons(body);
+    B.voice.list.forEach((v) => vs.append(B.h('option', { value: v.id }, v.name + ' · ' + v.desc + ' (' + v.mb + ' MB)')));
+    vs.append(B.h('option', { value: 'system' }, 'Voce del dispositivo (immediata)'));
+    vs.value = B.ls.get('voice:sys', false) ? 'system' : B.voice.current('it').id;
+    vs.addEventListener('change', () => { B.ls.set('voice:sys', vs.value === 'system'); if (vs.value !== 'system') B.voice.setVoice(vs.value); });
+    const rate = B.slider({ label: 'Velocità (voce del dispositivo)', min: 50, max: 200, value: 100, unit: '%' });
+    body.append(ta, vs, rate, B.h('div', { class: 'chips' },
+      B.h('button', { class: 'btn gold', type: 'button', onclick: () => { const sys = vs.value === 'system'; const v = !sys && B.voice.list.find((x) => x.id === vs.value); B.voice.speak(ta.value, { system: sys, voice: v && v.id, lang: v ? v.lang : undefined, rate: +rate.input.value / 100 }).catch((e) => B.err(e)); } }, B.h('span', { 'data-i': 'Play' }), 'Leggi'),
+      B.h('button', { class: 'btn', type: 'button', onclick: () => B.voice.stop() }, B.h('span', { 'data-i': 'StopCircle' }), 'Ferma')),
+      B.h('p', { class: 'mini-note', text: 'Le voci neurali (Piper) vengono scaricate una sola volta e poi parlano direttamente sul tuo dispositivo: naturali, senza limiti e senza inviare il testo a nessun server.' }));
+    B.modal({ title: 'Voce di lettura', icon: 'Volume2', body, wide: true, onClose: () => B.voice.stop() }); B.hydrateIcons(body);
   }
+  B.voicePicker = tVoice;
 
   /* ---------- naming ---------- */
   function tNaming() {

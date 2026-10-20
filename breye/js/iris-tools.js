@@ -1,7 +1,8 @@
 /* Thorion tools — unlimited photoreal generation on the AI Horde community GPU network (free, no account),
-   local realism finishing, tiled detail refinement and a tool-using agent.
-   Low GPU by design: the network renders small images (≤ 576×576, the free tier's cheapest size) and the
-   browser does the rest — upscaling, film finishing and blending the detail tiles. */
+   local realism finishing and a tool-using agent.
+   Photos come from the newest photoreal models the volunteers host (Z-Image, FLUX, SDXL photo models) at
+   their native ~1 MP size; two model families race and the first finished shot wins, then the network's
+   own photo upscaler and face restorer bring it to 2K and the browser adds a subtle film finish. */
 (function () {
   'use strict';
   const B = window.B;
@@ -17,6 +18,17 @@
     const AGENT = 'breye-studio:1.1:github.com/baccarossa2-ai/Claude';
     const HEAD = { 'Content-Type': 'application/json', apikey: '0000000000', 'Client-Agent': AGENT };
     const BUDGET = 576 * 576;
+    // photo families, best realism first; each family has the sampling its models were trained for
+    const FAM = {
+      zimage: { tier: 1, natural: true, models: ['Z-Image-Turbo'], p: { steps: 9, cfg_scale: 1, sampler_name: 'k_euler', scheduler: 'simple' } },
+      flux: { tier: 1, natural: true, models: ['Flux.1-Schnell fp8 (Compact)'], p: { steps: 5, cfg_scale: 1, sampler_name: 'k_euler', scheduler: 'karras' } },
+      sdxl: { tier: 2, models: ['Juggernaut XL', 'AlbedoBase XL 3.1', 'AlbedoBase XL (SDXL)', 'SDXL 1.0'], p: { steps: 28, cfg_scale: 4.5, sampler_name: 'k_dpmpp_2m', scheduler: 'karras' } },
+      sdxl2: { tier: 2, models: ['ICBINP XL', 'ZavyChromaXL'], p: { steps: 28, cfg_scale: 4.5, sampler_name: 'k_dpmpp_2m', scheduler: 'karras', clip_skip: 2 } },
+      sd15: { tier: 3, small: true, models: ["ICBINP - I Can't Believe It's Not Photography", 'Realistic Vision', 'AbsoluteReality', 'Edge Of Realism', 'Analog Madness', 'NatViS'], p: { steps: 26, cfg_scale: 5.5, sampler_name: 'k_dpmpp_2m', scheduler: 'karras' } }
+    };
+    const BUCKETS = [[1024, 1024], [1152, 896], [896, 1152], [1216, 832], [832, 1216], [1344, 768], [768, 1344], [1536, 640], [640, 1536]];
+    const bucket = (w, h) => { const r = Math.log(w / h); return BUCKETS.reduce((a, b) => (Math.abs(Math.log(b[0] / b[1]) - r) < Math.abs(Math.log(a[0] / a[1]) - r) ? b : a)); };
+    const NEG = 'cartoon, anime, illustration, painting, drawing, cgi, 3d render, plastic skin, waxy skin, airbrushed, doll, oversaturated, overprocessed, hdr, blurry, deformed, disfigured, bad anatomy, extra fingers, mutated hands, watermark, text, logo, signature, frame';
     const MODELS = {
       photo: ["ICBINP - I Can't Believe It's Not Photography", 'Realistic Vision', 'AbsoluteReality', 'Edge Of Realism', 'Analog Madness', 'NatViS', 'Deliberate', 'Dreamshaper', 'stable_diffusion'],
       art: ['Dreamshaper', 'Deliberate', 'Rev Animated', 'AbsoluteReality', 'stable_diffusion'],
@@ -80,9 +92,10 @@
       for (let attempt = 0; attempt < 3; attempt++) {
         const body = {
           prompt: o.prompt + (o.negative ? ' ### ' + o.negative : ''),
-          params: { width: w, height: h, steps: o.steps || 24, cfg_scale: o.cfg || 5.5, sampler_name: 'k_dpmpp_2m', karras: true, n: 1 },
-          nsfw: false, censor_nsfw: true, models, r2: false, shared: false, slow_workers: true, extra_slow_workers: true, allow_downgrade: !o.size, trusted_workers: false
+          params: Object.assign({ width: w, height: h, steps: o.steps || 24, cfg_scale: o.cfg || 5.5, sampler_name: 'k_dpmpp_2m', karras: true, n: 1 }, o.params || {}),
+          nsfw: false, censor_nsfw: true, models, r2: !!o.r2, shared: false, slow_workers: true, extra_slow_workers: true, allow_downgrade: !o.size, trusted_workers: false
         };
+        if (body.params.scheduler) delete body.params.karras;
         if (o.seed != null) body.params.seed = String(o.seed);
         if (o.source) { body.source_image = o.source; body.source_processing = o.processing || 'img2img'; body.params.denoising_strength = o.denoise ?? 0.5; }
         let id;
@@ -106,7 +119,7 @@
         if (!done) {
           call('DELETE', '/generate/status/' + id).catch(() => {});
           // only resubmit when no worker can serve these models: resubmitting otherwise would lose the queue position
-          if ((chk.faulted || chk.is_possible === false) && attempt < 2) { tried.push(...models); const alt = await pickMany(fam, tried); if (alt.length) { models = alt; continue; } }
+          if ((chk.faulted || chk.is_possible === false) && attempt < 2 && !o.noFallback) { tried.push(...models); const alt = await pickMany(fam, tried); if (alt.length) { models = alt; continue; } }
           throw userErr(chk.faulted ? B.ai.MSG.horde_error : B.ai.MSG.horde_busy, 'upstream_error');
         }
         const res = await call('GET', '/generate/status/' + id);
@@ -114,16 +127,79 @@
         if (!g || !g.img) continue;
         if (g.censored) throw userErr('Il filtro di sicurezza della rete ha bloccato questa immagine. Riformula la richiesta.', 'refused');
         const blob = /^https?:/.test(g.img) ? await (await fetch(g.img)).blob() : B.dataURLToBlob('data:image/webp;base64,' + g.img);
-        return { blob, w, h, model: g.model || models[0], seed: g.seed, worker: g.worker_name };
+        return { blob, w, h, model: g.model || models[0], seed: g.seed, worker: g.worker_name, url: /^https?:/.test(g.img) ? g.img : null };
       }
       throw userErr(B.ai.MSG.horde_busy, 'upstream_error');
     }
-    return { generate, pick, pickMany, fit, status, MODELS, BUDGET };
+    /* the photo path: best live families race (top realism tier vs the best photo SDXL), the first finished shot wins */
+    async function photoFamilies(exclude = []) {
+      const st = await status();
+      const live = (m) => st.find((x) => x.name === m && x.count > 0);
+      const c = Object.entries(FAM).map(([k, f]) => {
+        const ms = f.models.filter((m) => live(m) && !exclude.includes(m)); if (!ms.length) return null;
+        return { k, f, ms, eta: Math.min(...ms.map((m) => live(m).eta || 0)), workers: ms.reduce((a, m) => a + live(m).count, 0) };
+      }).filter(Boolean);
+      const best = (tier) => c.filter((x) => x.f.tier === tier).sort((a, b) => (a.eta - b.eta) || (b.workers - a.workers))[0];
+      const out = [best(1), best(2)].filter(Boolean);
+      if (!out.length && best(3)) out.push(best(3));
+      if (!out.length) out.push({ k: 'sd15', f: FAM.sd15, ms: FAM.sd15.models.slice(0, 3) });
+      return out;
+    }
+    function shapePrompt(prompt, fam, kind) {
+      let p = String(prompt || '').trim();
+      if (kind !== 'photo') return p;
+      if (fam.natural) {
+        p = p.replace(/^\s*raw photo,?\s*/i, '');
+        return p + (/\.$/.test(p) ? ' ' : '. ') + 'A real, unretouched photograph with true-to-life colors, natural light falloff, real skin pores and fine fabric texture, accurate anatomy, subtle film grain, shot on a full-frame camera.';
+      }
+      return (/^raw photo/i.test(p) ? '' : 'RAW photo, ') + p + ', photorealistic, natural skin texture, sharp focus, high detail, film grain';
+    }
+    async function photo(o) {
+      const fams = o.families || await photoFamilies(o.exclude);
+      const [aw, ah] = [o.w || 1, o.h || 1];
+      const people = o.people != null ? o.people : /\b(man|woman|girl|boy|person|people|portrait|face|child|kid|couple|bride|groom|crowd|model|selfie|uomo|donna|ragazz|persona|ritratto|volto|bambin)/i.test(o.prompt);
+      const outer = o.signal;
+      const ctls = fams.map(() => new AbortController());
+      const stopAll = (keep) => ctls.forEach((c, i) => { if (i !== keep) c.abort(); });
+      if (outer) outer.addEventListener('abort', () => stopAll(-1), { once: true });
+      let started = Date.now();
+      const runs = fams.map((F, i) => {
+        const fam = F.f;
+        const size = fam.small ? fit(aw, ah, 640 * 640) : bucket(aw, ah);
+        // only the face restorer runs on the network: every worker supports it, while upscalers shrink the pool
+        const pp = (people && fam.tier > 1 && (o.kind || 'photo') === 'photo') ? ['CodeFormers'] : [];
+        const params = Object.assign({}, fam.p, pp.length ? { post_processing: pp } : {}, pp.includes('CodeFormers') ? { facefixer_strength: 0.35 } : {});
+        return generateOne({ prompt: shapePrompt(o.prompt, fam, o.kind || 'photo'), negative: fam.natural ? '' : [NEG, o.negative].filter(Boolean).join(', '), models: F.ms, size, params, seed: o.seed, r2: true, noFallback: true, signal: ctls[i].signal, maxWait: o.maxWait || 1500,
+          onProgress: (pr) => o.onProgress && o.onProgress(Object.assign({}, pr, { family: F.k, racers: fams.length, elapsed: Math.round((Date.now() - started) / 1000) })) })
+          .then((r) => { stopAll(i); return Object.assign(r, { family: F.k, post: pp }); });
+      });
+      let r;
+      try { r = await Promise.any(runs); }
+      catch (agg) { const errs = (agg && agg.errors) || []; throw errs.find((e) => e && e.code === 'cancelled') || errs.find((e) => e && e.code === 'refused') || errs[0] || userErr(B.ai.MSG.horde_busy, 'upstream_error'); }
+      // native ~1 MP shot -> crisp 2K on the device: high-quality resampling and a fine unsharp mask
+      let c = await toCanvas(r.blob);
+      if (o.quality === 'max' && !FAM[r.family].small) { const f = Math.min(2, 2048 / Math.max(c.width, c.height)); if (f > 1.05) c = B.realism.sharpen(B.realism.upscale(c, f), 0.55, 1.1); }
+      return Object.assign(r, { blob: await B.canvasToBlob(c, 'image/jpeg', 0.95), canvas: c, w: c.width, h: c.height });
+    }
+    /* more real detail on an existing photo: low-denoise pass with a photo model plus the photo upscaler */
+    async function detail(srcIn, o = {}) {
+      let src = await toCanvas(srcIn);
+      const [bw, bh] = bucket(src.width, src.height);
+      const base = mk(bw, bh); const bx = base.getContext('2d'); bx.imageSmoothingQuality = 'high'; bx.drawImage(src, 0, 0, bw, bh);
+      const fams = (await photoFamilies()).filter((F) => F.f.tier === 2);
+      const F = fams[0] || { f: FAM.sdxl, ms: FAM.sdxl.models };
+      const r = await generateOne({ prompt: shapePrompt(o.prompt || 'photo', F.f, 'photo'), negative: NEG, models: F.ms, size: [bw, bh], source: b64(base), processing: 'img2img', denoise: B.clamp(o.strength || 0.24, 0.1, 0.5), params: F.f.p, r2: true, noFallback: true, signal: o.signal, onProgress: o.onProgress, maxWait: 1500 });
+      let c = await toCanvas(r.blob);
+      const f = Math.min(2, 2048 / Math.max(c.width, c.height));
+      if (f > 1.05) c = B.realism.sharpen(B.realism.upscale(c, f), 0.55, 1.1);
+      return { canvas: c, model: r.model };
+    }
+    return { generate, photo, detail, photoFamilies, pick, pickMany, fit, bucket, status, MODELS, FAM, BUDGET };
   })();
 
   /* ================= local realism toolkit ================= */
   const LOOKS = {
-    natural: { label: 'Naturale', curve: 0.18, sat: 1.0, warm: 0.0, sh: [0, 0, 0], hi: [0, 0, 0], grain: 0.35, vig: 0.18, clarity: 0.35, fade: 0 },
+    natural: { label: 'Naturale', curve: 0.1, sat: 1.0, warm: 0.0, sh: [0, 0, 0], hi: [0, 0, 0], grain: 0.26, vig: 0.08, clarity: 0.1, fade: 0 },
     portra: { label: 'Portra 400', curve: 0.14, sat: 0.92, warm: 0.035, sh: [0.01, 0.0, -0.01], hi: [0.025, 0.012, -0.02], grain: 0.5, vig: 0.22, clarity: 0.25, fade: 0.025 },
     cinestill: { label: 'Cinestill', curve: 0.26, sat: 1.05, warm: 0.02, sh: [-0.01, 0.005, 0.02], hi: [0.03, 0.0, -0.02], grain: 0.55, vig: 0.3, clarity: 0.3, fade: 0.01, halation: 0.35 },
     gold: { label: 'Ora d’oro', curve: 0.2, sat: 1.06, warm: 0.07, sh: [0.015, 0.0, -0.015], hi: [0.04, 0.02, -0.03], grain: 0.4, vig: 0.28, clarity: 0.3, fade: 0.015 },
@@ -133,6 +209,13 @@
   };
   B.realism = {
     LOOKS,
+    sharpen(src, amount = 0.6, radius = 1.2) {
+      const w = src.width, h = src.height, out = mk(w, h), x = out.getContext('2d', { willReadFrequently: true }); x.drawImage(src, 0, 0);
+      const bl = mk(w, h), bx = bl.getContext('2d', { willReadFrequently: true }); bx.filter = 'blur(' + radius + 'px)'; bx.drawImage(src, 0, 0);
+      const a = x.getImageData(0, 0, w, h), d = a.data, b = bx.getImageData(0, 0, w, h).data;
+      for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) { const v = d[i + k] + (d[i + k] - b[i + k]) * amount; d[i + k] = v < 0 ? 0 : v > 255 ? 255 : v; }
+      x.putImageData(a, 0, 0); return out;
+    },
     upscale(src, factor) {
       let c = src; let cur = 1;
       while (cur < factor - 1e-3) { const f = Math.min(1.5, factor / cur); const n = mk(c.width * f, c.height * f); const x = n.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(c, 0, 0, n.width, n.height); c = n; cur *= f; }
@@ -153,7 +236,7 @@
       // filmic tone curve LUT
       const lut = new Float32Array(256);
       for (let i = 0; i < 256; i++) { const x = i / 255; const s = x + L.curve * (x - 0.5) * (1 - Math.abs(2 * x - 1)) * 2 * 0.5; const shoulder = s > 0.82 ? 0.82 + (s - 0.82) * (1 - (s - 0.82) * 1.6) : s; lut[i] = Math.min(1, Math.max(0, shoulder * (1 - L.fade) + L.fade)); }
-      const cx = w / 2, cy = h / 2, maxD = Math.hypot(cx, cy), ca = (o.ca ?? 0.0011);
+      const cx = w / 2, cy = h / 2, maxD = Math.hypot(cx, cy), ca = (o.ca ?? 0.0006);
       const gAmp = L.grain * 0.055;
       for (let y = 0, i = 0; y < h; y++) {
         for (let x = 0; x < w; x++, i += 4) {
@@ -252,11 +335,11 @@
     const styleAdd = style && B.ai.STYLES[style] ? B.ai.STYLES[style].add : '';
     if (B.ai.textEngine()) {
       try {
-        const r = await B.ai.json('Sei un direttore della fotografia. Trasforma questa idea in un prompt per un modello Stable Diffusion fotorealistico.\nIdea: "' + idea + '"' + (styleAdd ? '\nStile richiesto: ' + styleAdd : '') + '\nRispondi SOLO con JSON: {"prompt":"in inglese, max 60 parole: inizia con RAW photo (se fotografia), poi soggetto preciso, azione, ambiente, luce (direzione e qualità), obiettivo e diaframma, pellicola o sensore, dettagli di texture","negative":"in inglese, difetti da evitare","look":"natural|portra|cinestill|gold|cinema|noir|crisp","kind":"photo|art|anime"}', { system: false, tier: 'quick', cache: true, signal });
-        if (r && r.prompt) return { prompt: String(r.prompt).slice(0, 600), negative: r.negative || base.negative, look: LOOKS[r.look] ? r.look : 'natural', kind: ['photo', 'art', 'anime'].includes(r.kind) ? r.kind : base.kind };
+        const r = await B.ai.json('Sei un direttore della fotografia premiato. Trasforma questa idea nella descrizione di una VERA fotografia, indistinguibile da uno scatto reale.\nIdea: "' + idea + '"' + (styleAdd ? '\nStile richiesto: ' + styleAdd : '') + '\nRispondi SOLO con JSON: {"prompt":"in inglese, 50-90 parole, frasi naturali: soggetto preciso (età, aspetto, espressione, abiti), azione, ambiente e dettagli di contesto, luce (sorgente, direzione, qualità, ora del giorno), inquadratura e punto di vista, fotocamera e obiettivo (es. Sony A7 IV, 85mm f/1.8), profondità di campo, texture reali (pori della pelle, capelli sottili, tessuti, polvere, imperfezioni), colori veri. Niente parole come masterpiece, 8k, hyper-realistic","negative":"in inglese, difetti da evitare","look":"natural|portra|cinestill|gold|cinema|noir|crisp","kind":"photo|art|anime","people":true}', { system: false, tier: 'quick', cache: true, signal });
+        if (r && r.prompt) return { prompt: String(r.prompt).slice(0, 900), negative: r.negative || base.negative, look: LOOKS[r.look] ? r.look : 'natural', kind: ['photo', 'art', 'anime'].includes(r.kind) ? r.kind : base.kind, people: typeof r.people === 'boolean' ? r.people : undefined };
       } catch (e) { if (e.code === 'cancelled') throw e; /* fall back */ }
     }
-    base.prompt = (base.kind === 'photo' ? 'RAW photo, ' : '') + idea + (styleAdd ? ', ' + styleAdd : ', natural light, 50mm lens, high detail, film grain');
+    base.prompt = idea + (styleAdd ? ', ' + styleAdd : base.kind === 'photo' ? ', candid real photograph, natural light, 50mm lens, shallow depth of field, real textures' : '');
     return base;
   };
 
@@ -270,10 +353,14 @@
     const look = o.look || plan.look;
     if (o.signal && o.signal.aborted) throw Object.assign(new Error('Interrotto'), { code: 'cancelled' });
     step('shot', 'Scatto sulla rete GPU comunitaria', 'run');
-    const shot = await B.horde.generate({ prompt: plan.prompt, negative: plan.negative, w: o.w || 1, h: o.h || 1, kind: plan.kind, seed: o.seed, signal: o.signal, onProgress: (p) => step('shot', 'Scatto sulla rete GPU comunitaria', 'run', { detail: p.processing ? 'in elaborazione su ' + p.model + ' · ' + p.elapsed + ' s' : 'in coda da ' + p.elapsed + ' s · di solito 1–3 minuti' }) });
-    step('shot', 'Scatto pronto · ' + shot.model, 'done', { preview: shot.blob });
-    let canvas = await toCanvas(shot.blob);
-    if (o.quality === 'ultra') {
+    const prog = (p) => step('shot', 'Scatto sulla rete GPU comunitaria', 'run', { detail: p.processing ? 'in elaborazione su ' + p.model + ' · ' + p.elapsed + ' s' : 'in coda da ' + p.elapsed + ' s' + (p.racers > 1 ? ' · due modelli fotografici in gara' : '') });
+    const shot = plan.kind === 'photo'
+      ? await B.horde.photo({ prompt: plan.prompt, negative: plan.negative, w: o.w || 1, h: o.h || 1, kind: 'photo', people: plan.people, quality: o.quality === 'fast' ? 'high' : 'max', seed: o.seed, signal: o.signal, onProgress: prog })
+      : await B.horde.generate({ prompt: plan.prompt, negative: plan.negative, w: o.w || 1, h: o.h || 1, kind: plan.kind, seed: o.seed, signal: o.signal, onProgress: prog });
+    step('shot', 'Scatto pronto · ' + shot.model + (shot.post && shot.post.length ? ' · ' + (shot.post.includes('CodeFormers') ? 'volti ritoccati, ' : '') + 'ingrandita a ' + shot.w + ' px' : ''), 'done', { preview: shot.blob });
+    let canvas = shot.canvas || await toCanvas(shot.blob);
+    if (plan.kind === 'photo') { /* already native 1 MP from a modern photo model, upscaled on the network */ }
+    else if (o.quality === 'ultra') {
       step('refine', 'Rifinisco il dettaglio in tasselli', 'run');
       try {
         const r = await B.irisRefine(canvas, { prompt: plan.prompt, negative: plan.negative, kind: plan.kind, model: shot.model, signal: o.signal, onProgress: (p) => step('refine', 'Rifinisco il dettaglio in tasselli', 'run', { detail: Math.round(p * 100) + '%' }) });
@@ -295,7 +382,9 @@
   /* edit / inpaint / outpaint an existing image */
   B.irisEdit = async function (srcIn, instruction, o = {}) {
     const src = await toCanvas(srcIn);
-    const [W, H] = B.horde.fit(src.width, src.height);
+    // plain edits run on a photo SDXL model at its native size; masked edits need the inpainting models
+    const F = o.mask ? null : (await B.horde.photoFamilies()).find((x) => x.f.tier === 2);
+    const [W, H] = F ? B.horde.bucket(src.width, src.height) : B.horde.fit(src.width, src.height);
     const small = mk(W, H); small.getContext('2d').drawImage(src, 0, 0, W, H);
     let prompt = instruction;
     if (B.ai.textEngine() && !o.rawPrompt) {
@@ -306,7 +395,7 @@
       const m = mk(W, H), mx = m.getContext('2d'); mx.drawImage(small, 0, 0); mx.globalCompositeOperation = 'destination-out'; mx.drawImage(o.mask, 0, 0, W, H);
       source = b64(m); processing = o.outpaint ? 'outpainting' : 'inpainting';
     }
-    const r = await B.horde.generate({ prompt: 'RAW photo, ' + prompt, negative: 'blurry, deformed, watermark, text, cartoon', source, processing, denoise: o.mask ? 1 : (o.strength ?? 0.55), size: [W, H], kind: o.mask ? 'inpaint' : 'photo', signal: o.signal, onProgress: o.onProgress, maxWait: 240 });
+    const r = await B.horde.generate(Object.assign({ prompt: 'RAW photo, ' + prompt + ', photorealistic, natural skin texture, sharp focus', negative: 'blurry, deformed, watermark, text, cartoon, cgi, plastic skin', source, processing, denoise: o.mask ? 1 : (o.strength ?? 0.55), size: [W, H], kind: o.mask ? 'inpaint' : 'photo', signal: o.signal, onProgress: o.onProgress, maxWait: F ? 1200 : 240 }, F ? { models: F.ms, params: F.f.p, noFallback: true } : {}));
     const im = await B.loadImage(r.blob);
     const out = mk(src.width, src.height), x = out.getContext('2d');
     if (o.mask) {
@@ -327,10 +416,26 @@
     const step = (label, status) => ctx.onStep && ctx.onStep({ label, status });
     const tools = [];
     if (B.ai.engines.horde) {
-      tools.push({ name: 'generate_photo', description: 'Scatta una foto fotorealistica (bassa risoluzione, veloce e a basso consumo di GPU). Scrivi tu un prompt fotografico dettagliato in inglese. Restituisce image_id, width, height.', schema: { type: 'object', properties: { prompt: { type: 'string', description: 'Prompt in inglese: RAW photo, soggetto, ambiente, luce, obiettivo, pellicola, texture' }, negative: { type: 'string', description: 'Difetti da evitare, in inglese' }, aspect: { type: 'string', enum: Object.keys(ASPECTS) }, kind: { type: 'string', enum: ['photo', 'art', 'anime'] } }, required: ['prompt'] },
-        execute: async (a, c) => { step('Scatto: ' + String(a.prompt).slice(0, 70), 'run'); const [aw, ah] = ASPECTS[a.aspect] || [1, 1]; const r = await B.horde.generate({ prompt: a.prompt, negative: a.negative || 'blurry, deformed, watermark, text, plastic skin', w: aw, h: ah, kind: a.kind || 'photo', signal: c && c.signal }); step('Scatto pronto', 'done'); return Object.assign(await put(r.blob, a.prompt, { prompt: a.prompt, negative: a.negative, kind: a.kind || 'photo', model: r.model }), { model: r.model }); } });
-      tools.push({ name: 'refine_detail', description: 'Raddoppia la risoluzione e aggiunge dettaglio reale (pelle, tessuti, materiali) rigenerando l’immagine a tasselli con bassa intensità. Usalo dopo generate_photo per il realismo massimo.', schema: { type: 'object', properties: { image_id: { type: 'string' }, strength: { type: 'number', description: '0.2 delicato – 0.45 marcato, default 0.32' } }, required: ['image_id'] },
-        execute: async (a, c) => { const it = get(a.image_id); step('Rifinisco il dettaglio', 'run'); const r = await B.irisRefine(it.canvas, { prompt: it.prompt || it.label || 'photo', negative: it.negative, kind: it.kind, model: it.model, strength: B.clamp(+a.strength || 0.32, 0.15, 0.5), signal: c && c.signal }); step('Dettaglio rifinito', 'done'); return put(await B.canvasToBlob(r.canvas, 'image/jpeg', 0.95), 'Rifinita', { prompt: it.prompt, kind: it.kind, model: it.model }); } });
+      tools.push({ name: 'generate_photo', description: 'Scatta una foto ultra realistica, indistinguibile da una vera: modelli fotografici di ultima generazione (Z-Image, FLUX, SDXL foto) a risoluzione nativa, volti ritoccati e ingrandimento nitido fino a 2K. Scrivi un prompt in inglese, descrittivo come una vera foto. Restituisce image_id, width, height.', schema: { type: 'object', properties: { prompt: { type: 'string', description: 'In inglese, 50-90 parole in frasi naturali: soggetto (età, aspetto, espressione, abiti), azione, ambiente, luce (sorgente, direzione, ora), inquadratura, fotocamera e obiettivo, profondità di campo, texture reali (pori, capelli, tessuti, imperfezioni)' }, negative: { type: 'string', description: 'Difetti da evitare, in inglese (solo per i modelli SDXL)' }, aspect: { type: 'string', enum: Object.keys(ASPECTS) }, kind: { type: 'string', enum: ['photo', 'art', 'anime'] }, quality: { type: 'string', enum: ['max', 'high'], description: 'max (default) = 2K nitida; high = 1 MP (es. texture o bozze)' }, people: { type: 'boolean', description: 'true se ci sono persone (ritocco dei volti)' } }, required: ['prompt'] },
+        execute: async (a, c) => {
+          const kind = a.kind || 'photo'; const [aw, ah] = ASPECTS[a.aspect] || [1, 1];
+          const label = 'Scatto: ' + String(a.prompt).slice(0, 70);
+          step(label, 'run');
+          const r = kind === 'photo'
+            ? await B.horde.photo({ prompt: a.prompt, negative: a.negative, w: aw, h: ah, kind, people: a.people, quality: a.quality === 'high' ? 'high' : 'max', signal: c && c.signal, onProgress: (p) => ctx.onStep && ctx.onStep({ label, status: 'run', detail: p.processing ? 'in elaborazione su ' + p.model : 'in coda da ' + p.elapsed + ' s' + (p.racers > 1 ? ' · due modelli in gara' : '') }) })
+            : await B.horde.generate({ prompt: a.prompt, negative: a.negative || 'blurry, deformed, watermark, text', w: aw, h: ah, kind, signal: c && c.signal });
+          step('Scatto pronto · ' + r.model + ' · ' + r.w + '×' + r.h, 'done');
+          return Object.assign(await put(r.blob, a.prompt, { prompt: a.prompt, negative: a.negative, kind, model: r.model, url: r.url, max: kind === 'photo' && a.quality !== 'high' }), { model: r.model });
+        } });
+      tools.push({ name: 'refine_detail', description: 'Aggiunge dettaglio reale (pelle, capelli, tessuti, materiali) e raddoppia la risoluzione fino a 2K con un passaggio leggero di un modello fotografico SDXL e un ingrandimento nitido. Utile per immagini allegate o scatti "high"; gli scatti "max" sono già al massimo.', schema: { type: 'object', properties: { image_id: { type: 'string' }, strength: { type: 'number', description: '0.15 delicato – 0.4 marcato, default 0.24' } }, required: ['image_id'] },
+        execute: async (a, c) => {
+          const it = get(a.image_id);
+          if (it.max && Math.max(it.canvas.width, it.canvas.height) >= 1900) { step('Dettaglio già al massimo (2K)', 'done'); return { image_id: String(a.image_id), width: it.canvas.width, height: it.canvas.height, note: 'già al massimo dettaglio' }; }
+          step('Rifinisco il dettaglio', 'run');
+          const r = await B.horde.detail(it.canvas, { prompt: it.prompt || it.label || 'photo', strength: +a.strength || 0.24, signal: c && c.signal });
+          step('Dettaglio rifinito · ' + r.canvas.width + '×' + r.canvas.height, 'done');
+          return put(await B.canvasToBlob(r.canvas, 'image/jpeg', 0.95), 'Rifinita', { prompt: it.prompt, kind: it.kind, model: r.model, max: true });
+        } });
       tools.push({ name: 'edit_photo', description: 'Modifica una foto esistente secondo un prompt (img2img): cambia stile, luce, stagione, abiti, sfondo. Restituisce un nuovo image_id.', schema: { type: 'object', properties: { image_id: { type: 'string' }, prompt: { type: 'string', description: 'Descrizione in inglese del risultato desiderato' }, strength: { type: 'number', description: '0.3 leggero – 0.75 forte' } }, required: ['image_id', 'prompt'] },
         execute: async (a, c) => { const it = get(a.image_id); step('Modifico la foto', 'run'); const blob = await B.irisEdit(it.canvas, a.prompt, { strength: B.clamp(+a.strength || 0.5, 0.2, 0.85), rawPrompt: true, signal: c && c.signal }); step('Modifica pronta', 'done'); return put(blob, a.prompt, { prompt: a.prompt, kind: it.kind }); } });
     }
@@ -342,42 +447,72 @@
       execute: async (a) => { const it = get(a.image_id); step('Scontorno il soggetto', 'run'); const out = await B.removeBackground(it.canvas); step('Sfondo rimosso', 'done'); return put(await B.canvasToBlob(out, 'image/png'), 'Scontornata', { prompt: it.prompt }); } });
     if (B.ai.textEngine()) tools.push({ name: 'create_vector', description: 'Crea un’illustrazione vettoriale SVG (loghi, icone, poster grafici). Restituisce image_id.', schema: { type: 'object', properties: { prompt: { type: 'string' }, aspect: { type: 'string', enum: Object.keys(ASPECTS) } }, required: ['prompt'] },
       execute: async (a, c) => { step('Disegno il vettoriale', 'run'); const [aw, ah] = ASPECTS[a.aspect] || [1, 1]; const W = 1024, H = Math.round(1024 * ah / aw); const svg = await B.ai.svg(a.prompt, { w: W, h: H, signal: c && c.signal }); step('Vettoriale pronto', 'done'); return put(await B.ai.svgToBlob(svg, W, H), a.prompt, { svg }); } });
-    tools.push({ name: 'make_video', description: 'Crea un breve video cinematografico (MP4) animando una o più immagini con movimenti di camera, particelle, transizioni e musica originale. Basso consumo: tutto nel browser.', schema: { type: 'object', properties: { image_ids: { type: 'array', items: { type: 'string' } }, title: { type: 'string', description: 'Testo a schermo, breve' }, seconds: { type: 'number' }, camera: { type: 'string', enum: ['zoomIn', 'zoomOut', 'panLeft', 'panRight', 'orbit'] }, particles: { type: 'string', enum: ['none', 'dust', 'bokeh', 'sparks', 'snow', 'rain', 'stars'] }, music: { type: 'string', enum: ['none', 'cinematic', 'upbeat', 'lofi', 'ambient', 'epic', 'corporate'] }, aspect: { type: 'string', enum: ['9:16', '16:9', '1:1'] } }, required: ['image_ids'] },
+    tools.push({ name: 'make_video', description: 'Gira un video realistico (MP4) CON AUDIO partendo da foto ultra realistiche: profondità 3D calcolata sul dispositivo e vera camera 3D (dolly, carrello, orbita, gru, messa a fuoco), atmosfera, pellicola, suono d’ambiente sintetizzato sulla scena (pioggia, mare, vento, città, bosco, fuoco, folla, grilli…), voce narrante naturale e musica facoltative.', schema: { type: 'object', properties: {
+        image_ids: { type: 'array', items: { type: 'string' }, description: '1-6 foto, una per inquadratura, nell’ordine del montaggio' },
+        seconds: { type: 'number', description: 'durata totale in secondi presa dal messaggio (3-120)' },
+        aspect: { type: 'string', enum: ['16:9', '9:16', '1:1', '4:5'] },
+        cameras: { type: 'array', items: { type: 'string', enum: ['dolly_in', 'dolly_out', 'truck_left', 'truck_right', 'crane_up', 'crane_down', 'orbit_left', 'orbit_right', 'push_in', 'rack_focus', 'static'] }, description: 'movimento di camera per ogni inquadratura' },
+        motion: { type: 'number', description: 'intensità dei movimenti 0.2 (delicata) – 1 (ampia), default 0.7' },
+        ambience: { type: 'string', description: 'suoni d’ambiente, es. "rain thunder", "ocean wind", "city crowd", "forest river", "fire night", "room" (se vuoto li deduco dalla scena)' },
+        narration: { type: 'string', description: 'testo della voce narrante (facoltativo, nella lingua dell’utente)' },
+        music: { type: 'string', enum: ['none', 'cinematic', 'ambient', 'epic', 'lofi', 'corporate', 'upbeat'], description: 'musica di sottofondo; none per il massimo realismo' },
+        title: { type: 'string', description: 'testo a schermo nei primi secondi (facoltativo)' },
+        prompt: { type: 'string', description: 'descrizione della scena (aiuta suono e atmosfera)' }
+      }, required: ['image_ids'] },
       execute: async (a, c) => {
         const ids = (a.image_ids || []).filter((id) => store.has(String(id))).slice(0, 6); if (!ids.length) throw new Error('nessuna immagine valida');
-        step('Monto il video', 'run');
-        const [aw, ah] = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080] }[a.aspect || '9:16'];
-        const total = B.clamp(+a.seconds || Math.max(6, 4 * ids.length), 3, 120); // seconds from the prompt; default well above 0
-        const per = B.clamp(total / ids.length, 2.5, 20);
-        const cams = ['zoomIn', 'panRight', 'orbit', 'zoomOut', 'panLeft'], trans = ['iris', 'fade', 'blink', 'zoom'];
-        const story = { w: aw, h: ah, music: a.music || 'cinematic', seed: 9, title: a.title || 'Thorion', lightLeak: true, scenes: ids.map((id, i) => ({ dur: per, title: i === 0 ? (a.title || '') : '', subtitle: '', text: 'cinematic', camera: a.camera || cams[i % cams.length], particles: a.particles || 'dust', transition: trans[i % trans.length], bg: { type: 'image', blob: get(id).blob } })) };
-        await B.prepareStory(story);
-        const audio = story.music !== 'none' ? await B.music.render({ mood: story.music, duration: B.storyDuration(story), seed: 9 }) : null;
-        const res = await B.exportVideo({ w: aw, h: ah, fps: 30, duration: B.storyDuration(story), audio, signal: c && c.signal, draw: (cx, t) => B.renderStory(cx, story, t, false) });
+        const shots = ids.map((id, i) => ({ canvas: get(id).canvas, label: get(id).prompt || get(id).label || '', camera: (a.cameras || [])[i] }));
+        let res, story = null;
+        try {
+          if (!B.cinema) throw Object.assign(new Error('cinema'), { code: 'nogl' });
+          const ar = shots[0].canvas.width / shots[0].canvas.height; a.aspect = a.aspect || (ar > 1.2 ? '16:9' : ar < 0.83 ? '9:16' : '1:1');
+          res = await B.cinema.render({ shots, seconds: a.seconds, aspect: a.aspect, motion: a.motion, ambience: a.ambience, narration: a.narration, music: B.music && B.music.MOODS[a.music] ? a.music : 'none', title: a.title, prompt: a.prompt, signal: c && c.signal, onStep: (s) => step(s.label, s.status) });
+        } catch (e) {
+          if (e.code === 'cancelled' || (c && c.signal && c.signal.aborted)) throw e;
+          // no WebGL2 here: the 2D storyboard renderer with the same realistic soundtrack
+          console.warn('Thorion Cinema non disponibile, uso il montaggio 2D', e);
+          step('Monto il video (modalità compatibile)', 'run');
+          const [aw, ah] = { '9:16': [1080, 1920], '16:9': [1920, 1080], '1:1': [1080, 1080], '4:5': [1080, 1350] }[a.aspect || '16:9'];
+          const total = B.clamp(+a.seconds || Math.max(6, 4 * ids.length), 3, 120), per = B.clamp(total / ids.length, 2.5, 20);
+          const cams = ['zoomIn', 'panRight', 'orbit', 'zoomOut', 'panLeft'];
+          story = { w: aw, h: ah, music: 'none', seed: 9, title: a.title || '', lightLeak: false, scenes: ids.map((id, i) => ({ dur: per, title: i === 0 ? (a.title || '') : '', subtitle: '', text: 'cinematic', camera: cams[i % cams.length], particles: 'none', transition: 'fade', bg: { type: 'image', blob: get(id).blob } })) };
+          await B.prepareStory(story);
+          const dur = B.storyDuration(story);
+          const st = B.cinema ? await B.cinema.soundtrack({ duration: dur, ambience: B.cinema.pickAmbience([a.prompt, a.title, a.narration].concat(shots.map((s) => s.label)).join(' '), a.ambience), narration: a.narration, music: a.music }) : { buffer: await B.music.render({ mood: 'cinematic', duration: dur, seed: 9 }) };
+          res = await B.exportVideo({ w: aw, h: ah, fps: 30, duration: dur, audio: st.buffer, signal: c && c.signal, draw: (cx, t) => B.renderStory(cx, story, t, false) });
+          res.seconds = dur; res.w = aw; res.h = ah;
+          step('Video pronto', 'done');
+        }
         const vid = 'vid' + ((ctx.videos = (ctx.videos || 0) + 1));
-        if (ctx.onVideo) await ctx.onVideo(vid, res.blob, story);
-        step('Video pronto', 'done');
-        return { video_id: vid, seconds: B.storyDuration(story), format: res.ext };
+        if (ctx.onVideo) await ctx.onVideo(vid, res.blob, story || { w: res.w, h: res.h });
+        return { video_id: vid, seconds: Math.round(res.seconds), format: res.ext, audio: true, ambience: (res.ambience || []).join(', '), narrated: !!res.narrated };
       } });
-    tools.push({ name: 'make_3d', description: 'Costruisce una scena 3D reale, interattiva ed esplorabile (Three.js/WebGL) con luci, ombre e materiali PBR. Usa come texture le foto già create (passa i loro image_id) per un look ultra realistico. Modalità "fps" per un piccolo gioco esplorabile con WASD e mouse, "orbit" per ruotare un oggetto/scena. Restituisce scene_id.', schema: { type: 'object', properties: {
-        mode: { type: 'string', enum: ['orbit', 'fps'], description: 'orbit = ruoti attorno; fps = cammini dentro la scena (gioco)' },
-        sky: { type: 'string', enum: ['day', 'sunset', 'night', 'studio', 'space'] },
-        ground: { type: 'object', description: 'pavimento: color (#hex) o texture (image_id di una foto, es. di pietra/erba/legno)', properties: { color: { type: 'string' }, texture: { type: 'string' }, tiles: { type: 'number' }, size: { type: 'number' } } },
-        fog: { type: 'boolean' },
-        objects: { type: 'array', description: 'da 1 a 24 oggetti', items: { type: 'object', properties: { shape: { type: 'string', enum: ['box', 'sphere', 'cylinder', 'cone', 'torus', 'plane'] }, pos: { type: 'array', items: { type: 'number' }, description: '[x,y,z]' }, size: { type: 'array', items: { type: 'number' }, description: 'dimensioni o [raggio]' }, color: { type: 'string' }, texture: { type: 'string', description: 'image_id di una foto da usare come texture' }, metal: { type: 'number' }, rough: { type: 'number' }, spin: { type: 'number', description: 'rotazione automatica, 0 = ferma' } }, required: ['shape', 'pos'] } },
-        title: { type: 'string' }
-      }, required: ['objects'] },
+    tools.push({ name: 'make_3d', description: 'Thorion Engine: crea un mondo 3D realistico e giocabile in tempo reale (three.js) — cielo fisico con ora del giorno, luce e ombre morbide, materiali PBR reali, SSAO e bloom, personaggio animato, auto realistiche guidabili, pioggia/nebbia. Preset: open_world_city (città stile open world con traffico e pedoni), nature (terreno, lago, foresta, erba al vento), studio (showroom con auto o oggetti), custom (i tuoi oggetti). custom_code permette di programmare la scena con l’API del motore. Restituisce scene_id; l’utente può giocarla e scaricarla come HTML autonomo.', schema: { type: 'object', properties: {
+        preset: { type: 'string', enum: ['open_world_city', 'nature', 'studio', 'custom'] },
+        title: { type: 'string' },
+        time_of_day: { type: 'string', enum: ['dawn', 'morning', 'noon', 'afternoon', 'golden', 'sunset', 'dusk', 'night'] },
+        day_cycle: { type: 'number', description: 'secondi per un giorno completo (0 = ora fissa)' },
+        weather: { type: 'string', enum: ['clear', 'rain', 'fog', 'snow'] },
+        player: { type: 'string', enum: ['third_person', 'fps', 'orbit', 'car'] },
+        color: { type: 'string', description: 'colore dell’auto protagonista (#hex)' },
+        quality: { type: 'string', enum: ['high', 'medium'] },
+        custom_code: { type: 'string', description: 'JavaScript eseguito con E (API del motore) e THREE dopo la costruzione del mondo' },
+        sky: { type: 'string', enum: ['day', 'sunset', 'night', 'studio', 'space'], description: 'solo preset custom' },
+        ground: { type: 'object', description: 'solo custom: material (asphalt|grass|cobble|marble|wood|sand|rock|concrete…), color o texture (image_id)', properties: { material: { type: 'string' }, color: { type: 'string' }, texture: { type: 'string' }, tiles: { type: 'number' }, size: { type: 'number' } } },
+        objects: { type: 'array', description: 'solo custom/studio: fino a 64 oggetti', items: { type: 'object', properties: { shape: { type: 'string', enum: ['box', 'sphere', 'cylinder', 'cone', 'torus', 'plane'] }, pos: { type: 'array', items: { type: 'number' } }, size: { type: 'array', items: { type: 'number' } }, rot: { type: 'array', items: { type: 'number' } }, color: { type: 'string' }, material: { type: 'string' }, texture: { type: 'string', description: 'image_id di una foto/texture creata' }, metal: { type: 'number' }, rough: { type: 'number' }, glass: { type: 'boolean' }, spin: { type: 'number' } } } },
+        mode: { type: 'string', enum: ['orbit', 'fps'] }, fog: { type: 'boolean' }
+      } },
       execute: async (a, c) => {
         step('Costruisco la scena 3D', 'run'); await B.sleep(10);
         const assets = {}; const want = new Set();
         (a.objects || []).forEach((o) => o && o.texture && want.add(String(o.texture)));
         if (a.ground && a.ground.texture) want.add(String(a.ground.texture));
         for (const id of want) { const it = store.get(id); if (it) { try { assets[id] = texData(it.canvas); } catch (e) { /* skip */ } } }
-        const html = B.scene3d(a, assets);
+        const html = B.engine ? B.engine.buildHTML(Object.assign({}, a, { assets, preset: a.preset || (a.objects && a.objects.length ? 'custom' : 'open_world_city') })) : B.scene3d(a, assets);
         const vid = 'scene' + ((ctx.scenes = (ctx.scenes || 0) + 1));
         if (ctx.onScene) await ctx.onScene(vid, new Blob([html], { type: 'text/html' }), a.title || 'Scena 3D');
         step('Scena 3D pronta', 'done');
-        return { scene_id: vid, mode: a.mode || 'orbit', objects: (a.objects || []).length };
+        return { scene_id: vid, preset: a.preset || 'custom', player: a.player || a.mode || 'third_person', objects: (a.objects || []).length };
       } });
     return tools;
   };
@@ -467,10 +602,10 @@ function boot(D){
 
   B.agentSystem = 'Sei Thorion Three 3.3: regista, fotografa, montatrice e artista 3D con strumenti reali che producono foto, video, scene 3D e grafica. ' +
     'Ragiona SEMPRE prima di agire: in poche righe pensa a cosa serve davvero (soggetto, luce, inquadratura, durata, texture, materiali) e scegli gli strumenti giusti; poi agisci. Punta sempre al massimo realismo. ' +
-    'FOTO ultra realistica: 1) generate_photo con un prompt in inglese molto dettagliato (inizia con "RAW photo", poi soggetto, azione, ambiente, luce con direzione e qualità, obiettivo e diaframma, pellicola o sensore, texture di pelle/materiali, "photorealistic, sharp focus, high detail"); 2) refine_detail sull’image_id; 3) finish_photo con il look adatto. Per una texture da usare in 3D, chiedi "seamless tileable PBR texture of …". ' +
-    'VIDEO: crea prima 1–4 foto realistiche (con refine_detail), poi make_video con i loro image_id. Leggi dal messaggio quanti secondi vuole l’utente e passali in "seconds"; se non lo dice, usa circa 8–12 secondi. Il video ha già musica/audio: scegli il "music" più adatto. ' +
-    'SCENE/GIOCHI 3D: usa make_3d. Per oggetti o materiali realistici genera prima le texture con generate_photo (es. pietra, legno, metallo, erba) e passa i loro image_id nel campo "texture" degli oggetti o del pavimento. Usa mode "fps" per un piccolo gioco esplorabile (WASD + mouse), "orbit" per mostrare un oggetto. ' +
+    'FOTO ultra realistica (indistinguibile da una vera): 1) generate_photo con un prompt in inglese di 50-90 parole in frasi naturali, come la didascalia tecnica di una vera foto: soggetto preciso (età, aspetto, espressione, abiti), azione, ambiente con dettagli di contesto, luce (sorgente, direzione, ora del giorno), inquadratura, fotocamera e obiettivo con diaframma, profondità di campo, texture reali (pori della pelle, capelli sottili, tessuti, polvere, piccole imperfezioni), colori veri; niente parole come masterpiece/8k/hyper-realistic; people=true se ci sono persone; quality "max" (default, 2K). 2) finish_photo con il look adatto (di solito natural). refine_detail solo per foto allegate o scatti "high". Per una texture da usare in 3D: "seamless tileable PBR texture of …, flat even lighting, top-down" con quality "high". ' +
+    'VIDEO realistico con audio: 1) crea 1–4 foto ultra realistiche con generate_photo (una per inquadratura, stesso soggetto/luce/ambiente descritti in modo coerente, aspect uguale al video: 16:9 orizzontale o 9:16 verticale); 2) make_video con i loro image_id, una camera diversa per inquadratura (dolly_in, truck_right, orbit_left, crane_up, rack_focus…), "seconds" letto dal messaggio (se non indicato 8–12 s), "prompt" con la descrizione della scena, "ambience" con i suoni giusti (es. "rain thunder", "ocean wind", "city crowd"), "narration" solo se l’utente vuole una voce, "music" none salvo richiesta. Il suono d’ambiente è sempre incluso. ' +
+    'MONDI/GIOCHI 3D realistici: usa make_3d (Thorion Engine). Città stile open world con traffico, pedoni e auto da guidare: preset open_world_city; natura: nature; vetrina prodotto/auto: studio; oggetti tuoi: custom (texture realistiche con "material" o con image_id di foto create con generate_photo "seamless tileable PBR texture …"). Scegli time_of_day, weather e player in base alla richiesta; per regole di gioco, missioni, oggetti, NPC o animazioni extra scrivi custom_code con l’API: ' + (B.engine ? B.engine.docs : '') + ' ' +
     'GRAFICA/loghi/icone: create_vector. MODIFICHE a una foto: edit_photo. Scontorno: remove_background. ' +
-    'CODICE e app/giochi web: scrivi tu codice completo e funzionante in un unico file (HTML+CSS+JS), moderno e animato; per il 3D nel codice usa Three.js via importmap. Non chiamare strumenti per il puro codice: scrivilo direttamente nel blocco ```html. ' +
+    'CODICE e app/giochi web: scrivi tu codice completo e funzionante in un unico file (HTML+CSS+JS), moderno e animato; per il 3D realistico nel codice preferisci make_3d con custom_code (il file HTML scaricabile è autonomo e si inserisce in qualsiasi sito); se scrivi tu il codice Three.js usa importmap con versione esatta, luce fisica (ACESFilmic, sRGB, ombre morbide, ambiente HDR), materiali PBR. Non chiamare strumenti per il puro codice: scrivilo direttamente nel blocco ```html. ' +
     'Non generare più di 3 foto per richiesta salvo richiesta esplicita. Foto, video e scene creati vengono mostrati automaticamente: alla fine rispondi in italiano con 1-3 frasi su cosa hai creato e un consiglio per migliorarlo, senza elencare gli id.';
 })();

@@ -32,9 +32,11 @@
       const paintAcct = () => {
         const u = B.account && B.account.signedIn && B.account.user;
         acct.replaceChildren(u ? B.h('span', { class: 'acct-av', text: u.name.slice(0, 1).toUpperCase() }) : B.h('span', { class: 'acct-av g', html: '<svg viewBox="0 0 48 48" width="16" height="16"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>' }),
-          B.h('span', { class: 'acct-tx' }, B.h('b', { text: u ? u.name.replace(/#\d+$/, '') : 'Accedi con Google' }), B.h('small', { text: u ? 'Priorità attiva · ' + u.kudos + ' kudos' : 'Immagini senza coda anonima' })));
+          B.h('span', { class: 'acct-tx' }, B.h('b', { text: u ? u.name.replace(/#\d+$/, '') : 'Accedi con Google' }), B.h('small', { text: u ? ({ sync: 'Sincronizzo le chat…', ok: 'Chat nel cloud · priorità attiva', offline: 'Offline: chat sul dispositivo' }[B.cloud && B.cloud.status] || 'Priorità attiva · ' + u.kudos + ' kudos') : 'Chat nel cloud e immagini più veloci' })));
       };
-      paintAcct(); B.on('account', paintAcct);
+      paintAcct(); B.on('account', paintAcct); B.on('cloud', paintAcct);
+      // chats synced from another device: refresh the list, and the open chat if it changed there and is idle here
+      B.on('cloud:pulled', async () => { const fresh = (await B.db.all('chats')).sort((a, b) => b.updated - a.updated); const same = cur && fresh.find((c) => c.id === cur.id); chats = fresh; if (cur && !same && cur.messages.length) chats.unshift(cur); if (same && !ctl && (same.updated || 0) > (cur.updated || 0)) { cur = same; renderThread(true); } else if (same) chats[chats.indexOf(same)] = cur; renderList(); });
       side.append(sideHead, newBtn, search, list, acct, B.h('div', { class: 'cs-foot', html: 'Powered by <b>Thorion Three&nbsp;3.3</b> ✦' }));
       search.addEventListener('input', renderList);
       logoInto(sideHead.querySelector('.cs-logo'), 22);
@@ -117,10 +119,10 @@
         chats.unshift(cur); renderList(); renderThread(true); if (!silent) ta.focus();
       }
       const SKIP = new Set(['blob', '_store', 'preview']);
-      async function persist() { if (!cur) return; cur.updated = Date.now(); if (cur.messages.length) await B.db.put('chats', JSON.parse(JSON.stringify(cur, (k, v) => (SKIP.has(k) ? undefined : v)))); renderList(); }
+      async function persist() { if (!cur) return; cur.updated = Date.now(); if (cur.messages.length) { const snap = JSON.parse(JSON.stringify(cur, (k, v) => (SKIP.has(k) ? undefined : v))); await B.db.put('chats', snap); B.cloud && B.cloud.push(snap); } renderList(); }
       function open(c) { if (c !== cur && holdSwitch()) return; cur = c; el.classList.remove('side-open'); renderList(); renderThread(true); }
       const dropVideos = (msgs) => msgs.forEach((m) => (m.media || []).forEach((x) => { if (x.key) { B.db.del('blobs', x.key).catch(() => {}); vidCache.delete(x.key); } }));
-      async function delChat(c) { if (c === cur && holdSwitch()) return; if (!(await B.confirm('Eliminare questa chat?', '“' + c.title + '” verrà eliminata.', 'Elimina', true))) return; dropVideos(c.messages); await B.db.del('chats', c.id); chats = chats.filter((x) => x !== c); if (c === cur) { cur = null; if (chats[0]) open(chats[0]); else newChat(); } else renderList(); }
+      async function delChat(c) { if (c === cur && holdSwitch()) return; if (!(await B.confirm('Eliminare questa chat?', '“' + c.title + '” verrà eliminata.', 'Elimina', true))) return; dropVideos(c.messages); await B.db.del('chats', c.id); B.cloud && B.cloud.remove(c.id); chats = chats.filter((x) => x !== c); if (c === cur) { cur = null; if (chats[0]) open(chats[0]); else newChat(); } else renderList(); }
       async function rename() { if (!cur) return; const n = await B.prompt('Rinomina chat', cur.title); if (n) { cur.title = n; persist(); } }
       function renderList() {
         const q = search.value.trim().toLowerCase();

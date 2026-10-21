@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<title>Thorion</title>
+<meta name="description" content="Thorion: una chat che ragiona e crea testo, codice, foto e video ultra realistici, scene e giochi 3D. Gratis, senza chiavi.">
+<meta name="theme-color" content="#100a06">
+<link rel="icon" type="image/png" href="assets/thorion-logo-64.png">
+<link rel="apple-touch-icon" href="assets/thorion-logo-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Figtree:ital,wght@0,400..700;1,400..600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/vendor/codemirror.css">
+<link rel="stylesheet" href="css/breye.css">
+<link rel="stylesheet" href="css/studios.css">
+</head>
+<body>
+<div id="boot" class="boot" aria-hidden="true">
+  <div class="boot-eye"><img src="assets/thorion-logo-256.webp" alt=""><span class="boot-lid top"></span><span class="boot-lid bottom"></span></div>
+  <div class="boot-word">Thorion</div>
+</div>
+
+<div class="app" id="app">
+  <aside class="side" id="side">
+    <a class="brand" href="#home" data-nav="home" aria-label="Thorion, home">
+      <span class="brand-eye" id="brandEye"></span>
+      <span class="brand-word">Thor<em>ion</em></span>
+    </a>
+    <nav class="nav" id="nav" aria-label="Sezioni"></nav>
+    <div class="side-foot">
+      <button class="nav-item" id="cmdBtn" type="button" data-tip="Cerca e comandi (Ctrl K)"><span class="ni-ic" data-i="Command"></span><span class="ni-tx">Comandi</span><kbd class="ni-kbd">Ctrl K</kbd></button>
+      <button class="nav-item" id="themeBtn" type="button" data-tip="Tema chiaro o scuro"><span class="ni-ic" data-i="Moon"></span><span class="ni-tx">Tema</span></button>
+      <button class="ai-pill" id="aiPill" type="button" data-nav="settings"><span class="ai-dot"></span><span class="ai-pill-tx">Thorion AI</span></button>
+    </div>
+  </aside>
+  <main class="main" id="main">
+    <div class="views" id="views"></div>
+  </main>
+</div>
+
+<div class="cmdk" id="cmdk" hidden>
+  <div class="cmdk-box" role="dialog" aria-label="Comandi">
+    <div class="cmdk-in"><span data-i="Search"></span><input id="cmdkInput" type="text" placeholder="Cerca strumenti, azioni, progetti… oppure chiedi a Thorion" autocomplete="off"></div>
+    <div class="cmdk-list" id="cmdkList"></div>
+    <div class="cmdk-foot"><span><kbd>↑</kbd><kbd>↓</kbd> scegli</span><span><kbd>Invio</kbd> apri</span><span><kbd>Esc</kbd> chiudi</span></div>
+  </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="modal-root" id="modalRoot"></div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script src="js/icons.js"></script>
+<script src="js/core.js"></script>
+<script src="js/account.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/engine/thorion-engine.js"></script>
+<script src="js/iris-tools.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/cinema.js"></script>
+<script src="js/forge.js"></script>
+<script src="js/eye.js"></script>
+<script src="js/home.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/imagine.js"></script>
+<script src="js/motion.js"></script>
+<script src="js/design.js"></script>
+<script src="js/photo.js"></script>
+<script src="js/video.js"></script>
+<script src="js/code.js"></script>
+<script src="js/docs.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/boot.js"></script>
+</body>
+</html>

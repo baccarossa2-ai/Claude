@@ -16,6 +16,36 @@
     const im = await B.loadImage(src); const c = mk(im.naturalWidth, im.naturalHeight); c.getContext('2d').drawImage(im, 0, 0); return c;
   }
 
+  /* ================= subject cut-out: ORMBG (Apache-2.0) on the device ================= */
+  let segP = null;
+  function loadSeg() {
+    if (!segP) segP = (async () => {
+      const T = await import(TJS); T.env.allowLocalModels = false;
+      return { T, pipe: await T.pipeline('background-removal', 'onnx-community/ormbg-ONNX', { device: 'wasm', dtype: 'q8' }) };
+    })();
+    segP.catch(() => { segP = null; });
+    return segP;
+  }
+  // returns the image with a transparent background, or null when no clear subject was found
+  B.neuralCut = async function (src) {
+    const c = await toCanvas(src), s = Math.min(1, 1024 / Math.max(c.width, c.height));
+    const small = mk(c.width * s, c.height * s); small.getContext('2d').drawImage(c, 0, 0, small.width, small.height);
+    const { T, pipe } = await loadSeg();
+    const out = await pipe(T.RawImage.fromCanvas(small)); const m = (Array.isArray(out) ? out[0] : out).toCanvas();
+    const d = m.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, m.width, m.height).data; let fg = 0; for (let i = 3; i < d.length; i += 4) fg += d[i] > 127;
+    const f = fg / (m.width * m.height); if (f < 0.005 || f > 0.97) return null;
+    const res = mk(c.width, c.height), x = res.getContext('2d'); x.drawImage(c, 0, 0); x.globalCompositeOperation = 'destination-in'; x.imageSmoothingQuality = 'high'; x.drawImage(m, 0, 0, c.width, c.height);
+    return res;
+  };
+  // every background removal in Thorion tries the neural cut first, then the local colour flood
+  addEventListener('DOMContentLoaded', () => {
+    const flood = B.removeBackground; if (!flood || flood.neural) return;
+    B.removeBackground = Object.assign(async function (src, opts = {}) {
+      if (opts.neural !== false) { try { const c = await B.neuralCut(src); if (c) return c; } catch (e) { console.warn('scontorno neurale non disponibile', e); } }
+      return flood(src, opts);
+    }, { neural: true });
+  });
+
   /* ================= charts ================= */
   const PAL = ['#c8902e', '#3f6e8c', '#b5543c', '#5d8a4e', '#8a5fa8', '#d9b45f', '#2f8f8a', '#9a6a4a', '#c76b98', '#6b7a8f'];
   const MATH = { sin: 1, cos: 1, tan: 1, asin: 1, acos: 1, atan: 1, sinh: 1, cosh: 1, tanh: 1, sqrt: 1, cbrt: 1, abs: 1, exp: 1, floor: 1, ceil: 1, round: 1, sign: 1, min: 1, max: 1, pow: 1, log: 'log10', ln: 'log', log10: 1, log2: 1, pi: 'PI', e: 'E', sen: 'sin', tg: 'tan', arcsin: 'asin', arccos: 'acos', arctan: 'atan' };
@@ -275,8 +305,9 @@
     const canvas = await toCanvas(src);
     const N = o.detail === 'high' ? 300 : o.detail === 'low' ? 160 : 240;
     const s = N / Math.max(canvas.width, canvas.height), w = Math.max(16, Math.round(canvas.width * s)), h = Math.max(16, Math.round(canvas.height * s));
-    step('Separo il soggetto dallo sfondo', 'run');
-    const cut = await B.removeBackground(canvas);
+    step('Separo il soggetto dallo sfondo (rete neurale ORMBG, sul tuo dispositivo)', 'run');
+    let cut = null; try { cut = await B.neuralCut(canvas); } catch (e) { console.warn('scontorno neurale non disponibile', e); }
+    if (!cut) cut = await B.removeBackground(canvas, { neural: false });
     const cs = mk(w, h), cx = cs.getContext('2d', { willReadFrequently: true }); cx.drawImage(cut, 0, 0, w, h);
     const ad = cx.getImageData(0, 0, w, h).data;
     let mA = new Uint8Array(w * h), fa = 0; for (let p = 0; p < w * h; p++) { mA[p] = ad[p * 4 + 3] > 127 ? 1 : 0; fa += mA[p]; } fa /= w * h;

@@ -1,7 +1,8 @@
 /* Thorion — the Thorion AI engine.
-   Text, code, tools and vision: Claude inside claude.ai (no key), or on the public web open models running on the
-   AI Horde community GPU network (Skyfall 31B and its Mistral family, or a large Qwen whenever a volunteer hosts one):
-   free, keyless, no quota.
+   Two models, both free, keyless and unlimited. Three 3.3 Veloce answers everyday chat, searches, reasoning and
+   attachments: GPT-OSS streamed from Pollinations, with web search. Three 3.3 Forte builds — code, sites, games,
+   charts, 3D, and directs photo/video/audio tools: Qwen 3.5 122B on the AI Horde community GPUs (then Skyfall 31B
+   and its family), with priority for signed-in accounts. Each falls back on the other. Inside claude.ai: Claude.
    Images: photoreal (AI Horde as well, see iris-tools.js; Pollinations Sana as an instant fallback),
    vector (SVG written by the language model), procedural (GLSL shaders written by the language model). Video: see motion.js. */
 (function () {
@@ -13,7 +14,7 @@
     engines: { claude: false, web: false, horde: false, vision: false, tools: false },
     ready: null,
     busy: 0,
-    persona: 'Sei Thorion Three 3.3, un modello di frontiera: ragioni in profondità prima di rispondere, sei fortissimo in matematica, scienze, ingegneria e programmazione, e sai creare foto e video ultra realistici, modelli e scene 3D. Ti presenti come "Thorion Three 3.3". Rispondi nella lingua dell’utente (di default in italiano), con tono caldo, preciso e sicuro. Prima pensa passo per passo al problema, poi dai una risposta chiara e completa. Usa Markdown quando aiuta: titoli brevi, elenchi, tabelle, formule e blocchi di codice con il linguaggio indicato; quando scrivi codice, scrivilo completo, moderno e funzionante in un unico file. Non inventare fatti: se non sei sicuro, dillo. Aiuti la ricerca scientifica e lo studio in modo responsabile e per fini legittimi; non fornisci istruzioni per creare armi, agenti patogeni o altro materiale pericoloso.'
+    persona: 'Sei Thorion Three 3.3, un modello di frontiera: ragioni in profondità prima di rispondere, sei fortissimo in matematica, scienze, ingegneria e programmazione, e sai creare foto e video ultra realistici, modelli e scene 3D. Ti presenti come "Thorion Three 3.3". Rispondi nella lingua dell’utente (di default in italiano), con tono caldo, preciso e sicuro. Prima pensa passo per passo al problema, poi dai una risposta chiara e completa. Usa Markdown quando aiuta: titoli brevi, elenchi, tabelle, formule e blocchi di codice con il linguaggio indicato; quando scrivi codice, scrivilo completo, moderno e funzionante in un unico file. Non inventare fatti: se non sei sicuro, dillo. Lavori in due modalità che Thorion sceglie da sola: Veloce, per la conversazione, le ricerche sul web, i ragionamenti e gli allegati, e Forte, quando costruisci qualcosa (codice, siti, giochi, grafici, modelli e mondi 3D) o dirigi foto, video, musica e voci. Aiuti la ricerca scientifica e lo studio in modo responsabile e per fini legittimi; non fornisci istruzioni per creare armi, agenti patogeni o altro materiale pericoloso.'
   });
 
   let sample = null;
@@ -125,6 +126,7 @@
   // model families on the network, best first. A request names a whole family: the first free GPU running any of
   // its models takes the job, so answers stay fast while the network stays fair (one prompt format per family)
   const FAMILIES = [
+    { id: 'qwen-xl', fmt: 'qwen3', re: /qwen3\.5-(122b|397b|35b|27b)|qwen3-(235b|32b|30b)/i, label: 'Qwen 3.5' },
     { id: 'qwen', fmt: 'chatml', re: /qwen[\w.-]*?(max|14b|27b|30b|32b|72b|235b)/i, label: 'Qwen' },
     { id: 'mistral-big', fmt: 'mistral', re: /(skyfall|artemis)-31b|(cydonia|magidonia)-24b|mistral-small/i, label: 'Skyfall 31B' },
     { id: 'mistral', fmt: 'mistral', re: /rocinante|angelic_eclipse|mistral-nemo/i, label: 'Mistral Nemo 12B' },
@@ -177,6 +179,8 @@
   }
   const TEMPLATES = {
     chatml: { head: '', sys: (s) => '<|im_start|>system\n' + s + '<|im_end|>\n', turn: (r, c) => '<|im_start|>' + r + '\n' + c + '<|im_end|>\n', open: '<|im_start|>assistant\n', stop: ['<|im_end|>', '<|im_start|>'] },
+    // Qwen 3 / 3.5: an empty thinking block answers straight away (the 512-token chunks would otherwise go to reasoning)
+    qwen3: { head: '', sys: (s) => '<|im_start|>system\n' + s + '<|im_end|>\n', turn: (r, c) => '<|im_start|>' + r + '\n' + c + '<|im_end|>\n', open: '<|im_start|>assistant\n<think>\n\n</think>\n\n', stop: ['<|im_end|>', '<|im_start|>'] },
     mistral: { head: '', sys: (s) => '[SYSTEM_PROMPT]' + s + '[/SYSTEM_PROMPT]', turn: (r, c) => r === 'user' ? '[INST]' + c + '[/INST]' : c + '</s>', open: '', stop: ['[INST]', '</s>', '[/INST]', '[SYSTEM_PROMPT]'] },
     llama3: { head: '<|begin_of_text|>', sys: (s) => '<|start_header_id|>system<|end_header_id|>\n\n' + s + '<|eot_id|>', turn: (r, c) => '<|start_header_id|>' + r + '<|end_header_id|>\n\n' + c + '<|eot_id|>', open: '<|start_header_id|>assistant<|end_header_id|>\n\n', stop: ['<|eot_id|>', '<|start_header_id|>'] }
   };
@@ -246,17 +250,68 @@
       drop(); return '';
     } catch (e) { drop(); throw e; }
   };
-  async function webText(msgs, o) {
-    const pools = await textPools(o.tier === 'complex');
-    let sys = (o.system === false ? 'Sei un assistente preciso.' : (o.system || ai.persona)) + '\nRispondi direttamente, senza mostrare il ragionamento.';
-    if (o.json) sys += '\nRispondi esclusivamente con JSON valido, senza testo prima o dopo e senza blocchi di codice.';
+  // open models read pictures through automatic captions (cached per message, so a fallback doesn't pay twice)
+  async function withCaptions(msgs, o) {
     msgs = msgs.map((m) => Object.assign({}, m));
+    let note = '';
     if (o.images && o.images.length) {
-      const caps = await Promise.all(o.images.map((im) => ai.caption(im, o.signal).catch(() => '')));
-      const desc = caps.map((c, i) => (o.images.length > 1 ? (i + 1) + ') ' : '') + (c || 'descrizione non disponibile')).join('; ');
-      sys += '\nNon vedi direttamente le immagini: ricevi una loro descrizione automatica (in inglese) e ragioni su quella.';
+      o._caps = o._caps || await Promise.all(o.images.map((im) => ai.caption(im, o.signal).catch(() => '')));
+      const desc = o._caps.map((c, i) => (o.images.length > 1 ? (i + 1) + ') ' : '') + (c || 'descrizione non disponibile')).join('; ');
+      note = '\nNon vedi direttamente le immagini: ricevi una loro descrizione automatica (in inglese) e ragioni su quella.';
       msgs[msgs.length - 1].content += '\n\n[Immagine allegata — descrizione automatica: ' + desc + ']';
     }
+    return { msgs, note };
+  }
+
+  /* ---------- Three 3.3 Veloce: GPT-OSS on Pollinations — free, keyless, streamed token by token ---------- */
+  const POLLI = 'https://text.pollinations.ai/openai';
+  async function fastText(msgs0, o) {
+    const { msgs, note } = await withCaptions(msgs0, o);
+    let sys = (o.system === false ? 'Sei un assistente preciso.' : (o.system || ai.persona)) + note;
+    if (o.json) sys += '\nRispondi esclusivamente con JSON valido, senza testo prima o dopo e senza blocchi di codice.';
+    const messages = [{ role: 'system', content: sys }].concat(msgs.slice(-24).map((m) => ({ role: m.role, content: String(m.content).slice(-48000) })));
+    const stream = !!o.onText && !o.json;
+    const body = { model: 'openai-fast', messages, stream, temperature: o.json ? 0.2 : 0.5, reasoning_effort: o.reasoning || (o.tier === 'quick' ? 'low' : 'medium'), private: true, referrer: 'thorion' };
+    let r = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      r = await fetch(POLLI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: o.signal });
+      if (r.status === 429 || r.status >= 500) { await nap(3000 * (attempt + 1), o.signal); continue; }
+      break;
+    }
+    if (!r.ok) throw Object.assign(new Error('HTTP ' + r.status), { code: r.status === 429 ? 'rate_limited' : 'upstream_error', retryOther: true });
+    ai.gate = { label: 'Three 3.3 Veloce', model: 'GPT-OSS 20B', kind: 'fast' };
+    let text = '';
+    if (stream && r.body) {
+      const rd = r.body.getReader(), dec = new TextDecoder(); let buf = '', thinking = false, last = 0;
+      for (;;) {
+        const { done, value } = await rd.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let i;
+        while ((i = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+          if (!line.startsWith('data:') || line === 'data: [DONE]') continue;
+          let d; try { d = JSON.parse(line.slice(5)); } catch (e) { continue; }
+          const dl = (d.choices && d.choices[0] && d.choices[0].delta) || {};
+          if (dl.reasoning || dl.reasoning_content) { if (!thinking) { thinking = true; B.emit('ai:think', true); } }
+          if (dl.content) { text += dl.content; const now = Date.now(); if (now - last > 40) { last = now; o.onText({ text, delta: dl.content }); } }
+        }
+      }
+      if (thinking) B.emit('ai:think', false);
+      if (text) o.onText({ text, delta: '' });
+    } else {
+      const j = await r.json().catch(() => ({}));
+      text = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+    }
+    text = clean(text);
+    if (!text) throw Object.assign(new Error('vuoto'), { code: 'empty_completion', retryOther: true });
+    return o.json ? ai.parseJSON(text) : text;
+  }
+
+  async function webText(msgs0, o) {
+    const pools = await textPools(o.tier === 'complex');
+    const { msgs, note } = await withCaptions(msgs0, o);
+    let sys = (o.system === false ? 'Sei un assistente preciso.' : (o.system || ai.persona)) + '\nRispondi direttamente, senza mostrare il ragionamento.' + note;
+    if (o.json) sys += '\nRispondi esclusivamente con JSON valido, senza testo prima o dopo e senza blocchi di codice.';
     const maxTok = o.maxTokens || (o.tier === 'complex' ? 12000 : 4096);
     let lastErr = null;
     for (const pool of pools.slice(0, 4)) {
@@ -269,7 +324,7 @@
           const res = await hordeOnce(base + out, pool, T.stop, o.signal);
           if (!res.text.trim() && out && !looksDone(clean(out), o.json) && ++empties < 2) { out = out.replace(/\s+$/, ''); continue; }
           const prev = clean(out); out += res.text;
-          ai.gate = { label: ai.modelLabel(res.model) + ' · GPU comunitaria', model: res.model };
+          ai.gate = { label: 'Three 3.3 Forte', model: ai.modelLabel(res.model), kind: 'strong' };
           if (o.onText) await reveal(prev, clean(out), o.onText, o.signal);
           if (!res.text.trim()) break;
           if (o.json) { try { ai.parseJSON(clean(out)); break; } catch (e) { continue; } } // JSON: keep going until it parses
@@ -300,10 +355,20 @@
           throw e;
         }
       }
-      return await webText(msgs, o);
+      return await routeText(msgs, o);
     } catch (e) { throw wrapErr(e); }
     finally { setBusy(-1); }
   };
+  // everyday work goes to the fast model, building to the strong one; each covers for the other
+  async function routeText(msgs, o) {
+    const strong = o.tier === 'complex' || o.strong;
+    const cancelled = (e) => e && (e.code === 'cancelled' || e.name === 'AbortError');
+    if (!strong) {
+      try { return await fastText(msgs, o); } catch (e) { if (cancelled(e)) throw e; console.warn('modello veloce non disponibile, passo al forte', e); }
+      return webText(msgs, o);
+    }
+    try { return await webText(msgs, o); } catch (e) { if (cancelled(e)) throw e; console.warn('modello forte non disponibile, passo al veloce', e); return fastText(msgs, Object.assign({}, o, { reasoning: 'high' })); }
+  }
   ai.json = (input, o = {}) => ai.text(input, Object.assign({}, o, { json: true }));
 
   /* ---------- tool use: the model calls page functions (Claude natively, the open gateway via OpenAI tools) ---------- */
@@ -333,7 +398,7 @@
       const conv = msgs.slice();
       let shown = '';
       for (let round = 0; round < (o.maxRounds || 8); round++) {
-        const text = await webText(conv, { system: sys, signal: o.signal, images: round === 0 ? o.images : null, maxTokens: 2048, tier: 'complex' });
+        const text = await routeText(conv, { system: sys, signal: o.signal, images: round === 0 ? o.images : null, maxTokens: 2048, tier: 'complex' });
         const call = parseToolCall(text, tools);
         if (!call && /<tool>/i.test(text) && round < (o.maxRounds || 8) - 1) {
           conv.push({ role: 'assistant', content: text }, { role: 'user', content: '<tool_result name="errore">Blocco <tool> non valido o strumento sconosciuto. Strumenti validi: ' + tools.map((t) => t.name).join(', ') + '. Riprova con JSON valido oppure rispondi all’utente.</tool_result>' });
@@ -361,6 +426,29 @@
     if (!tool) return null;
     return { tool, args: j.arguments || j.args || j.parameters || {}, index: m.index, end: m.index + m[0].length };
   }
+  /* ---------- web search: free, keyless sources the browser can reach ---------- */
+  const getJSON = (u, signal) => fetch(u, { signal }).then((r) => (r.ok ? r.json() : null)).catch((e) => { if (e.name === 'AbortError') throw e; return null; });
+  async function wiki(lang, q, signal) {
+    const j = await getJSON('https://' + lang + '.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=' + encodeURIComponent(q) + '&gsrlimit=3&prop=extracts|info&exintro=1&explaintext=1&exchars=1400&inprop=url&format=json&origin=*', signal);
+    const pages = j && j.query && j.query.pages ? Object.values(j.query.pages).sort((a, b) => a.index - b.index) : [];
+    return pages.filter((p) => p.extract).map((p) => ({ title: p.title + ' — Wikipedia', url: p.fullurl, snippet: p.extract.replace(/\s+/g, ' ').slice(0, 1400) }));
+  }
+  ai.search = async function (q, signal) {
+    q = String(q || '').replace(/^\s*(cerca(mi)?( sul web| online| in rete)?|ricerca|trova(mi)?|search)\s*[:,-]?\s*/i, '').trim().slice(0, 200);
+    if (!q) return [];
+    const [it, en, ddg] = await Promise.all([wiki('it', q, signal), wiki('en', q, signal), getJSON('https://api.duckduckgo.com/?q=' + encodeURIComponent(q) + '&format=json&no_html=1&skip_disambig=1', signal)]);
+    const out = [];
+    if (ddg && (ddg.Answer || ddg.AbstractText)) out.push({ title: (ddg.Heading || q) + (ddg.AbstractSource ? ' — ' + ddg.AbstractSource : ''), url: ddg.AbstractURL || 'https://duckduckgo.com/?q=' + encodeURIComponent(q), snippet: String(ddg.Answer || ddg.AbstractText).slice(0, 1400) });
+    it.concat(en.slice(0, it.length ? 1 : 3)).forEach((r) => { if (!out.some((x) => x.url === r.url)) out.push(r); });
+    return out.slice(0, 6);
+  };
+  // any public page as clean text (Jina reader: free, ~20 pages a minute)
+  ai.readUrl = async function (url, signal) {
+    const r = await fetch('https://r.jina.ai/' + url, { signal, headers: { 'X-Return-Format': 'markdown' } }).catch((e) => { if (e.name === 'AbortError') throw e; return null; });
+    if (!r || !r.ok) return '';
+    return (await r.text()).slice(0, 16000);
+  };
+
   ai.canSee = () => ai.engines.vision || !!ai.engines.caption;
   ai.canRead = () => ai.engines.vision; // reading text in images needs real pixel vision
 

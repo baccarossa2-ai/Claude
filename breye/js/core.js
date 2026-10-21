@@ -436,12 +436,15 @@
   B.cap = {};
 
   /* ---------- markdown rendering ---------- */
+  // synchronous once the libraries are loaded, so a re-rendered thread keeps its height
+  B.mdSync = function (text) {
+    if (!(window.marked && window.DOMPurify)) return null;
+    return window.DOMPurify.sanitize(window.marked.parse(String(text || ''), { gfm: true, breaks: true }), { ADD_ATTR: ['target'] });
+  };
   B.md = async function (text) {
     await B.need('marked', 'purify');
     try { await B.need('hljs'); } catch (e) { /* optional */ }
-    const html = window.marked.parse(String(text || ''), { gfm: true, breaks: true });
-    const clean = window.DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
-    return clean;
+    return B.mdSync(text);
   };
   B.enhanceCode = function (root, extra) {
     B.$$('pre > code', root).forEach((code) => {

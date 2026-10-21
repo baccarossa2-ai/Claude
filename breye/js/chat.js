@@ -8,7 +8,7 @@
     ['Code2', 'Codice', 'Scrivi un’app web completa in un solo file, elegante e animata, per '],
     ['Feather', 'Scrivi', 'Scrivimi '],
     ['Lightbulb', 'Idee', 'Dammi 7 idee originali per '],
-    ['Globe', 'Cerca', 'Spiegami in modo approfondito e ragionato '],
+    ['Globe', 'Cerca', 'Cerca sul web: '],
     ['Coffee', 'Vita quotidiana', 'Aiutami con '],
     ['Sparkles', 'Creatività', 'Crea una foto ultra realistica di ']
   ];
@@ -67,7 +67,16 @@
       let near = true;
       const toBottom = (smooth) => scroller.scrollTo({ top: scroller.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
       const downBtn = B.h('button', { class: 'to-bottom', type: 'button', 'aria-label': 'Vai all’ultimo messaggio', 'data-i': 'ArrowDown', hidden: true, onclick: () => { near = true; toBottom(true); } });
-      scroller.addEventListener('scroll', () => { near = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120; downBtn.hidden = near; }, { passive: true });
+      // only the person can unstick the thread: re-renders and late Markdown also fire scroll events
+      let userAt = 0;
+      const touched = () => { userAt = performance.now(); };
+      ['wheel', 'touchmove', 'pointerdown'].forEach((ev) => scroller.addEventListener(ev, touched, { passive: true }));
+      addEventListener('keydown', (e) => { if (/^(PageUp|PageDown|ArrowUp|ArrowDown|Home|End| )$/.test(e.key)) touched(); });
+      scroller.addEventListener('scroll', () => {
+        if (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120) near = true;
+        else if (performance.now() - userAt < 800) near = false;
+        downBtn.hidden = near;
+      }, { passive: true });
       if (window.ResizeObserver) new ResizeObserver(() => { if (near) toBottom(); }).observe(thread);
 
       /* ---- composer ---- */
@@ -168,6 +177,7 @@
         if (m.steps && m.steps.length) body.append(stepsBlock(m));
         if (m.media && m.media.length) body.append(mediaBlock(m));
         if (m.gen) body.append(genBlock(m.gen));
+        if (m.sources && m.sources.length && !m.pending) body.append(B.h('div', { class: 'msg-src' }, B.h('b', { text: 'Fonti' }), m.sources.map((r, k) => B.h('a', { href: r.url, target: '_blank', rel: 'noopener', text: '[' + (k + 1) + '] ' + r.title }))));
         if (!isUser && !m.pending) body.append(actions(m, i));
         b.append(body);
         return b;
@@ -211,7 +221,7 @@
           B.h('button', { class: 'btn sm', type: 'button', onclick: () => B.save(B.dataURLToBlob(g.src), B.slug(g.prompt) + '.png') }, B.h('span', { 'data-i': 'Download' }), 'Scarica')));
         return box;
       }
-      const mdNow = async (node, text) => { node.innerHTML = await B.md(text || ''); B.enhanceCode(node, codeExtras); B.hydrateIcons(node); };
+      const mdNow = async (node, text) => { const h = B.mdSync(text || ''); node.innerHTML = h != null ? h : await B.md(text || ''); B.enhanceCode(node, codeExtras); B.hydrateIcons(node); };
       const mdLive = new WeakMap();
       const renderMd = (node, text) => { let f = mdLive.get(node); if (!f) mdLive.set(node, (f = B.throttle(mdNow, 90))); f(node, text); };
       function codeExtras(acts, code, lang) {
@@ -228,6 +238,7 @@
         a.append(B.h('button', { class: 'btn ghost sm icon', type: 'button', 'data-tip': 'Copia', 'aria-label': 'Copia', 'data-i': 'Copy', onclick: () => B.copy(m.content) }));
         a.append(B.h('button', { class: 'btn ghost sm icon', type: 'button', 'data-tip': 'Leggi ad alta voce (premi di nuovo per fermare)', 'aria-label': 'Leggi', 'data-i': 'Volume2', onclick: (e) => speak(m.content, e.currentTarget) }));
         if (i === cur.messages.length - 1) a.append(B.h('button', { class: 'btn ghost sm icon', type: 'button', 'data-tip': 'Rigenera', 'aria-label': 'Rigenera', 'data-i': 'RefreshCw', onclick: regenerate }));
+        if (m.model) a.append(B.h('span', { class: 'msg-model', text: m.model }));
         return a;
       }
       let reading = null;
@@ -334,6 +345,7 @@
           const sys = system + '\n\n' + B.agentSystem + (B.ai.engines.horde ? '' : '\nIn questa versione (dentro un Artifact) le foto, i video e i modelli 3D ultra realistici non sono raggiungibili: per le immagini usa create_vector e ricorda in una frase che la versione completa, con foto e video reali illimitati, è sul web: ' + B.PUBLIC_URL);
           const text = await B.ai.toolChat(msgs, { system: sys, tools, signal: ctl.signal, tier: 'complex', images: B.ai.canSee() ? atts.filter((a) => a.kind === 'image').map((a) => a.blob) : null, onText: ({ text: t }) => { pend.content = t; const n = B.$('.msg:last-child .msg-content', thread); if (n) renderMd(n, t); stick(); } });
           pend.content = text || (pend.media.length ? 'Fatto.' : '');
+          if (B.ai.gate) pend.model = B.ai.gate.label + ' · ' + B.ai.gate.model;
           // the realism pipeline always ends with the film finish, even if a smaller model forgets the last step
           const last = [...pend.media].reverse().find((x) => x.type === 'image' && !x.draft);
           const fin = tools.find((t) => t.name === 'finish_photo');
@@ -353,6 +365,8 @@
         renderThread(); persist();
         if (cur.messages.length === 2 && B.ai.textEngine()) autoTitle();
       }
+      const STRONG = /\b(codic[ei]|programm|script|funzion[ei]\s+(js|javascript|python|che)|algoritm|applicazion|pagina web|landing|html|css|javascript|typescript|python|java\b|c\+\+|rust|sql|react|regex|videogioc|dimostra|teorema|equazion|integral|derivat|ottimizz|architettur|debug|refactor)/i;
+      const SEARCH = /\b(cerca|cercami|ricerca|trova(mi)?|chi\s+(è|e'|era|sono|erano|ha\s+(vinto|inventato|scritto|scoperto|fondato))|cos['’]?\s?è|cosa\s+(è|sono|significa)|quando\s+(è|nasce|nacque|fu|è stat)|dove\s+(si trova|è|nasce)|quant[ioae]\s+(abitanti|anni|costa|è alt|è lung|misura)|storia\s+d|wikipedia|notizi|ultim[ie]\s+(notizie|novità)|attualmente|aggiornat|fonti?\b|capitale|popolazione|biografia|definizione)/i;
       // guaranteed-correct answers for the two things everyone tests first: who it is, and exact arithmetic
       function quickReply(text) {
         const t = String(text || '').trim();
@@ -384,21 +398,40 @@
           const h2 = history.map((m, idx) => ({ role: m.role, content: (m.content || ' ') + (idx === history.length - 1 ? fileText2 : '') }));
           return agentAnswer(h2, lastUser._atts || [], system);
         }
-        const pend = { role: 'assistant', content: '', pending: true };
+        // Three 3.3 Veloce for everyday chat, searches and attachments; Three 3.3 Forte for code, maths and anything built
+        const ask = lastUser.content || '';
+        const strong = STRONG.test(ask);
+        const pend = { role: 'assistant', content: '', pending: true, steps: [] };
         cur.messages.push(pend);
         renderThread();
-        const node = B.$('.msg:last-child .msg-content', thread);
-        node.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+        const typing = () => { const n = B.$('.msg:last-child .msg-content', thread); if (n && !pend.content) n.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>'; };
+        typing();
         busy(true);
         ctl = new AbortController();
         const images = [];
         let fileText = '';
         (lastUser._atts || []).forEach((a) => { if (a.kind === 'image') images.push(a.blob); else fileText += '\n\n[File allegato: ' + a.name + ']\n' + a.text; });
-        const msgs = history.map((m, idx) => ({ role: m.role, content: (m.content || ' ') + (idx === history.length - 1 ? fileText : '') }));
+        const step = stepper(pend);
         try {
+          // links in the message are read; questions about facts go to the web first
+          const urls = (ask.match(/https?:\/\/[^\s)<>"']+/g) || []).slice(0, 2);
+          for (const u of urls) {
+            step({ label: 'Leggo la pagina ' + u.replace(/^https?:\/\//, '').slice(0, 60), status: 'run' }); typing();
+            const t = await B.ai.readUrl(u, ctl.signal);
+            if (t) fileText += '\n\n[Contenuto della pagina ' + u + ']\n' + t;
+            step({ label: t ? 'Pagina letta' : 'Pagina non raggiungibile', status: t ? 'done' : 'err' });
+          }
+          if (!strong && !urls.length && SEARCH.test(ask)) {
+            step({ label: 'Cerco sul web: ' + ask.slice(0, 70), status: 'run' }); typing();
+            const res = await B.ai.search(ask, ctl.signal);
+            if (res.length) { pend.sources = res.map((r) => ({ title: r.title, url: r.url })); fileText += '\n\n[Risultati della ricerca web — usali come fonti, citali con [1], [2]… e non inventare fatti che non contengono]\n' + res.map((r, i) => '[' + (i + 1) + '] ' + r.title + ' (' + r.url + ')\n' + r.snippet).join('\n\n'); }
+            step({ label: res.length ? 'Trovate ' + res.length + ' fonti' : 'Nessuna fonte trovata: rispondo con ciò che so', status: 'done' });
+          }
+          const msgs = history.map((m, idx) => ({ role: m.role, content: (m.content || ' ') + (idx === history.length - 1 ? fileText : '') }));
           if (images.length && !B.ai.canSee()) B.toast('Questo motore non può vedere le immagini: invio solo il testo');
-          const text = await B.ai.text(msgs, { system, tier: 'complex', signal: ctl.signal, images: B.ai.canSee() ? images : null, onText: ({ text: t }) => { pend.content = t; renderMd(node, t); stick(); } });
+          const text = await B.ai.text(msgs, { system, tier: strong ? 'complex' : 'fast', signal: ctl.signal, images: B.ai.canSee() ? images : null, onText: ({ text: t }) => { pend.content = t; const n = B.$('.msg:last-child .msg-content', thread); if (n) renderMd(n, t); stick(); } });
           pend.content = text;
+          if (B.ai.gate) pend.model = B.ai.gate.label + ' · ' + B.ai.gate.model;
         } catch (e) {
           if (e.code === 'cancelled') pend.content = (pend.content || '') + '\n\n_— interrotto_';
           else { pend.content = (e.partial || pend.content || '') + (pend.content ? '\n\n' : '') + '⚠️ ' + (e.userMessage || 'Errore'); pend.error = true; }
@@ -439,6 +472,7 @@
       }
       function exportMd() { if (!cur) return; const md = '# ' + cur.title + '\n\n' + cur.messages.map((m) => '**' + (m.role === 'user' ? 'Tu' : 'Thorion') + ':**\n\n' + m.content).join('\n\n---\n\n'); B.save(new Blob([md], { type: 'text/markdown' }), B.slug(cur.title) + '.md'); }
 
+      B.on('ai:think', (on) => { const n = B.$('.msg:last-child .msg-content .typing', thread); if (n && on && !B.$('.think-note', n.parentNode)) n.after(B.h('small', { class: 'muted think-note', text: ' sto ragionando…' })); });
       B.on('ai:wait', () => { const n = B.$('.msg:last-child .msg-content .typing', thread); if (n && !B.$('.wait-note', n.parentNode)) n.after(B.h('small', { class: 'muted wait-note', text: ' ragiono e lavoro sulla rete GPU comunitaria…' })); });
       B.ai.init();
       this.ask = (q) => { if (cur && cur.messages.length) newChat(true); ta.value = q; grow(); send(); };

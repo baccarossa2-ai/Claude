@@ -71,7 +71,7 @@
 .md pre { background: #0b0705; border: 1px solid var(--line); border-radius: 0 0 14px 14px; padding: 14px 16px; overflow-x: auto; margin-top: 0; }
 .md pre code { background: transparent; padding: 0; font-size: 13px; line-height: 1.6; color: #f1e2cc; }
 .md table { border-collapse: collapse; display: block; overflow-x: auto; max-width: 100%; }
-.md th, .md td { border: 1px solid var(--line-2); padding: 7px 11px; text-align: left; }
+.md th, .md td { border: 1px solid var(--line-2); padding: 7px 11px; text-align: left; overflow-wrap: normal; word-break: normal; hyphens: auto; min-width: 5em; }
 .md th { background: var(--panel-2); font-weight: 650; }
 .md hr { border: 0; height: 1px; background: var(--line); margin: 1.2em 0; }
 .md img { border-radius: 12px; }
@@ -563,6 +563,12 @@ body.solo .main { height: 100%; }
 .solo-chat .composer-row .btn.gold { box-shadow: 0 4px 14px var(--glow); }
 .solo-chat .composer-row .btn.gold svg { color: var(--on-gold); stroke-width: 2.6; }
 .solo-chat .msg-acts .btn.icon { width: 30px; height: 30px; border-radius: 9px; }
+.solo-chat .msg-acts { align-items: center; }
+.msg-model { margin-left: 8px; font-size: 11px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg-src { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-size: 12.5px; }
+.msg-src b { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+.msg-src a { color: var(--text-2); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-src a:hover { color: var(--gold); }
 .solo-chat .msg-acts .btn svg { width: 16px; height: 16px; }
 .solo-chat .ce-chip { height: 38px; padding: 0 16px; }
 .solo-chat .cs-head .btn.icon { width: 32px; height: 32px; }

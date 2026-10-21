@@ -10,14 +10,16 @@
     ['Lightbulb', 'Idee', 'Dammi 7 idee originali per '],
     ['Globe', 'Cerca', 'Cerca sul web: '],
     ['Coffee', 'Vita quotidiana', 'Aiutami con '],
-    ['Sparkles', 'Creatività', 'Crea una foto ultra realistica di ']
+    ['Sparkles', 'Creatività', 'Crea una foto ultra realistica di '],
+    ['Music', 'Musica', 'Componi una musica strumentale di 30 secondi, '],
+    ['Box', 'Modello 3D', 'Crea un modello 3D di ']
   ];
 
   B.view('chat', {
     title: 'Thorion', icon: 'Aperture', group: 'ai', desc: 'Parla con Thorion',
     mount(el) {
       let chats = [], cur = null, ctl = null;
-      let attachments = []; // {kind:'image'|'text', name, blob?, text?}
+      let attachments = []; // {kind:'image'|'text'|'model', name, blob?, text?}
       el.classList.add('chat-view', 'solo-chat');
       const side = B.h('aside', { class: 'chat-side' });
       const main = B.h('div', { class: 'chat-main' });
@@ -84,7 +86,7 @@
       const attBar = B.h('div', { class: 'att-bar' });
       const sendBtn = B.h('button', { class: 'btn gold icon', type: 'button', 'aria-label': 'Invia', 'data-i': 'ArrowRight', onclick: () => send() });
       const stopBtn = B.h('button', { class: 'btn icon', type: 'button', 'aria-label': 'Ferma', 'data-i': 'StopCircle', hidden: true, onclick: () => ctl && ctl.abort() });
-      const attachBtn = B.h('button', { class: 'btn icon ghost', type: 'button', 'aria-label': 'Allega file', 'data-tip': 'Allega immagini, testi, codice o PDF', 'data-i': 'Paperclip', onclick: async () => addFiles(await B.pickFiles('image/*,.txt,.md,.csv,.json,.js,.ts,.py,.html,.css,.pdf', true)) });
+      const attachBtn = B.h('button', { class: 'btn icon ghost', type: 'button', 'aria-label': 'Allega file', 'data-tip': 'Allega immagini, testi, codice, PDF o modelli 3D', 'data-i': 'Paperclip', onclick: async () => addFiles(await B.pickFiles('image/*,.txt,.md,.csv,.json,.js,.ts,.py,.html,.css,.pdf,.glb,.gltf,.stl,.obj', true)) });
       const plusBtn = B.h('button', { class: 'btn icon ghost', type: 'button', 'aria-label': 'Nuova chat', 'data-i': 'Plus', onclick: () => newChat() });
       const focusPill = B.h('button', { class: 'focus-pill', type: 'button', 'data-tip': 'Thorion ragiona sempre al massimo prima di rispondere', onclick: (e) => e.preventDefault() }, B.h('span', { 'data-i': 'Star' }), B.h('span', { class: 'fp-tx', text: 'Three 3.3 · Focus' }));
       const composer = B.h('div', { class: 'composer' }, attBar, ta, B.h('div', { class: 'composer-row' }, plusBtn, attachBtn, B.h('div', { class: 'bar-sp' }), focusPill, stopBtn, sendBtn));
@@ -99,6 +101,7 @@
       async function addFiles(files) {
         for (const f of files) {
           if (f.type.startsWith('image/')) attachments.push({ kind: 'image', name: f.name, blob: f });
+          else if (/\.(glb|gltf|stl|obj)$/i.test(f.name)) attachments.push({ kind: 'model', name: f.name, blob: f });
           else if (f.type === 'application/pdf' || f.name.endsWith('.pdf')) {
             try { const txt = await B.pdfText(f); attachments.push({ kind: 'text', name: f.name, text: txt.slice(0, 120000) }); } catch (e) { B.toast('Non riesco a leggere il PDF ' + f.name, 'err'); }
           } else { try { attachments.push({ kind: 'text', name: f.name, text: (await f.text()).slice(0, 120000) }); } catch (e) { /* ignore */ } }
@@ -108,7 +111,7 @@
       function paintAtt() {
         attBar.innerHTML = '';
         attachments.forEach((a, i) => {
-          const chip = B.h('div', { class: 'att' }, a.kind === 'image' ? B.h('img', { src: URL.createObjectURL(a.blob), alt: '' }) : B.h('span', { 'data-i': 'FileText' }), B.h('span', { class: 'att-n', text: a.name }), B.h('button', { type: 'button', 'aria-label': 'Rimuovi', 'data-i': 'X', onclick: () => { attachments.splice(i, 1); paintAtt(); } }));
+          const chip = B.h('div', { class: 'att' }, a.kind === 'image' ? B.h('img', { src: URL.createObjectURL(a.blob), alt: '' }) : B.h('span', { 'data-i': a.kind === 'model' ? 'Box' : 'FileText' }), B.h('span', { class: 'att-n', text: a.name }), B.h('button', { type: 'button', 'aria-label': 'Rimuovi', 'data-i': 'X', onclick: () => { attachments.splice(i, 1); paintAtt(); } }));
           attBar.append(chip);
         });
         attBar.hidden = !attachments.length; B.hydrateIcons(attBar);
@@ -127,10 +130,10 @@
         cur = { id: B.uid('c'), title: 'Nuova chat', messages: [], updated: Date.now() };
         chats.unshift(cur); renderList(); renderThread(true); if (!silent) ta.focus();
       }
-      const SKIP = new Set(['blob', '_store', 'preview']);
+      const SKIP = new Set(['blob', '_store', '_models', 'preview']);
       async function persist() { if (!cur) return; cur.updated = Date.now(); if (cur.messages.length) { const snap = JSON.parse(JSON.stringify(cur, (k, v) => (SKIP.has(k) ? undefined : v))); await B.db.put('chats', snap); B.cloud && B.cloud.push(snap); } renderList(); }
       function open(c) { if (c !== cur && holdSwitch()) return; cur = c; el.classList.remove('side-open'); renderList(); renderThread(true); }
-      const dropVideos = (msgs) => msgs.forEach((m) => (m.media || []).forEach((x) => { if (x.key) { B.db.del('blobs', x.key).catch(() => {}); vidCache.delete(x.key); } }));
+      const dropVideos = (msgs) => msgs.forEach((m) => (m.media || []).concat(m.models || []).forEach((x) => { if (x.key) { B.db.del('blobs', x.key).catch(() => {}); vidCache.delete(x.key); } }));
       async function delChat(c) { if (c === cur && holdSwitch()) return; if (!(await B.confirm('Eliminare questa chat?', '“' + c.title + '” verrà eliminata.', 'Elimina', true))) return; dropVideos(c.messages); await B.db.del('chats', c.id); B.cloud && B.cloud.remove(c.id); chats = chats.filter((x) => x !== c); if (c === cur) { cur = null; if (chats[0]) open(chats[0]); else newChat(); } else renderList(); }
       async function rename() { if (!cur) return; const n = await B.prompt('Rinomina chat', cur.title); if (n) { cur.title = n; persist(); } }
       function renderList() {
@@ -162,7 +165,7 @@
         const logo = B.h('div', { class: 'ce-logo' }); logoInto(logo, 88);
         const g = B.h('div', { class: 'ce-chips' });
         CHIPS.forEach(([ic, t, starter]) => g.append(B.h('button', { type: 'button', class: 'ce-chip', onclick: () => { ta.value = starter; grow(); ta.focus(); } }, B.h('span', { 'data-i': ic }), t)));
-        wrap.append(logo, B.h('h1', { class: 'ce-title serif', text: 'Cosa hai in mente oggi?' }), B.h('p', { class: 'ce-sub', text: 'Sono qui per aiutarti. Fai una domanda, scrivi, crea immagini, video, modelli 3D e codice.' }), g);
+        wrap.append(logo, B.h('h1', { class: 'ce-title serif', text: 'Cosa hai in mente oggi?' }), B.h('p', { class: 'ce-sub', text: 'Sono qui per aiutarti. Fai una domanda, scrivi, crea immagini, video, musica, modelli 3D e codice.' }), g);
         return wrap;
       }
       function bubble(m, i) {
@@ -171,6 +174,7 @@
         const body = B.h('div', { class: 'msg-body' });
         if (m.images && m.images.length) body.append(B.h('div', { class: 'msg-imgs' }, m.images.map((src) => B.h('img', { src, alt: 'Immagine allegata' }))));
         if (m.files && m.files.length) body.append(B.h('div', { class: 'msg-files' }, m.files.map((n) => B.h('span', { class: 'chip' }, B.h('span', { 'data-i': 'FileText' }), n))));
+        if (m.models && m.models.length) body.append(B.h('div', { class: 'agent-media' }, m.models.map((x) => modelCard(x))));
         const content = B.h('div', { class: 'msg-content md' });
         if (isUser) content.textContent = m.content; else if (m.pending) renderMd(content, m.content); else mdNow(content, m.content);
         body.append(content);
@@ -204,10 +208,40 @@
               B.h('button', { class: 'btn sm', type: 'button', onclick: async () => { const b = await mediaBlobOf(x); if (b) window.open(URL.createObjectURL(b), '_blank'); } }, B.h('span', { 'data-i': 'Maximize2' }), 'A tutto schermo')));
             mediaBlobOf(x).then(async (b) => { if (b) frame.srcdoc = await b.text(); else card.replaceChildren(B.h('div', { class: 'muted', text: 'Scena non più disponibile in questa sessione.' })); });
             box.append(card);
-          } else box.append(genBlock({ status: 'done', src: x.src, prompt: x.label || 'Immagine di Thorion' }));
+          } else if (x.type === 'audio') box.append(audioCard(x));
+          else if (x.type === 'model') box.append(modelCard(x));
+          else box.append(genBlock({ status: 'done', src: x.src, prompt: x.label || 'Immagine di Thorion' }));
         });
         if (drafts.length) box.append(B.h('details', { class: 'agent-drafts' }, B.h('summary', { text: 'Passaggi intermedi (' + drafts.length + ')' }), B.h('div', { class: 'ad-row' }, drafts.map((d) => B.h('img', { src: d.src, alt: d.label || '', title: d.label || '', onclick: () => lightImg(d.src) })))));
         return box;
+      }
+      function audioCard(x) {
+        const au = B.h('audio', { controls: true, preload: 'metadata' });
+        const secs = x.seconds ? Math.floor(x.seconds / 60) + ':' + String(Math.round(x.seconds % 60)).padStart(2, '0') : '';
+        const card = B.h('div', { class: 'gen-audio' }, B.h('div', { class: 'ga-head' }, B.h('span', { class: 'ga-ic', 'data-i': x.kind === 'voice' ? 'Mic' : 'Music' }), B.h('b', { text: x.label || 'Audio' }), B.h('small', { text: [x.engine, secs].filter(Boolean).join(' · ') })), au,
+          B.h('div', { class: 'gen-acts' }, B.h('button', { class: 'btn sm', type: 'button', onclick: async () => { const b = await mediaBlobOf(x); if (b) B.save(b, B.slug(x.label || 'thorion-audio') + '.wav'); } }, B.h('span', { 'data-i': 'Download' }), 'Scarica WAV')));
+        mediaBlobOf(x).then((b) => { if (b) au.src = URL.createObjectURL(b); else card.replaceChildren(B.h('div', { class: 'muted', text: 'Audio non più disponibile in questa sessione.' })); });
+        return card;
+      }
+      function modelCard(x) {
+        const stage = B.h('div', { class: 'm3d-stage' }, B.h('div', { class: 'gen-load' }, B.h('div', { class: 'iris-spin' }), B.h('span', { text: 'Preparo il visualizzatore 3D…' })));
+        const name = x.name || 'modello.glb';
+        const dl = (fmt) => B.h('button', { class: 'btn sm', type: 'button', onclick: async (e) => {
+          const btn = e.currentTarget; btn.disabled = true;
+          try { const b = await mediaBlobOf(x); if (!b) throw new Error('modello non più disponibile'); const out = fmt === name.split('.').pop().toLowerCase() ? b : await B.convertModel(b, name, fmt); B.save(out, B.slug((x.label || 'thorion-3d').replace(/\.(glb|gltf|stl|obj)$/i, '')) + '.' + fmt); }
+          catch (err) { B.toast('Conversione non riuscita: ' + err.message, 'err'); }
+          btn.disabled = false;
+        } }, B.h('span', { 'data-i': 'Download' }), fmt.toUpperCase());
+        const card = B.h('div', { class: 'gen-img m3d' }, stage, B.h('div', { class: 'gen-acts' }, dl('glb'), dl('stl'), dl('obj'), x.tris ? B.h('small', { class: 'muted', text: x.tris.toLocaleString('it-IT') + ' triangoli' }) : null));
+        (async () => {
+          const b = await mediaBlobOf(x); if (!b) { stage.replaceChildren(B.h('div', { class: 'muted', text: 'Modello non più disponibile in questa sessione.' })); return; }
+          const glb = /\.glb$/i.test(name) ? b : await B.convertModel(b, name, 'glb');
+          await B.modelViewer();
+          const mv = document.createElement('model-viewer');
+          [['src', URL.createObjectURL(glb)], ['alt', x.label || 'Modello 3D'], ['camera-controls', ''], ['auto-rotate', ''], ['shadow-intensity', '1'], ['exposure', '1.05'], ['environment-image', 'neutral'], ['ar', ''], ['touch-action', 'pan-y'], ['interaction-prompt', 'none']].forEach(([k, v]) => mv.setAttribute(k, v));
+          stage.replaceChildren(mv);
+        })().catch((e) => { console.warn('visualizzatore 3D', e); stage.replaceChildren(B.h('div', { class: 'muted', text: 'Il visualizzatore 3D non è disponibile qui: scarica il modello in GLB, STL o OBJ.' })); });
+        return card;
       }
       const vidCache = new Map();
       async function mediaBlobOf(x) { if (vidCache.has(x.key)) return vidCache.get(x.key); try { const r = await B.db.get('blobs', x.key); if (r && r.blob) { vidCache.set(x.key, r.blob); return r.blob; } } catch (e) { /* gone */ } return null; }
@@ -260,7 +294,11 @@
         const imgCmd = text.match(/^\/(immagine|img|image|disegna)\s+([\s\S]+)/i);
         const atts = attachments; attachments = []; paintAtt();
         const userMsg = { role: 'user', content: text || '(allegati)', images: [], files: [] };
-        for (const a of atts) { if (a.kind === 'image') userMsg.images.push(await B.blobToDataURL(a.blob)); else userMsg.files.push(a.name); }
+        for (const a of atts) {
+          if (a.kind === 'image') userMsg.images.push(await B.blobToDataURL(a.blob));
+          else if (a.kind === 'model') { const key = B.uid('m'); try { await B.db.put('blobs', { id: key, blob: a.blob }); } catch (e) { /* memory only */ } vidCache.set(key, a.blob); a.key = key; (userMsg.models = userMsg.models || []).push({ key, name: a.name, label: a.name }); }
+          else userMsg.files.push(a.name);
+        }
         userMsg._atts = atts;
         cur.messages.push(userMsg);
         if (cur.messages.length === 1) cur.title = (imgCmd ? '🖼 ' + imgCmd[2] : text).slice(0, 48) || 'Chat';
@@ -302,10 +340,11 @@
 
       /* Thorion reasons first, then picks the right tools (photo, video, 3D, vector, edits). */
       const PLAIN = /^\s*(ciao|salve|buongiorno|buonasera|hey|ehi|grazie|ok|okay|va bene|perfetto|👍|🙏|come stai|come va|chi sei|come ti chiami)[\s!?.…]*$/i;
-      const CREATIVE = /\b(foto|fotograf|immagin|ritratt|scatt|logo|icon[ae]|poster|locandin|illustr|disegn|dipin|wallpaper|sfond|copertin|banner|mockup|render|video|reel|clip|anim|scontorn|ingrand|ritocc|rifinis|pellicol|3d|modell|scena|gioco|game|three\.?js|webgl|picture|photo|image|draw|paint|selfie|paesagg|tramonto|app|sito|landing|pagina web|html)\w*/i;
+      const CREATIVE = /\b(foto|fotograf|immagin|ritratt|scatt|logo|icon[ae]|poster|locandin|illustr|disegn|dipin|wallpaper|sfond|copertin|banner|mockup|render|video|reel|clip|anim|scontorn|ingrand|ritocc|rifinis|pellicol|3d|modell|scena|gioco|game|three\.?js|webgl|picture|photo|image|draw|paint|selfie|paesagg|tramonto|app|sito|landing|pagina web|html|grafic|chart|diagramm|istogramm|plot|musica|music|canzon|brano|melodi|colonna sonora|beat|jingle|audio|voce|voci|podcast|audiolibr|doppiag|voiceover|stl|glb|stampa 3d|scultur|statua|statue)\w*/i;
       function wantsAgent(text, atts) {
         if (!B.ai.canUseTools()) return false;
         if (PLAIN.test(text) && !atts.length) return false;
+        if (atts.some((a) => a.kind === 'model')) return true;
         return CREATIVE.test(text) || (atts.some((a) => a.kind === 'image') && /\b(rend[ia]|trasform|cambia|modific|aggiung|togli|rimuov|miglior|sistem|fai|anima|descrivi)\w*/i.test(text));
       }
       async function agentAnswer(history, atts, system) {
@@ -321,12 +360,18 @@
             try { const im = await B.loadImage(a.blob); const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); const id = 'img' + (store.size + 1); store.set(id, { blob: a.blob, canvas: c, label: a.name }); note.push(id + ' (allegato “' + a.name + '”)'); }
             catch (e) { B.toast('Non riesco ad aprire ' + a.name + ': usa JPG, PNG o WebP'); }
           }
-          const known = [...store.entries()].filter(([id]) => !note.some((n) => n.startsWith(id + ' '))).slice(-6).map(([id, v]) => id + ' (' + String(v.label || '').slice(0, 50) + ')');
+          const models = cur._models instanceof Map ? cur._models : (cur._models = new Map());
+          for (const a of atts) { if (a.kind !== 'model') continue; const id = 'model' + (models.size + 1); models.set(id, { blob: a.blob, name: a.name, label: a.name }); note.push(id + ' (modello 3D allegato “' + a.name + '”)'); }
+          const known = [...store.entries()].filter(([id]) => !note.some((n) => n.startsWith(id + ' '))).slice(-6).map(([id, v]) => id + ' (' + String(v.label || '').slice(0, 50) + ')')
+            .concat([...models.entries()].filter(([id]) => !note.some((n) => n.startsWith(id + ' '))).slice(-4).map(([id, v]) => id + ' (modello 3D “' + String(v.label || '').slice(0, 50) + '”)'));
           const ctx = {
             images: store,
             onImage: async (id, blob, label) => { pend.media.push({ id, type: 'image', src: await B.blobToDataURL(blob), label }); repaintLast(); },
             onVideo: async (id, blob, story) => { const key = B.uid('v'); try { await B.db.put('blobs', { id: key, blob }); } catch (e) { /* memory only */ } vidCache.set(key, blob); pend.media.push({ id, type: 'video', key, ext: /webm/.test(blob.type) ? 'webm' : 'mp4', w: story.w, h: story.h }); repaintLast(); },
             onScene: async (id, blob, label) => { const key = B.uid('s'); try { await B.db.put('blobs', { id: key, blob }); } catch (e) { /* memory only */ } vidCache.set(key, blob); pend.media.push({ id, type: 'scene', key, label }); repaintLast(); },
+            models,
+            onModel: async (id, blob, label, meta) => { const key = B.uid('m'); try { await B.db.put('blobs', { id: key, blob }); } catch (e) { /* memory only */ } vidCache.set(key, blob); pend.media.push({ id, type: 'model', key, label, name: 'thorion-3d.glb', tris: meta.tris }); repaintLast(); },
+            onAudio: async (id, blob, label, meta) => { const key = B.uid('a'); try { await B.db.put('blobs', { id: key, blob }); } catch (e) { /* memory only */ } vidCache.set(key, blob); pend.media.push({ id, type: 'audio', key, label, kind: meta.kind, seconds: meta.seconds, engine: meta.engine }); repaintLast(); },
             onStep: stepper(pend)
           };
           const madeBy = {};
@@ -340,7 +385,7 @@
             catch (e) { const s = [...pend.steps].reverse().find((x) => x.status === 'run'); if (s) { s.status = 'err'; s.detail = B.ai.errorText(e); repaintLast(); } throw e; }
           } }));
           const msgs = history.map((m) => ({ role: m.role, content: m.content || ' ' }));
-          const extra = (note.length ? '\n\n[Immagini allegate disponibili per gli strumenti: ' + note.join(', ') + ']' : '') + (known.length ? '\n[Immagini già create in questa chat: ' + known.join(', ') + ']' : '');
+          const extra = (note.length ? '\n\n[Allegati disponibili per gli strumenti: ' + note.join(', ') + ']' : '') + (known.length ? '\n[Già creati in questa chat: ' + known.join(', ') + ']' : '');
           msgs[msgs.length - 1].content += extra;
           const sys = system + '\n\n' + B.agentSystem + (B.ai.engines.horde ? '' : '\nIn questa versione (dentro un Artifact) le foto, i video e i modelli 3D ultra realistici non sono raggiungibili: per le immagini usa create_vector e ricorda in una frase che la versione completa, con foto e video reali illimitati, è sul web: ' + B.PUBLIC_URL);
           const text = await B.ai.toolChat(msgs, { system: sys, tools, signal: ctl.signal, tier: 'complex', images: B.ai.canSee() ? atts.filter((a) => a.kind === 'image').map((a) => a.blob) : null, onText: ({ text: t }) => { pend.content = t; const n = B.$('.msg:last-child .msg-content', thread); if (n) renderMd(n, t); stick(); } });
@@ -394,7 +439,7 @@
         }
         if (wantsAgent(lastUser.content || '', lastUser._atts || [])) {
           let fileText2 = '';
-          (lastUser._atts || []).forEach((a) => { if (a.kind !== 'image') fileText2 += '\n\n[File allegato: ' + a.name + ']\n' + a.text; });
+          (lastUser._atts || []).forEach((a) => { if (a.kind === 'text') fileText2 += '\n\n[File allegato: ' + a.name + ']\n' + a.text; });
           const h2 = history.map((m, idx) => ({ role: m.role, content: (m.content || ' ') + (idx === history.length - 1 ? fileText2 : '') }));
           return agentAnswer(h2, lastUser._atts || [], system);
         }
@@ -410,7 +455,7 @@
         ctl = new AbortController();
         const images = [];
         let fileText = '';
-        (lastUser._atts || []).forEach((a) => { if (a.kind === 'image') images.push(a.blob); else fileText += '\n\n[File allegato: ' + a.name + ']\n' + a.text; });
+        (lastUser._atts || []).forEach((a) => { if (a.kind === 'image') images.push(a.blob); else if (a.kind === 'model') fileText += '\n\n[Modello 3D allegato: ' + a.name + ']'; else fileText += '\n\n[File allegato: ' + a.name + ']\n' + a.text; });
         const step = stepper(pend);
         try {
           // links in the message are read; questions about facts go to the web first

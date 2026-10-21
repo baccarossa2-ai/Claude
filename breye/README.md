@@ -18,7 +18,9 @@ Thorion è un'app web con un'unica interfaccia: la chat. Scrivi quello che vuoi 
 
 | Funzione | Online (web pubblico) | Dentro Claude |
 | --- | --- | --- |
-| Chat, scrittura, codice | modelli aperti sulla rete GPU comunitaria AI Horde: una versione grande di Qwen quando un volontario la ospita, altrimenti Skyfall 31B, Cydonia e Magidonia 24B, Rocinante 12B | Claude, senza chiave |
+| Chat, ricerche, ragionamenti, allegati | **Three 3.3 Veloce**: GPT-OSS 20B (OpenAI, open weights) su Pollinations, in streaming, con ragionamento | Claude, senza chiave |
+| Codice, siti, giochi, grafici, 3D, regia di foto/video/audio | **Three 3.3 Forte**: Qwen 3.5 122B sulla rete GPU comunitaria AI Horde (riserva: Skyfall 31B, Cydonia 24B…) | Claude, senza chiave |
+| Ricerca sul web | DuckDuckGo e Wikipedia (italiano e inglese) con fonti citate; le pagine linkate nel messaggio vengono lette | non disponibile |
 | Descrizione di immagini | didascalie generate dalla stessa rete, lette dal modello linguistico | Claude (visione) |
 | Testo da immagine (OCR) | Tesseract nel browser (italiano e inglese) | Claude (visione) |
 | Agente con strumenti | strumenti descritti nel prompt, chiamati con blocchi `<tool>` | Claude (strumenti nativi) |
@@ -28,22 +30,23 @@ Thorion è un'app web con un'unica interfaccia: la chat. Scrivi quello che vuoi 
 | Illustrazioni vettoriali | SVG scritti dal modello linguistico | idem |
 | Scene 3D procedurali | shader GLSL scritti dal modello, resi sulla GPU | idem |
 | Video con audio | Thorion Cinema: profondità 3D (Depth Anything V2 nel browser), vera camera 2.5D, suono d’ambiente sintetizzato, voce narrante, MP4 | stesso motore, profondità stimata |
-| Voce | voci neurali Piper (Paola, Serena HD, Riccardo…) generate sul dispositivo | voce migliore del dispositivo |
+| Voce | voci neurali Piper generate sul dispositivo: italiano (Paola, Serena HD, Serena, Riccardo), inglese (Emma, Ryan HD, Alan), spagnolo, francese, tedesco; voiceover e podcast con musica sotto | voce migliore del dispositivo |
 | Mondi e giochi 3D | Thorion Engine (three.js): cielo fisico, PBR Poly Haven, ombre, SSAO, città open world, natura, auto guidabili | materiali e cielo procedurali |
+| Modelli 3D (GLB, STL, OBJ) | Thorion Forge: da foto, allegato o testo (volume ricostruito + profondità neurale) o da codice three.js; modelli 3D allegati visualizzati e messi in scena | dagli allegati, profondità stimata |
+| Grafici | Chart.js: barre, linee, aree, torte, radar, dispersione, grafici di funzioni | idem |
+| Musica | **MusicGen** (Meta) sul dispositivo: brani strumentali di ogni genere; riserva: sintetizzatore Thorion | sintetizzatore Thorion |
 | Ritocco, montaggio, musica, PDF | nel browser | nel browser |
 
 Nessun motore richiede chiavi o account e nessuno ha una quota. AI Horde è una rete di GPU messe a disposizione da volontari: i modelli sono quelli che i volontari ospitano in quel momento, e le richieste anonime hanno la priorità più bassa. Una risposta in chat arriva di solito in 20–60 secondi, uno scatto in 1–3 minuti, una foto Thorion Pro in 3–6 minuti.
 
-### Modelli di testo
+### Due modelli: Veloce e Forte
 
-Ogni richiesta nomina un'intera famiglia di modelli con lo stesso formato di prompt: la prima GPU libera che ne ospita uno risponde. L'ordine è:
+Thorion sceglie da sola il modello per ogni messaggio:
 
-1. **Qwen** grande (14B e oltre, per esempio Qwen 3.8 Max 27B) appena un volontario lo ospita;
-2. **Skyfall 31B, Cydonia 24B, Magidonia 24B** (famiglia Mistral) per i compiti complessi: codice, agente, impaginazione;
-3. per la chat, alla stessa famiglia si aggiungono **Rocinante 12B** e **Angelic Eclipse 12B**, più rapidi;
-4. **Magnum 12B** (ChatML) e **Llama 3 8B** come riserva.
+- **Three 3.3 Veloce** (GPT-OSS 20B, open weights di OpenAI, su Pollinations): conversazione, domande, ragionamenti, riassunti, traduzioni, allegati e ricerche sul web. È gratuito, senza chiavi e risponde in streaming in pochi secondi. Quando una domanda riguarda fatti (chi, cosa, quando, dove, notizie…) Thorion cerca prima su DuckDuckGo e Wikipedia e cita le fonti; i link nel messaggio vengono letti.
+- **Three 3.3 Forte** (Qwen 3.5 122B sulla rete AI Horde): tutto ciò che si costruisce, cioè codice, siti, giochi, matematica, grafici, modelli e mondi 3D, e la regia di foto, video, musica e voci con gli strumenti. Le richieste anonime arrivano a 512 token per volta e le risposte lunghe continuano da sole in più pezzi.
 
-Le richieste anonime possono chiedere al massimo 512 token: le risposte più lunghe continuano da sole in più pezzi. Il modello Gemma 4 31B presente sulla rete è escluso, perché la sua catena di ragionamento ricomincia a ogni pezzo e non arriva alla risposta. In Impostazioni si può fissare un modello preferito.
+Ognuno fa da riserva all'altro, e sotto ogni risposta compare il modello che l'ha scritta.
 
 ### Foto indistinguibili da quelle vere
 
@@ -73,11 +76,22 @@ Un motore 3D realistico costruito su three.js, usato dall’agente con `make_3d`
 - terza persona, prima persona, orbita, guida; tastiera, mouse e comandi touch; pioggia, nebbia e neve;
 - `custom_code` per programmare il mondo con l’API `E` (aggiungere oggetti, personaggi, auto, luci, regole di gioco).
 
-In chat Thorion usa tutto come **strumenti** (`generate_photo`, `refine_detail`, `finish_photo`, `edit_photo`, `upscale_photo`, `remove_background`, `create_vector`, `make_video`, `make_3d`) e decide da sola la sequenza; i passaggi compaiono dal vivo nel messaggio.
+### Thorion Forge: grafici, musica, voci e modelli 3D
+
+- **Grafici** (`make_chart`): barre, barre orizzontali, linee, aree, torte e ciambelle con percentuali, radar, dispersione e bolle, e grafici di funzioni (`x^2-3x+2`, `sin(x)`, `ln(x)`…) con gli asintoti gestiti. PNG nitido a 1600 px.
+- **Musica** (`make_music`): **MusicGen** di Meta gira nel browser (WebGPU dove c'è, altrimenti WASM). Il modello (circa 650 MB) si scarica una sola volta. Genera da 6 a 30 secondi di musica vera, poi estende il brano alla durata richiesta con dissolvenze incrociate. Su CPU 10 secondi di musica richiedono circa un minuto e mezzo. Il risultato è un WAV stereo. Se il modello non è raggiungibile, Thorion usa il suo sintetizzatore.
+- **Voci** (`make_voice`): voiceover, podcast, audiolibri e annunci con le voci Piper. Si può mettere sotto una musica creata con `make_music`: la musica si abbassa da sola mentre la voce parla.
+- **Modelli 3D**:
+  - `make_3d_model` crea il modello da una foto, da un allegato o da un testo (prima genera la foto del soggetto). Separa il soggetto dallo sfondo e ne ricostruisce un volume pieno e chiuso: l'inflazione di Poisson dà sezioni rotonde, poi la profondità neurale di Depth Anything scolpisce i dettagli e la foto diventa la texture. Senza un soggetto isolato crea un bassorilievo.
+  - `build_3d_model` costruisce oggetti precisi (mobili, edifici, veicoli, asset di gioco) con codice three.js, che gira in un frame isolato.
+  - `stage_3d_model` mette qualsiasi modello in una vetrina girevole, nella natura o in città con il Thorion Engine.
+  - Ogni modello si ruota nel visualizzatore (con realtà aumentata sul telefono) e si scarica in **GLB**, **STL** (100 mm, pronto per la stampa 3D) e **OBJ**. In chat si possono allegare modelli **GLB, glTF, STL e OBJ**.
+
+In chat Thorion usa tutto come **strumenti** (`generate_photo`, `refine_detail`, `finish_photo`, `edit_photo`, `upscale_photo`, `remove_background`, `create_vector`, `make_video`, `make_3d`, `make_chart`, `make_music`, `make_voice`, `make_3d_model`, `build_3d_model`, `stage_3d_model`) e decide da sola la sequenza; i passaggi compaiono dal vivo nel messaggio.
 
 ## Cosa fa Thorion (strumenti dell'agente in chat)
 
-- **Thorion Chat**: conversazioni salvate, streaming, Markdown e codice evidenziato, allegati (immagini, testi, PDF), personalità (scrittrice, sviluppatrice, traduttrice…), agente creativo con strumenti reali (foto ultra realistiche, ritocchi, scontorni, vettoriali, video), immagini rapide con `/immagine`.
+- **Thorion Chat**: conversazioni salvate (anche nel cloud, cifrate), streaming, Markdown e codice evidenziato, ricerca sul web con fonti, allegati (immagini, testi, PDF, modelli 3D), agente creativo con strumenti reali (foto ultra realistiche, ritocchi, scontorni, vettoriali, video con audio, grafici, musica, voci, modelli e mondi 3D), immagini rapide con `/immagine`.
 - **Immagini AI**: Thorion Pro e Thorion Foto (rete GPU comunitaria), Lampo, Vettoriale e Procedurale 3D; passaggi dal vivo, look pellicola, 13 stili, 7 formati, varianti in parallelo, prompt negativo, rifinitura/finitura/ingrandimento dei risultati, galleria locale, scene GPU dal vivo.
 - **Video AI**: dall'idea allo storyboard (scene, testi, camera, particelle, transizioni “iride” e “battito di ciglia”), musica generata, foto animate, export MP4.
 - **Design Studio**: Fabric.js, 12 modelli adattivi, 15 formati, forme, 330 icone, adesivi, 47 font, abbinamenti tipografici, sfondi e gradienti, palette di brand, livelli, pagine multiple, Magic Resize, Magic Design, Magic Write, assistente che modifica il design a parole, export PNG/JPG/SVG/PDF/ZIP.
@@ -99,9 +113,10 @@ breye/
   js/iris-tools.js    rete GPU comunitaria, foto in gara tra modelli, finitura pellicola, strumenti dell'agente
   js/voice.js         voce neurale Piper sul dispositivo (con riserva sulla voce di sistema)
   js/cinema.js        Thorion Cinema: profondità, camera 2.5D, suono d'ambiente, MP4 con audio
+  js/forge.js         Thorion Forge: grafici, musica MusicGen, voci, modelli 3D (GLB/STL/OBJ)
   js/engine/          Thorion Engine: motore 3D realistico che genera pagine HTML autonome
   js/*.js             una sezione per file
   assets/             logo e iride (sfondo trasparente, anello dorato)
 ```
 
-Librerie open source caricate da cdnjs/jsDelivr: Fabric.js, CodeMirror, marked, DOMPurify, highlight.js, pdf.js, pdf-lib, jsPDF, html2canvas, JSZip, QRious, mammoth, turndown, mp4-muxer. Icone: sottoinsieme di Lucide (ISC).
+Librerie open source caricate da cdnjs/jsDelivr: three.js, transformers.js (MusicGen, Depth Anything), onnxruntime-web, Chart.js, model-viewer, Fabric.js, CodeMirror, marked, DOMPurify, highlight.js, pdf.js, pdf-lib, jsPDF, html2canvas, JSZip, QRious, mammoth, turndown, mp4-muxer. Icone: sottoinsieme di Lucide (ISC).

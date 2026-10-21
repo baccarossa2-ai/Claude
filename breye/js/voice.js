@@ -15,7 +15,11 @@
     { id: 'it_IT-serena-medium', name: 'Serena', desc: 'italiano, chiara', lang: 'it', espeak: 'it', path: 'it/it_IT/serena/medium/', mb: 61 },
     { id: 'it_IT-riccardo-x_low', name: 'Riccardo', desc: 'italiano, voce maschile leggera', lang: 'it', espeak: 'it', path: 'it/it_IT/riccardo/x_low/', mb: 27 },
     { id: 'en_US-hfc_female-medium', name: 'Emma', desc: 'English (US)', lang: 'en', espeak: 'en-us', path: 'en/en_US/hfc_female/medium/', mb: 60 },
-    { id: 'en_US-ryan-high', name: 'Ryan HD', desc: 'English (US), male', lang: 'en', espeak: 'en-us', path: 'en/en_US/ryan/high/', mb: 115 }
+    { id: 'en_US-ryan-high', name: 'Ryan HD', desc: 'English (US), male', lang: 'en', espeak: 'en-us', path: 'en/en_US/ryan/high/', mb: 115 },
+    { id: 'en_GB-alan-medium', name: 'Alan', desc: 'English (UK), male', lang: 'en', espeak: 'en-gb-x-rp', path: 'en/en_GB/alan/medium/', mb: 61 },
+    { id: 'es_ES-davefx-medium', name: 'Davefx', desc: 'español, voz masculina', lang: 'es', espeak: 'es', path: 'es/es_ES/davefx/medium/', mb: 61 },
+    { id: 'fr_FR-siwis-medium', name: 'Siwis', desc: 'français, voix féminine', lang: 'fr', espeak: 'fr', path: 'fr/fr_FR/siwis/medium/', mb: 61 },
+    { id: 'de_DE-thorsten-medium', name: 'Thorsten', desc: 'Deutsch, männlich', lang: 'de', espeak: 'de', path: 'de/de_DE/thorsten/medium/', mb: 61 }
   ];
   const byId = (id) => VOICES.find((v) => v.id === id);
   const pref = { it: B.ls.get('voice:it', 'it_IT-paola-medium'), en: B.ls.get('voice:en', 'en_US-hfc_female-medium') };

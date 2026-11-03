@@ -1,5 +1,5 @@
 // Registro ricevute: due serie numerate per anno, filtri, ristampa, PDF, annullamento ed esportazione.
-import { db, PAYMENT_METHODS } from '../lib/db.js';
+import { db, PAYMENT_METHODS, payKind } from '../lib/db.js';
 import { icon, on, $, $$, popMenu, modal, toast, confirmDialog, emptyState, countUp } from '../lib/ui.js';
 import { go } from '../lib/router.js';
 import { esc, euro, date, normalize, debounce, MESI, phoneIntl } from '../lib/format.js';
@@ -16,7 +16,7 @@ function list() {
     if (r.anno !== st.year) return false;
     if (st.tipo !== 'tutte' && r.tipo !== st.tipo) return false;
     if (st.month && r.data.slice(5, 7) !== st.month) return false;
-    if (st.metodo && r.metodo !== st.metodo) return false;
+    if (st.metodo && payKind(r.metodo) !== payKind(st.metodo)) return false;
     if (!st.showVoid && r.annullata) return false;
     if (q) {
       const hay = normalize(`${r.numero} ${r.intestatario?.nome} ${r.intestatario?.cognome} ${r.atleta?.nome} ${r.atleta?.cognome} ${(r.righe || []).map(l => l.descrizione).join(' ')} ${r.disciplina}`);

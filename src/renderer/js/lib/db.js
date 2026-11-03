@@ -9,25 +9,60 @@ export const DEFAULT_DISCIPLINES = [
   { id: 'd-fitness', nome: 'Salute e fitness', colore: '#10B981', icona: 'heart-pulse', immagine: 'fitness', federazione: '', quotaMensile: 40, quotaIscrizione: 20, descrizione: 'Allenamento funzionale, tonificazione e benessere.' },
 ];
 
+// categoria = colonna del report di cassa in cui finisce l'importo
 export const DEFAULT_CAUSALI = [
-  { id: 'c-quota', descrizione: 'Quota mensile corso', tipo: 'generale', importo: 0, usaQuotaDisciplina: true },
-  { id: 'c-iscr', descrizione: 'Quota di iscrizione e tesseramento annuale', tipo: 'generale', importo: 30 },
-  { id: 'c-assoc', descrizione: 'Quota associativa annuale', tipo: 'generale', importo: 20 },
-  { id: 'c-gara', descrizione: 'Iscrizione gara / evento', tipo: 'generale', importo: 15 },
-  { id: 'c-trim', descrizione: 'Quota trimestrale corso', tipo: 'generale', importo: 140 },
-  { id: 'c-body', descrizione: 'Body / divisa sociale', tipo: 'commerciale', importo: 45 },
-  { id: 'c-tuta', descrizione: 'Tuta di rappresentanza', tipo: 'commerciale', importo: 60 },
-  { id: 'c-attr', descrizione: 'Attrezzi (nastro, cerchio, palla, clavette)', tipo: 'commerciale', importo: 25 },
-  { id: 'c-pers', descrizione: 'Lezione individuale / personal training', tipo: 'commerciale', importo: 35 },
+  { id: 'c-quota', descrizione: 'Quota corso mese di', tipo: 'generale', categoria: 'corso', importo: 0, usaQuotaDisciplina: true },
+  { id: 'c-iscr', descrizione: 'Quota di iscrizione', tipo: 'generale', categoria: 'iscrizione', importo: 30 },
+  { id: 'c-tess', descrizione: 'Quota di tesseramento', tipo: 'generale', categoria: 'tesseramento', importo: 15 },
+  { id: 'c-saggio', descrizione: 'Quota saggio', tipo: 'generale', categoria: 'saggio', importo: 25 },
+  { id: 'c-gara', descrizione: 'Quota gara', tipo: 'generale', categoria: 'saggio', importo: 15 },
+  { id: 'c-trim', descrizione: 'Quota trimestrale corso', tipo: 'generale', categoria: 'corso', importo: 140 },
+  { id: 'c-body', descrizione: 'Body', tipo: 'commerciale', categoria: 'commerciale', importo: 45 },
+  { id: 'c-mezze', descrizione: 'Mezze punte', tipo: 'commerciale', categoria: 'commerciale', importo: 23 },
+  { id: 'c-tuta', descrizione: 'Tuta di rappresentanza', tipo: 'commerciale', categoria: 'commerciale', importo: 60 },
+  { id: 'c-attr', descrizione: 'Attrezzi (nastro, cerchio, palla, clavette)', tipo: 'commerciale', categoria: 'commerciale', importo: 25 },
 ];
 
-export const PAYMENT_METHODS = ['Contanti', 'POS / Bancomat', 'Carta di credito', 'Bonifico bancario', 'Satispay', 'PayPal', 'Assegno'];
+export const PAYMENT_METHODS = ['Contanti', 'POS', 'Bonifico'];
+
+export const RECEIPT_CATEGORIES = [
+  { id: 'corso', label: 'Quota corso' },
+  { id: 'saggio', label: 'Quota saggio/gare' },
+  { id: 'iscrizione', label: 'Quota iscrizione' },
+  { id: 'tesseramento', label: 'Quota tesseramento' },
+  { id: 'commerciale', label: 'Corrispettivo commerciale' },
+];
+
+// metodo di pagamento -> colonna del report (anche per i metodi delle versioni precedenti)
+export function payKind(metodo) {
+  const m = String(metodo || '').toLowerCase();
+  if (/bonific|assegno/.test(m)) return 'bonifico';
+  if (/pos|bancomat|carta|satispay|paypal/.test(m)) return 'pos';
+  return 'contante';
+}
+
+export function normalizeMethod(metodo) {
+  return { contante: 'Contanti', pos: 'POS', bonifico: 'Bonifico' }[payKind(metodo)];
+}
+
+export function guessCategory(descrizione, tipo) {
+  if (tipo === 'commerciale') return 'commerciale';
+  const d = String(descrizione || '').toLowerCase();
+  if (/tesser/.test(d)) return 'tesseramento';
+  if (/iscriz/.test(d) && !/gara/.test(d)) return 'iscrizione';
+  if (/saggio|gara|gare|evento|trasfert/.test(d)) return 'saggio';
+  return 'corso';
+}
+
+export function lineCategory(r, l) {
+  return l.categoria || guessCategory(l.descrizione, r.tipo);
+}
 
 export function defaultCompany() {
   return {
     tipoSoggetto: 'ente',
-    denominazione: 'Athletic Club',
-    formaGiuridica: 'A.S.D.',
+    denominazione: '',
+    formaGiuridica: '',
     nome: '',
     cognome: '',
     partitaIva: '',
@@ -59,7 +94,7 @@ export function defaultSettings() {
     printer: { deviceName: '', formato: 'A4', copie: 1, silent: false, doppiaCopia: false },
     receipts: {
       startNumbers: {},
-      footer: 'Grazie per la fiducia! Conserva questa ricevuta.',
+      footer: 'Grazie per averci scelto.',
       detrazioneAuto: true,
       bolloAuto: true,
       bolloThreshold: 77.47,
@@ -95,13 +130,16 @@ export const db = {
     if (!data.reminders) { data.reminders = []; changed = true; }
     if (!data.activity) { data.activity = []; changed = true; }
     if (!data.templates) { data.templates = []; changed = true; }
+    if (!data.closures) { data.closures = {}; changed = true; }
     const ds = defaultSettings();
     data.settings = { ...ds, ...(data.settings || {}) };
     data.settings.printer = { ...ds.printer, ...(data.settings.printer || {}) };
     data.settings.receipts = { ...ds.receipts, ...(data.settings.receipts || {}) };
     data.settings.chat = { ...ds.chat, ...(data.settings.chat || {}) };
+    // causali delle versioni precedenti: categoria per il report di cassa
+    for (const c of data.settings.receipts.causali || []) if (!c.categoria) { c.categoria = guessCategory(c.descrizione, c.tipo); changed = true; }
     if (changed) {
-      for (const k of ['company', 'disciplines', 'clients', 'receipts', 'reminders', 'activity', 'templates', 'settings']) await window.athlos.db.put(k, data[k]);
+      for (const k of ['company', 'disciplines', 'clients', 'receipts', 'reminders', 'activity', 'templates', 'closures', 'settings']) await window.athlos.db.put(k, data[k]);
     }
     window.athlos.on('db:changed', async () => {
       const fresh = await window.athlos.db.load();
@@ -120,6 +158,7 @@ export const db = {
   get activity() { return data.activity; },
   get reminders() { return data.reminders; },
   get templates() { return data.templates; },
+  get closures() { return data.closures; },
   get all() { return data; },
 
   async save(col, value) {
@@ -221,6 +260,21 @@ export const db = {
     data.receipts = data.receipts.filter(x => x.id !== id);
     await this.save('receipts');
   },
+
+  // ------------------------------------------------ chiusure di cassa (uscite e note scritte a mano)
+  closureKey(dataISO, sedeId) { return `${dataISO}|${sedeId || 'all'}`; },
+  closure(dataISO, sedeId) {
+    return data.closures[this.closureKey(dataISO, sedeId)] || { uscite: [], note: '' };
+  },
+  async saveClosure(dataISO, sedeId, patch) {
+    const k = this.closureKey(dataISO, sedeId);
+    data.closures[k] = { ...this.closure(dataISO, sedeId), ...patch, updatedAt: new Date().toISOString() };
+    await this.save('closures');
+    return data.closures[k];
+  },
+
+  sedi() { return (data.company.sedi || []).filter(s => s.nome || s.comune); },
+  mainSede() { const l = this.sedi(); return l.find(s => s.principale) || l[0] || null; },
 
   receiptsOf(clientId) {
     return data.receipts.filter(r => r.clientId === clientId).sort((a, b) => b.data.localeCompare(a.data) || b.numero - a.numero);

@@ -329,6 +329,7 @@ kbd {
 .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.g5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .g6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .span2 { grid-column: span 2; }
 .span3 { grid-column: span 3; }
@@ -749,7 +750,12 @@ table.table { width: 100%; border-collapse: separate; border-spacing: 0; }
 /* ------------------------------------------------------------------ ricevute */
 .receipt-editor { display: grid; grid-template-columns: minmax(380px, 1fr) minmax(420px, 560px); gap: 22px; align-items: start; }
 .receipt-lines { display: flex; flex-direction: column; gap: 8px; }
-.receipt-line { display: grid; grid-template-columns: 1fr 120px 38px; gap: 8px; align-items: center; }
+.receipt-line { display: grid; grid-template-columns: minmax(0, 1fr) 170px 120px 38px; gap: 8px; align-items: center; }
+.pay-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pay-pick button { display: flex; align-items: center; justify-content: center; gap: 10px; height: 54px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text-2); font: inherit; cursor: pointer; transition: all .18s; }
+.pay-pick button b { font-size: 15px; }
+.pay-pick button:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.pay-pick button.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .receipt-total { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-radius: 16px; background: var(--grad); color: #fff; margin-top: 14px; box-shadow: 0 16px 30px -16px rgba(139, 61, 240, .9); }
 .receipt-total b { font-family: var(--font-display); font-size: 28px; }
 .paper-wrap { position: sticky; top: 0; }
@@ -1083,6 +1089,20 @@ table.table { width: 100%; border-collapse: separate; border-spacing: 0; }
   .c3 { grid-column: span 6; } .c4 { grid-column: span 6; } .c5, .c7, .c8 { grid-column: span 12; }
 }
 
+.cassa-bar { margin-bottom: 18px; }
+.cassa-tiles .stat .stat-val { font-size: 25px; }
+.cassa-table td, .cassa-table th { white-space: nowrap; }
+.cassa-table tfoot td { padding: 12px 16px; border-top: 2px solid var(--line); }
+.cassa-cols { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.cassa-sum { gap: 6px 22px; }
+.cs-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; }
+.cs-row .k { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.cs-row.strong { font-weight: 700; }
+.cs-row.strong b { color: var(--accent); }
+.cs-out { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.cs-out span { flex: 1; min-width: 0; }
+.cs-add { display: grid; grid-template-columns: minmax(0, 1fr) 130px auto; gap: 8px; }
+
 /* =====================================================================
    Telefono (app Android e finestre strette): barra in alto, menu laterale,
    navigazione in basso, fogli dal basso. Sopra i 760 px non cambia nulla.
@@ -1165,7 +1185,11 @@ table.table { width: 100%; border-collapse: separate; border-spacing: 0; }
   .page-head .actions { margin-left: 0; width: 100%; }
   .page-head .actions .btn { flex: 1 1 auto; justify-content: center; }
   .g2, .g3 { grid-template-columns: minmax(0, 1fr); }
-  .g4, .g6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g4, .g5, .g6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cassa-cols { grid-template-columns: minmax(0, 1fr); }
+  .cs-add { grid-template-columns: minmax(0, 1fr) 110px; }
+  .cs-add .btn { grid-column: 1 / -1; }
+  .cs-row { grid-template-columns: 74px minmax(0, 1fr) auto; font-size: 13px; }
   .span2, .span3, .span4 { grid-column: 1 / -1; }
   .dash-grid { gap: 14px; margin-top: 14px; }
   .c3, .c4, .c5, .c6, .c7, .c8, .c12 { grid-column: 1 / -1; }
@@ -1256,7 +1280,9 @@ table.table { width: 100%; border-collapse: separate; border-spacing: 0; }
   .disc-grid { grid-template-columns: minmax(0, 1fr); }
   .icon-picker { grid-template-columns: repeat(6, 1fr); }
   .receipt-editor { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .receipt-line { grid-template-columns: minmax(0, 1fr) 96px 38px; }
+  .receipt-line { grid-template-columns: minmax(0, 1fr) 100px 38px; }
+  .receipt-line > input:first-child { grid-column: 1 / -1; }
+  .pay-pick button { height: 50px; }
   .paper-wrap { position: static; }
   .month-pick { grid-template-columns: repeat(4, 1fr); }
   .type-pick button { padding: 12px; }

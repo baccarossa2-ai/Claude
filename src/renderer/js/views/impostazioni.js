@@ -1,5 +1,5 @@
 // Impostazioni: stampanti reali, ricevute, promemoria, aspetto, sicurezza, chat, dati e backup.
-import { db, DEFAULT_CAUSALI } from '../lib/db.js';
+import { db, DEFAULT_CAUSALI, RECEIPT_CATEGORIES } from '../lib/db.js';
 import { icon, on, $, $$, toast, confirmDialog, modal, promptDialog } from '../lib/ui.js';
 import { esc, euro, uid, colorFor, date } from '../lib/format.js';
 import { docShell } from '../print/documents.js';
@@ -118,9 +118,10 @@ function ricevute(box) {
       <div class="row mt"><button class="btn sm" id="addC">${icon('plus', 15)}Aggiungi causale</button><button class="btn sm ghost" id="resetC">${icon('rotate-ccw', 15)}Ripristina predefinite</button></div>`, 'list');
 
   const drawC = () => {
-    $('#caus', box).innerHTML = r.causali.map((c, i) => `<div class="grid" style="grid-template-columns:1fr 150px 110px 150px 36px;gap:8px;align-items:center">
+    $('#caus', box).innerHTML = r.causali.map((c, i) => `<div class="grid caus-row" style="grid-template-columns:1fr 140px 180px 100px 150px 36px;gap:8px;align-items:center">
       <input class="input" data-c="${i}" data-k="descrizione" value="${esc(c.descrizione)}">
       <select class="input" data-c="${i}" data-k="tipo"><option value="generale" ${c.tipo === 'generale' ? 'selected' : ''}>Generale</option><option value="commerciale" ${c.tipo === 'commerciale' ? 'selected' : ''}>Commerciale</option></select>
+      <select class="input" data-c="${i}" data-k="categoria">${RECEIPT_CATEGORIES.map(x => `<option value="${x.id}" ${(c.categoria || 'corso') === x.id ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select>
       <input class="input" type="number" step="0.5" data-c="${i}" data-k="importo" value="${c.importo}" ${c.usaQuotaDisciplina ? 'disabled' : ''}>
       <label class="check small"><input type="checkbox" data-c="${i}" data-k="usaQuotaDisciplina" ${c.usaQuotaDisciplina ? 'checked' : ''}>Quota disciplina</label>
       <button class="btn icon sm ghost" data-delc="${i}">${icon('trash-2', 15)}</button></div>`).join('');
@@ -132,7 +133,7 @@ function ricevute(box) {
     save(); if (t.type === 'checkbox') drawC();
   });
   on(box, 'click', '[data-delc]', (e, t) => { r.causali.splice(Number(t.dataset.delc), 1); save(); drawC(); });
-  $('#addC', box).onclick = () => { r.causali.push({ id: uid('c-'), descrizione: 'Nuova causale', tipo: 'generale', importo: 0 }); save(); drawC(); };
+  $('#addC', box).onclick = () => { r.causali.push({ id: uid('c-'), descrizione: 'Nuova causale', tipo: 'generale', categoria: 'corso', importo: 0 }); save(); drawC(); };
   $('#resetC', box).onclick = async () => { if (await confirmDialog('Ripristinare le causali predefinite?')) { r.causali = DEFAULT_CAUSALI.map(c => ({ ...c })); save('Causali ripristinate'); drawC(); } };
   $('#sg', box).onchange = e => { sn.generale = Math.max(1, Number(e.target.value) || 1); save('Numerazione aggiornata'); rerender(); };
   $('#sc', box).onchange = e => { sn.commerciale = Math.max(1, Number(e.target.value) || 1); save('Numerazione aggiornata'); rerender(); };

@@ -21,112 +21,128 @@ export function needsBollo(r) {
   return Number(r.totale || 0) > Number(s.bolloThreshold || 77.47);
 }
 
-function one(r, logo, label, compact) {
+// Persone sulla ricevuta: dai dati salvati, con ripiego sull'anagrafica per le ricevute delle versioni precedenti
+function people(r) {
+  const c = r.clientId ? db.client(r.clientId) : null;
+  const ath = { ...(c ? { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale, residenza: c.residenza, telefono: c.telefono } : {}), ...(r.atleta || {}) };
+  if (!ath.residenza && c) ath.residenza = c.residenza;
+  if (!ath.telefono && c) ath.telefono = c.telefono || (c.genitore && c.genitore.telefono);
+  const payer = { ...(r.intestatario || {}) };
+  const g = c && c.genitore;
+  if (g && payer.nome === g.nome && payer.cognome === g.cognome) {
+    if (!payer.residenza) payer.residenza = g.residenza && g.residenza.indirizzo ? g.residenza : c.residenza;
+    if (!payer.telefono) payer.telefono = g.telefono || c.telefono;
+    if (!payer.codiceFiscale) payer.codiceFiscale = g.codiceFiscale;
+  }
+  const same = (payer.codiceFiscale && ath.codiceFiscale && payer.codiceFiscale === ath.codiceFiscale)
+    || (`${payer.nome} ${payer.cognome}`.trim().toLowerCase() === `${ath.nome || ''} ${ath.cognome || ''}`.trim().toLowerCase());
+  if (same && !payer.residenza) { payer.residenza = ath.residenza; payer.telefono = payer.telefono || ath.telefono; }
+  return { payer, ath, same: same || !(ath.nome || ath.cognome) };
+}
+
+function personBlock(title, p) {
+  const a = p.residenza || {};
+  const via = [a.indirizzo, a.civico].filter(Boolean).join(', ');
+  const city = [a.cap, a.comune, a.provincia ? `(${a.provincia})` : ''].filter(Boolean).join(' ');
+  return `<div class="rp-person"><h3>${esc(title)}</h3>
+    <p>${esc(p.cognome || '')}</p>
+    <p>${esc(p.nome || '')}</p>
+    <p>${esc(via)}</p>
+    <p class="tight">${esc(city)}<br>${esc(p.telefono || '')}</p>
+    <p>${esc(p.codiceFiscale || '')}</p></div>`;
+}
+
+// "S.S.D. a r.l." + "Athletic Club" -> "S.S.D. Athletic Club a r.l."
+export function companyLegalName(c = db.company) {
+  const n = companyName(c);
+  const f = String(c.formaGiuridica || '').trim();
+  if (c.tipoSoggetto === 'persona' || !f || n.toLowerCase().includes(f.toLowerCase())) return n;
+  const m = /^(.*?)\s*(a\s*r\.?\s*l\.?)$/i.exec(f);
+  return m && m[1] ? `${m[1]} ${n} ${m[2]}` : `${f} ${n}`;
+}
+
+// importi come sulle ricevute cartacee: "€ 55,00"
+const eur = n => `€ ${(Number(n) || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const OLD_FOOTER = 'Grazie per la fiducia! Conserva questa ricevuta.';
+
+function paper(r, logo) {
   const c = db.company;
-  const sede = (c.sedi || []).find(s => s.principale) || (c.sedi || [])[0];
-  const legal = address(c.fatturazione) || address(sede);
-  const tipoLabel = r.tipo === 'commerciale' ? 'Ricevuta commerciale' : 'Ricevuta generale';
-  const payer = r.intestatario || {};
-  const ath = r.atleta || {};
-  const samePerson = payer.codiceFiscale && ath.codiceFiscale ? payer.codiceFiscale === ath.codiceFiscale : `${payer.nome} ${payer.cognome}` === `${ath.nome} ${ath.cognome}`;
+  const sede = (c.sedi || []).find(x => x.principale) || (c.sedi || [])[0] || {};
+  const f = c.fatturazione && (c.fatturazione.indirizzo || c.fatturazione.comune) ? c.fatturazione : sede;
+  const line1 = [[f.indirizzo, f.civico].filter(Boolean).join(' '), f.cap].filter(Boolean).join(' ');
+  const line2 = [f.comune, c.partitaIva ? `P.IVA ${c.partitaIva}` : (c.codiceFiscale ? `C.F. ${c.codiceFiscale}` : '')].filter(Boolean).join(' - ');
+  const { payer, ath, same } = people(r);
   const s = db.settings.receipts;
   const dicitura = (s.diciture && s.diciture[r.tipo]) || '';
-  const mesi = (r.mesi || []).map(monthLabel).join(', ');
-  return `<section class="rc ${compact ? 'compact' : ''} ${r.annullata ? 'void' : ''}">
+  const rows = (r.righe || []).map(l => `<tr><td>${esc(l.descrizione)}</td><td class="eur">${eur(l.importo)}</td></tr>`).join('');
+  const footer = !s.footer || s.footer === OLD_FOOTER ? 'Grazie per averci scelto.' : s.footer;
+  return `<section class="rp ${r.annullata ? 'void' : ''}">
     ${r.annullata ? '<div class="stamp">ANNULLATA</div>' : ''}
-    <header>
-      <div class="brand">
+    <header class="rp-head">
+      <div class="rp-brand">
         ${logo ? `<img src="${logo}" alt="">` : `<div class="mono-logo">${esc(companyName().slice(0, 1))}</div>`}
-        <div>
-          <h1>${esc(companyName())}</h1>
-          <p>${esc([c.tipoSoggetto !== 'persona' ? c.formaGiuridica : '', legal].filter(Boolean).join(' · '))}</p>
-          <p>${esc([c.partitaIva ? `P.IVA ${c.partitaIva}` : '', c.codiceFiscale ? `C.F. ${c.codiceFiscale}` : ''].filter(Boolean).join(' · '))}</p>
-          <p>${esc([c.telefono || c.cellulare, c.email, c.sito].filter(Boolean).join(' · '))}</p>
-        </div>
+        <b>${esc(companyLegalName())}</b>
+        ${line1 ? `<small>sede legale: ${esc(line1)}</small>` : ''}
+        ${line2 ? `<small>${esc(line2)}</small>` : ''}
       </div>
-      <div class="num">
-        <span class="kind ${r.tipo}">${tipoLabel}</span>
-        <b>N. ${esc(r.numero)}<small>/${esc(r.anno)}</small></b>
-        <span>del ${date(r.data)}</span>
-        ${label ? `<em>${esc(label)}</em>` : ''}
-      </div>
+      <h1>${r.tipo === 'commerciale' ? 'Ricevuta commerciale' : 'Ricevuta'}</h1>
     </header>
-    <div class="parties">
-      <div><span>Ricevuto da</span><b>${esc(`${payer.nome || ''} ${payer.cognome || ''}`.trim() || '—')}</b>
-        ${payer.codiceFiscale ? `<small>C.F. ${esc(payer.codiceFiscale)}</small>` : ''}
-        ${payer.residenza && address(payer.residenza) ? `<small>${esc(address(payer.residenza))}</small>` : ''}</div>
-      ${!samePerson && (ath.nome || ath.cognome) ? `<div><span>Per l'atleta</span><b>${esc(`${ath.nome || ''} ${ath.cognome || ''}`)}</b>
-        <small>${esc([ath.luogoNascita ? `nato/a a ${ath.luogoNascita}` : '', ath.dataNascita ? `il ${date(ath.dataNascita)}` : ''].filter(Boolean).join(' '))}</small>
-        ${ath.codiceFiscale ? `<small>C.F. ${esc(ath.codiceFiscale)}</small>` : ''}</div>` : ''}
+    <div class="rp-meta">
+      <span>Ricevuta N.</span><em>${esc(r.numero)}</em>
+      <span>DATA</span><em>${date(r.data)}</em>
     </div>
-    <table class="lines">
-      <thead><tr><th>Causale</th><th class="r">Importo</th></tr></thead>
-      <tbody>${(r.righe || []).map(l => `<tr><td>${esc(l.descrizione)}${l === r.righe[0] && (r.disciplina || mesi) ? `<div class="sub">${esc([r.disciplina, mesi ? `Periodo: ${mesi}` : ''].filter(Boolean).join(' · '))}</div>` : ''}</td><td class="r">${euro(l.importo)}</td></tr>`).join('')}</tbody>
-    </table>
-    <div class="total">
-      <div class="words">Importo in lettere: <b>euro ${esc(euroInWords(r.totale))}</b><br>Pagamento: <b>${esc(r.metodo || '—')}</b></div>
-      <div class="sum"><span>Totale</span><b>${euro(r.totale)}</b></div>
+    <div class="rp-parties">
+      ${same ? personBlock('Anagrafica cliente', payer) + '<div></div>' : personBlock('Anagrafica genitore', payer) + personBlock('Anagrafica atleta', ath)}
     </div>
-    ${r.detrazione ? `<p class="note detr">${esc(DETRAZIONE_TEXT)}</p>` : ''}
-    ${dicitura ? `<p class="note">${esc(dicitura)}</p>` : ''}
-    ${r.note ? `<p class="note">Note: ${esc(r.note)}</p>` : ''}
-    <footer>
-      ${r.bollo ? `<div class="bollo">Marca da bollo<br><b>€ ${Number(s.bolloAmount || 2).toFixed(2).replace('.', ',')}</b></div>` : '<div></div>'}
-      <div class="sign"><div class="line"></div><span>${esc(s.firma || 'Timbro e firma')}</span></div>
-    </footer>
-    ${s.footer && !compact ? `<p class="thanks">${esc(s.footer)}</p>` : ''}
+    <div class="rp-cols"><span>DESCRIZIONE</span><span>EURO</span></div>
+    <div class="rp-box">
+      <table><tbody>${rows}</tbody></table>
+      <div class="rp-total"><span>TOTALE DA CORRISPONDERE</span><b>${eur(r.totale)}</b></div>
+    </div>
+    <p class="rp-pay">Metodo di pagamento: <b>${esc(r.metodo || '—')}</b></p>
+    ${r.detrazione ? `<p class="rp-note">${esc(DETRAZIONE_TEXT)}</p>` : ''}
+    ${dicitura ? `<p class="rp-note">${esc(dicitura)}</p>` : ''}
+    ${r.note ? `<p class="rp-note">Note: ${esc(r.note)}</p>` : ''}
+    ${r.bollo ? `<p class="rp-note">Marca da bollo da € ${Number(s.bolloAmount || 2).toFixed(2).replace('.', ',')} applicata sull'originale.</p>` : ''}
+    <p class="rp-thanks">${esc(footer)}</p>
   </section>`;
 }
 
 const CSS = `
-  .rc{position:relative;padding:8mm 9mm;border:1.2px solid #ddd8f0;border-radius:10px;overflow:hidden}
-  .rc+.rc{margin-top:0}
-  .cut{border-top:1.5px dashed #b9b4d4;margin:7mm 0;position:relative}
-  .cut::after{content:'✂';position:absolute;left:8px;top:-11px;background:#fff;padding:0 4px;color:#8a86a6;font-size:12pt}
-  header{display:flex;justify-content:space-between;gap:10mm;padding-bottom:5mm;border-bottom:2.5px solid #7C4DFF}
-  .brand{display:flex;gap:4mm;align-items:flex-start}
-  .brand img{width:20mm;height:20mm;object-fit:contain;border-radius:3mm}
-  .mono-logo{width:18mm;height:18mm;border-radius:4mm;background:linear-gradient(135deg,#5B5BF6,#8B3DF0,#E9468F);color:#fff;display:grid;place-items:center;font:700 22pt Outfit,sans-serif}
-  .brand h1{font-size:17pt;line-height:1.1;color:#1b1838}
-  .brand p{margin:1mm 0 0;font-size:8.6pt;color:#5d5980}
-  .num{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1mm;white-space:nowrap}
-  .num .kind{font-size:8pt;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:1.2mm 3mm;border-radius:20mm;background:#F1EEFF;color:#5B2BD6}
-  .num .kind.commerciale{background:#E6F6FF;color:#0369A1}
-  .num b{font:700 22pt Outfit,sans-serif;color:#1b1838}
-  .num b small{font-size:12pt;color:#8a86a6}
-  .num span{font-size:9.5pt;color:#5d5980}
-  .num em{font-style:normal;font-size:7.5pt;font-weight:800;letter-spacing:.1em;color:#E9468F;text-transform:uppercase}
-  .parties{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin:5mm 0 4mm}
-  .parties div{background:#FAF9FE;border:1px solid #ece9f7;border-radius:3mm;padding:3mm 4mm}
-  .parties span{display:block;font-size:7.5pt;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8a86a6}
-  .parties b{display:block;font-size:11.5pt;margin:.5mm 0}
-  .parties small{display:block;font-size:8.6pt;color:#5d5980}
-  table.lines{width:100%;border-collapse:collapse;font-size:10pt}
-  .lines th{text-align:left;font-size:7.5pt;letter-spacing:.1em;text-transform:uppercase;color:#8a86a6;border-bottom:1px solid #e3e0f0;padding:1.5mm 0}
-  .lines td{padding:2.2mm 0;border-bottom:1px solid #f0eef8;vertical-align:top}
-  .lines .sub{font-size:8.5pt;color:#8a86a6;margin-top:.5mm}
-  .r{text-align:right;white-space:nowrap}
-  .total{display:flex;justify-content:space-between;align-items:center;gap:8mm;margin-top:4mm}
-  .words{font-size:9.2pt;color:#3c3860;line-height:1.6}
-  .sum{background:linear-gradient(135deg,#5B5BF6,#8B3DF0 60%,#E9468F);color:#fff;border-radius:3mm;padding:3mm 6mm;text-align:right;min-width:48mm}
-  .sum span{display:block;font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
-  .sum b{font:700 18pt Outfit,sans-serif}
-  .note{font-size:8.2pt;color:#5d5980;margin:3mm 0 0;line-height:1.45}
-  .note.detr{background:#F6FFF9;border-left:3px solid #10B981;padding:2mm 3mm;border-radius:1.5mm;color:#1f5d45}
-  footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:6mm}
-  .bollo{width:24mm;height:28mm;border:1.5px dashed #b9b4d4;border-radius:2mm;display:grid;place-items:center;text-align:center;font-size:7.5pt;color:#8a86a6;line-height:1.4}
-  .sign{width:68mm;text-align:center;font-size:8.5pt;color:#8a86a6}
-  .sign .line{border-bottom:1px solid #8a86a6;height:12mm;margin-bottom:1.5mm}
-  .thanks{text-align:center;font-size:8.5pt;color:#8a86a6;margin:4mm 0 0}
+  body{font-family:'Outfit','Plus Jakarta Sans',Arial,sans-serif;color:#3a3a3a}
+  .rp{position:relative;min-height:268mm;padding:4mm 4mm 0}
+  .rp-head{display:flex;justify-content:space-between;align-items:flex-start}
+  .rp-brand{display:flex;flex-direction:column;align-items:flex-start;max-width:105mm}
+  .rp-brand img{max-width:48mm;max-height:26mm;object-fit:contain;margin:0 0 4mm 10mm}
+  .mono-logo{width:20mm;height:20mm;border-radius:4mm;background:#333;color:#fff;display:grid;place-items:center;font:700 22pt Outfit,sans-serif;margin-bottom:4mm}
+  .rp-brand b{font-size:13.5pt;font-weight:700;color:#2b2b2b;letter-spacing:.01em}
+  .rp-brand small{font-size:8.6pt;font-weight:700;color:#3a3a3a;line-height:1.35}
+  .rp-head h1{font-size:23pt;font-weight:600;color:#3a3a3a;margin-top:2mm;letter-spacing:.01em}
+  .rp-meta{display:grid;grid-template-columns:auto auto;column-gap:16mm;row-gap:1.5mm;margin:-14mm 0 0 82mm;font-size:8.6pt;width:max-content}
+  .rp-meta span{font-weight:700;text-align:center;color:#2b2b2b}
+  .rp-meta em{font-style:normal;color:#666}
+  .rp-meta span:nth-of-type(2){grid-row:2}
+  .rp-parties{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin:16mm 0 0 8mm}
+  .rp-person h3{font-size:9pt;font-weight:700;color:#2b2b2b;margin-bottom:5mm;font-family:inherit}
+  .rp-person p{margin:0 0 5.2mm;font-size:9pt;color:#666;text-transform:uppercase;min-height:3.2mm;line-height:1.35}
+  .rp-person p.tight{margin-bottom:4.2mm}
+  .rp-person + .rp-person{border-bottom:1px solid #555;padding-bottom:2mm}
+  .rp-cols{display:grid;grid-template-columns:1fr 50mm;margin:6mm 0 1.5mm;font-size:8.6pt;font-weight:700;color:#2b2b2b}
+  .rp-cols span:first-child{text-align:center;padding-left:30mm}
+  .rp-cols span:last-child{text-align:center;border-bottom:1px solid #555;padding-bottom:1mm}
+  .rp-box{background:repeating-linear-gradient(180deg,#d9d9d9 0,#d9d9d9 6mm,#e1e1e1 6mm,#e1e1e1 12mm);min-height:95mm;position:relative;padding:2mm 3mm 12mm}
+  .rp-box table{width:100%;border-collapse:collapse;font-size:8.6pt}
+  .rp-box td{padding:1.4mm 0;vertical-align:top;color:#333}
+  .rp-box td.eur{text-align:right;width:40mm;white-space:nowrap}
+  .rp-total{position:absolute;left:3mm;right:3mm;bottom:2.5mm;display:flex;justify-content:flex-end;align-items:baseline;gap:40mm;font-size:8.6pt}
+  .rp-total span{font-weight:700;color:#2b2b2b}
+  .rp-total b{font-weight:500;color:#333}
+  .rp-pay{font-size:8.6pt;margin:3mm 0 0;color:#444}
+  .rp-note{font-size:7.6pt;color:#666;margin:2mm 0 0;line-height:1.4}
+  .rp-thanks{text-align:center;font-style:italic;font-size:8.2pt;color:#555;margin:8mm 0 0;text-transform:uppercase}
   .void .stamp{position:absolute;inset:0;display:grid;place-items:center;font:800 54pt Outfit,sans-serif;color:rgba(239,68,68,.22);transform:rotate(-18deg);pointer-events:none;letter-spacing:.1em}
-  .compact{padding:5mm 7mm}
-  .compact header{padding-bottom:3mm}
-  .compact .brand img{width:15mm;height:15mm}
-  .compact .brand h1{font-size:14pt}
-  .compact .parties{margin:3mm 0}
-  .compact footer{margin-top:3mm}
-  .compact .bollo{height:20mm}
-  .compact .sign .line{height:8mm}
+  .a5 .rp{min-height:0}
+  .a5 .rp-box{min-height:45mm}
 `;
 
 const THERMAL_CSS = `
@@ -168,15 +184,12 @@ function thermal(r, logo) {
   </div>`;
 }
 
-export async function receiptHTML(r, { format = db.settings.printer.formato || 'A4', doppia = db.settings.printer.doppiaCopia } = {}) {
+export async function receiptHTML(r, { format = db.settings.printer.formato || 'A4' } = {}) {
   const logo = await mediaToDataUrl(db.company.logo).catch(() => '');
   const title = `Ricevuta ${r.tipo} n. ${r.numero}/${r.anno}`;
   if (String(format).startsWith('Termica')) {
     return docShell({ title, page: format, css: THERMAL_CSS, body: thermal(r, logo) });
   }
-  const compact = doppia && format === 'A4';
-  const body = compact
-    ? one(r, logo, 'Originale', true) + '<div class="cut"></div>' + one(r, logo, 'Copia per la società', true)
-    : one(r, logo, '', format === 'A5');
-  return docShell({ title, page: format, css: CSS + (format === 'A5' ? 'body{font-size:9.5pt}' : ''), body });
+  const body = format === 'A5' ? `<div class="a5">${paper(r, logo)}</div>` : paper(r, logo);
+  return docShell({ title, page: format, css: CSS, body });
 }

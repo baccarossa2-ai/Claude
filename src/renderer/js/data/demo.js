@@ -2,7 +2,7 @@
 // Tutti i record hanno demo: true e si eliminano da Impostazioni › Dati.
 import { db } from '../lib/db.js';
 import { computeCF } from '../lib/cf.js';
-import { toISO, uid } from '../lib/format.js';
+import { toISO, uid, MESI } from '../lib/format.js';
 
 const NOMI_F = ['Sofia', 'Giulia', 'Martina', 'Chiara', 'Alice', 'Emma', 'Greta', 'Beatrice', 'Ginevra', 'Matilde', 'Noemi', 'Viola', 'Elena', 'Bianca', 'Rebecca', 'Gaia'];
 const NOMI_M = ['Leonardo', 'Francesco', 'Lorenzo', 'Tommaso', 'Mattia', 'Gabriele', 'Riccardo', 'Edoardo'];
@@ -72,34 +72,55 @@ export async function createDemoData() {
   }
   for (const c of created) await db.upsertClient(c);
 
-  // qualche ricevuta degli ultimi mesi per popolare i grafici
+  // qualche ricevuta degli ultimi mesi (e di oggi) per popolare grafici e chiusura di cassa
   const list = db.clients.filter(c => c.demo);
+  const sede = db.mainSede();
+  const mese = d => MESI[d.getMonth()].charAt(0).toUpperCase() + MESI[d.getMonth()].slice(1);
+  const emit = async (c, day, d, tipo, righe) => {
+    const disc = db.discipline(c.discipline[0]);
+    const payer = c.genitore ? { ...c.genitore, residenza: c.residenza } : { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale, residenza: c.residenza, telefono: c.telefono };
+    const totale = righe.reduce((t, l) => t + l.importo, 0);
+    await db.addReceipt({
+      demo: true,
+      tipo,
+      data: day,
+      clientId: c.id,
+      sedeId: sede ? sede.id : '',
+      intestatario: payer,
+      atleta: { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale, dataNascita: c.dataNascita, luogoNascita: c.luogoNascita, residenza: c.residenza, telefono: c.telefono },
+      righe,
+      totale,
+      metodo: pick(['Contanti', 'Contanti', 'POS', 'POS', 'Bonifico']),
+      mesi: tipo === 'generale' ? [`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] : [],
+      disciplina: disc ? disc.nome : '',
+      detrazione: tipo === 'generale' && !!c.genitore,
+      bollo: false,
+      note: '',
+    });
+  };
+  const quota = (c, d) => {
+    const disc = db.discipline(c.discipline[0]);
+    const dn = disc ? ` (${disc.nome.toLowerCase().replace(/^ginnastica /, 'g. ')})` : '';
+    return { descrizione: `Quota corso mese di ${mese(d)}${dn}`, importo: disc ? disc.quotaMensile : 45, categoria: 'corso' };
+  };
   for (let m = 5; m >= 0; m--) {
     const d = new Date(now.getFullYear(), now.getMonth() - m, 5);
     for (const c of list.slice(0, 8 + ((m * 3) % 9))) {
-      const disc = db.discipline(c.discipline[0]);
       const day = toISO(new Date(d.getFullYear(), d.getMonth(), 3 + Math.floor(r() * 20)));
-      if (day > toISO(now)) continue;
-      const payer = c.genitore ? { ...c.genitore } : { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale };
-      const imp = disc ? disc.quotaMensile : 45;
-      await db.addReceipt({
-        demo: true,
-        tipo: m % 4 === 0 && c === list[0] ? 'commerciale' : 'generale',
-        data: day,
-        clientId: c.id,
-        intestatario: { ...payer, residenza: c.residenza },
-        atleta: { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale, dataNascita: c.dataNascita, luogoNascita: c.luogoNascita },
-        righe: [{ descrizione: `Quota mensile ${disc ? disc.nome : 'corso'}`, importo: imp }],
-        totale: imp,
-        metodo: pick(['Contanti', 'POS / Bancomat', 'Bonifico bancario', 'Satispay']),
-        mesi: [`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`],
-        disciplina: disc ? disc.nome : '',
-        detrazione: !c.genitore ? false : true,
-        bollo: false,
-        note: '',
-      });
+      if (day >= toISO(now)) continue;
+      const righe = [quota(c, d)];
+      if (r() < .15) righe.push({ descrizione: 'Quota di iscrizione', importo: 30, categoria: 'iscrizione' });
+      await emit(c, day, d, 'generale', righe);
     }
   }
+  // giornata di oggi: quote, un'iscrizione e un corrispettivo commerciale
+  for (const [i, c] of list.slice(0, 7).entries()) {
+    const righe = [quota(c, now)];
+    if (i === 2) righe.push({ descrizione: 'Quota di iscrizione', importo: 30, categoria: 'iscrizione' });
+    if (i === 5) righe.push({ descrizione: 'Quota di tesseramento', importo: 15, categoria: 'tesseramento' });
+    await emit(c, toISO(now), now, 'generale', righe);
+  }
+  await emit(list[3], toISO(now), now, 'commerciale', [{ descrizione: 'Mezze punte', importo: 23, categoria: 'commerciale' }]);
   db.log('demo', 'Caricati 24 atleti di esempio');
 }
 

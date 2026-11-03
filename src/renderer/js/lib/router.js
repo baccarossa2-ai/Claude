@@ -11,6 +11,7 @@ const ROUTES = [
   ['/ricevute', () => import('../views/ricevute.js')],
   ['/ricevute/nuova', () => import('../views/ricevuta-editor.js')],
   ['/scadenzario', () => import('../views/scadenzario.js')],
+  ['/cassa', () => import('../views/cassa.js')],
   ['/comunica', () => import('../views/comunica.js')],
   ['/squadra', () => import('../views/squadra.js')],
   ['/studio', () => import('../views/studio-home.js')],

@@ -1,8 +1,8 @@
 // Nuova ricevuta: scelta atleta e intestatario, causali, mesi, anteprima in tempo reale, stampa e PDF.
-import { db, PAYMENT_METHODS } from '../lib/db.js';
+import { db, PAYMENT_METHODS, RECEIPT_CATEGORIES, guessCategory } from '../lib/db.js';
 import { icon, avatar, on, $, $$, toast, modal, confetti } from '../lib/ui.js';
 import { go } from '../lib/router.js';
-import { esc, euro, todayISO, age, fullName, MESI_BREVI, debounce, date, phoneIntl } from '../lib/format.js';
+import { esc, euro, todayISO, age, fullName, MESI_BREVI, MESI, debounce, date, phoneIntl } from '../lib/format.js';
 import { euroInWords } from '../lib/words.js';
 import { receiptHTML, needsBollo, monthLabel, companyName } from '../print/receipt.js';
 import { printDocument, quickPrint } from '../print/documents.js';
@@ -18,6 +18,7 @@ export default {
       payerMode: 'auto',
       altro: { nome: '', cognome: '', codiceFiscale: '' },
       metodo: PAYMENT_METHODS[0],
+      sedeId: (db.mainSede() || {}).id || '',
       disciplinaId: '',
       mesi: [],
       righe: [],
@@ -50,7 +51,8 @@ export default {
             <div class="form-section"><h3><span class="ico-box">${icon('calendar-days', 17)}</span>Data, pagamento e periodo</h3>
               <div class="grid g2">
                 <label class="field"><span>Data ricevuta</span><input type="date" id="data" value="${r.data}"></label>
-                <label class="field"><span>Metodo di pagamento</span><select id="metodo">${PAYMENT_METHODS.map(m => `<option>${m}</option>`).join('')}</select></label>
+                <label class="field"><span>Sede</span><select id="sede">${db.sedi().map(x => `<option value="${x.id}">${esc(x.nome || x.comune)}</option>`).join('') || '<option value="">Sede principale</option>'}</select></label>
+                <div class="field span-all"><span>Metodo di pagamento</span><div class="pay-pick" id="metodo">${PAYMENT_METHODS.map(m => `<button type="button" data-pay="${m}">${icon({ Contanti: 'banknote', POS: 'credit-card', Bonifico: 'landmark' }[m] || 'wallet', 20)}<b>${m}</b></button>`).join('')}</div></div>
                 <label class="field span-all"><span>Disciplina</span><select id="disc"></select></label>
               </div>
               <div class="row between mt"><b class="small">Mesi di riferimento</b>
@@ -83,7 +85,7 @@ export default {
         </div>
       </div>`;
 
-    $('#fmtLbl', root).textContent = `Formato ${db.settings.printer.formato}${db.settings.printer.doppiaCopia ? ' · originale + copia' : ''}`;
+    $('#fmtLbl', root).textContent = `Formato ${db.settings.printer.formato}`;
 
     const client = () => (r.clientId ? db.client(r.clientId) : null);
 
@@ -91,8 +93,11 @@ export default {
       const c = client();
       if (r.payerMode === 'altro' || !c) return { ...r.altro };
       const useParent = r.payerMode === 'genitore' || (r.payerMode === 'auto' && c.genitore && c.genitore.nome && age(c.dataNascita) !== null && age(c.dataNascita) < 18);
-      if (useParent && c.genitore) return { nome: c.genitore.nome, cognome: c.genitore.cognome, codiceFiscale: c.genitore.codiceFiscale, residenza: c.residenza };
-      return { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale, residenza: c.residenza };
+      if (useParent && c.genitore) {
+        const g = c.genitore;
+        return { nome: g.nome, cognome: g.cognome, codiceFiscale: g.codiceFiscale, residenza: g.residenza && g.residenza.indirizzo ? g.residenza : c.residenza, telefono: g.telefono || c.telefono };
+      }
+      return { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale, residenza: c.residenza, telefono: c.telefono || (c.genitore && c.genitore.telefono) || '' };
     };
 
     const build = () => {
@@ -107,8 +112,9 @@ export default {
         numero: db.nextReceiptNumber(r.tipo, Number(r.data.slice(0, 4))),
         clientId: c ? c.id : null,
         intestatario: payer(),
-        atleta: c ? { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale, dataNascita: c.dataNascita, luogoNascita: c.luogoNascita } : {},
-        righe: righe.map(l => ({ descrizione: l.descrizione, importo: Math.round((Number(l.importo) || 0) * 100) / 100 })),
+        atleta: c ? { nome: c.nome, cognome: c.cognome, codiceFiscale: c.codiceFiscale, dataNascita: c.dataNascita, luogoNascita: c.luogoNascita, residenza: c.residenza, telefono: c.telefono || (c.genitore && c.genitore.telefono) || '' } : {},
+        righe: righe.map(l => ({ descrizione: l.descrizione, importo: Math.round((Number(l.importo) || 0) * 100) / 100, categoria: l.categoria || guessCategory(l.descrizione, r.tipo) })),
+        sedeId: r.sedeId,
         totale: Math.round(totale * 100) / 100,
         metodo: r.metodo,
         mesi: [...r.mesi].sort(),
@@ -200,6 +206,7 @@ export default {
       r.payerMode = 'auto';
       const c = client();
       r.disciplinaId = (c.discipline || [])[0] || '';
+      if (c.sedeId && db.sedi().some(x => x.id === c.sedeId)) { r.sedeId = c.sedeId; $('#sede', root).value = c.sedeId; }
       renderWho();
       renderDisc();
       if (!r.righe.some(l => l.descrizione)) applyPreset(db.settings.receipts.causali.find(x => x.tipo === r.tipo) || db.settings.receipts.causali[0]);
@@ -230,6 +237,7 @@ export default {
       if (!r.righe.length) r.righe.push({ descrizione: '', importo: '' });
       $('#lines', root).innerHTML = r.righe.map((l, i) => `<div class="receipt-line">
         <input class="input" data-l="${i}" data-k="descrizione" placeholder="Causale (es. Quota mensile)" value="${esc(l.descrizione)}">
+        <select class="input" data-cat="${i}" data-tip="Colonna del report di cassa">${RECEIPT_CATEGORIES.map(x => `<option value="${x.id}" ${(l.categoria || guessCategory(l.descrizione, r.tipo)) === x.id ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select>
         <div class="input-icon">${icon('euro', 15)}<input class="input" data-l="${i}" data-k="importo" type="number" step="0.01" min="0" placeholder="0,00" value="${l.importo}"></div>
         <button class="btn icon sm ghost" data-del="${i}" data-tip="Rimuovi">${icon('trash-2', 15)}</button></div>`).join('');
       totals();
@@ -249,10 +257,10 @@ export default {
       let desc = p.descrizione;
       if (p.usaQuotaDisciplina && disc) {
         importo = Number(disc.quotaMensile || 0) * Math.max(1, r.mesi.length);
-        desc = `${p.descrizione} – ${disc.nome}`;
+        desc = presetText(p, disc, r.mesi);
       }
       const empty = r.righe.findIndex(l => !l.descrizione && !Number(l.importo));
-      const line = { descrizione: desc, importo: importo ? importo.toFixed(2) : '', preset: p.id };
+      const line = { descrizione: desc, importo: importo ? importo.toFixed(2) : '', preset: p.id, categoria: p.categoria || guessCategory(p.descrizione, p.tipo) };
       if (empty >= 0) r.righe[empty] = line; else r.righe.push(line);
       renderLines();
       updatePreview();
@@ -267,7 +275,10 @@ export default {
     });
     on(root, 'input', '[data-altro]', (e, t) => { r.altro[t.dataset.altro] = t.dataset.altro === 'codiceFiscale' ? t.value.toUpperCase() : t.value; updatePreview(); });
     $('#data', root).addEventListener('change', e => { r.data = e.target.value || todayISO(); renderType(); autoFlags(); updatePreview(); });
-    $('#metodo', root).addEventListener('change', e => { r.metodo = e.target.value; updatePreview(); });
+    const drawPay = () => $$('#metodo [data-pay]', root).forEach(b => b.classList.toggle('sel', b.dataset.pay === r.metodo));
+    on(root, 'click', '[data-pay]', (e, t) => { r.metodo = t.dataset.pay; drawPay(); updatePreview(); });
+    $('#sede', root).addEventListener('change', e => { r.sedeId = e.target.value; });
+    on(root, 'change', '[data-cat]', (e, t) => { const l = r.righe[Number(t.dataset.cat)]; l.categoria = t.value; l.categoriaTouched = true; updatePreview(); });
     $('#disc', root).addEventListener('change', e => {
       r.disciplinaId = e.target.value;
       // aggiorna le righe nate dalla quota della disciplina
@@ -287,7 +298,10 @@ export default {
         const p = db.settings.receipts.causali.find(x => x.id === l.preset);
         if (p && p.usaQuotaDisciplina) {
           const disc = db.discipline(r.disciplinaId);
-          if (disc) r.righe[i].importo = (Number(disc.quotaMensile || 0) * Math.max(1, r.mesi.length)).toFixed(2);
+          if (disc) {
+            r.righe[i].importo = (Number(disc.quotaMensile || 0) * Math.max(1, r.mesi.length)).toFixed(2);
+            r.righe[i].descrizione = presetText(p, disc, r.mesi);
+          }
         }
       });
       renderLines();
@@ -298,11 +312,12 @@ export default {
       const l = r.righe[Number(t.dataset.l)];
       l[t.dataset.k] = t.value;
       if (t.dataset.k === 'descrizione') delete l.preset;
+      if (t.dataset.k === 'descrizione' && !l.categoriaTouched) l.categoria = guessCategory(t.value, r.tipo);
       totals();
       updatePreview();
     });
     on(root, 'click', '[data-del]', (e, t) => { r.righe.splice(Number(t.dataset.del), 1); renderLines(); updatePreview(); });
-    $('#addLine', root).onclick = () => { r.righe.push({ descrizione: '', importo: '' }); renderLines(); $$('[data-k=descrizione]', root).pop().focus(); };
+    $('#addLine', root).onclick = () => { r.righe.push({ descrizione: '', importo: '', categoria: r.tipo === 'commerciale' ? 'commerciale' : 'corso' }); renderLines(); $$('[data-k=descrizione]', root).pop().focus(); };
     $('#detr', root).addEventListener('change', e => { r.detrazione = e.target.checked; r.detrTouched = true; updatePreview(); });
     $('#bollo', root).addEventListener('change', e => { r.bollo = e.target.checked; r.bolloTouched = true; updatePreview(); });
     $('#note', root).addEventListener('input', e => { r.note = e.target.value; updatePreview(); });
@@ -329,11 +344,21 @@ export default {
     renderMonths();
     renderPresets();
     renderLines();
-    $('#metodo', root).value = r.metodo;
+    drawPay();
     if (r.clientId && client()) choose(r.clientId);
     else { autoFlags(); updatePreview(); }
   },
 };
+
+// "Quota corso mese di Novembre (g. ritmica)", come sulle ricevute della palestra
+export function presetText(p, disc, mesi) {
+  const months = [...mesi].sort().map(k => MESI[Number(k.slice(5, 7)) - 1]).map(m => m.charAt(0).toUpperCase() + m.slice(1));
+  const base = p.descrizione.replace(/\s+(mese|mesi) di$/i, '');
+  const list = months.length > 1 ? `${months.slice(0, -1).join(', ')} e ${months[months.length - 1]}` : months[0];
+  const when = months.length ? ` ${months.length > 1 ? 'mesi' : 'mese'} di ${list}` : '';
+  const dn = disc ? ` (${disc.nome.toLowerCase().replace(/^ginnastica /, 'g. ')})` : '';
+  return `${base}${when}${dn}`;
+}
 
 export function receiptMessage(rec) {
   const p = rec.intestatario || {};

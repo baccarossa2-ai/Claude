@@ -11,6 +11,7 @@ const TABS = [
   { path: '/dashboard', label: 'Home', icon: 'layout-dashboard' },
   { path: '/atleti', label: 'Atleti', icon: 'users', match: /^\/atleti/ },
   { path: '/ricevute', label: 'Ricevute', icon: 'receipt-text', match: /^\/ricevute/ },
+  { path: '/cassa', label: 'Chiusura cassa', icon: 'calculator' },
   { path: '/scadenzario', label: 'Scadenze', icon: 'calendar-clock', badge: 'scadenze-m' },
   { label: 'Altro', icon: 'layout-grid' },
 ];
@@ -262,6 +263,7 @@ const ACTIONS = [
   { label: 'Nuovo atleta / cliente', icon: 'user-plus', keys: 'nuovo atleta cliente anagrafica aggiungi', fn: () => go('/atleti/nuovo') },
   { label: 'Nuova ricevuta generale', icon: 'receipt-text', keys: 'ricevuta generale pagamento quota', fn: () => go('/ricevute/nuova?tipo=generale') },
   { label: 'Nuova ricevuta commerciale', icon: 'receipt', keys: 'ricevuta commerciale vendita', fn: () => go('/ricevute/nuova?tipo=commerciale') },
+  { label: 'Chiusura di cassa del giorno', icon: 'calculator', keys: 'cassa chiusura report giornaliero mensile contanti pos bonifico uscite', fn: () => go('/cassa') },
   { label: 'Apri Salto Studio (editor video)', icon: 'clapperboard', keys: 'video editor montaggio grafica studio salto', fn: () => window.athlos.system.openStudio() },
   { label: 'Scrivi un post social', icon: 'megaphone', keys: 'social instagram facebook whatsapp twitter x messenger post', fn: () => go('/comunica') },
   { label: 'Chat dello staff', icon: 'messages-square', keys: 'chat squadra staff messaggi', fn: () => go('/squadra') },

@@ -20,7 +20,7 @@ import * as bundle from './bundle.js';
 const tr = s => (typeof window !== 'undefined' && window.__athlosT ? window.__athlosT(s) : s);
 
 
-const VERSION = '1.0.1';
+const VERSION = '1.1.0';
 const STUDIO = 'athlos/studio';
 const FILES = 'athlos/files';
 const MEDIA_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'mp4', 'm4v', 'mov', 'webm', 'mkv', 'avi', 'mp3', 'wav', 'ogg', 'opus', 'm4a', 'aac', 'flac', 'salto']);
@@ -265,6 +265,7 @@ async function setTheme(mode) {
   lastDark = dark;
   if (fsx.native) {
     try { await StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light }); } catch { /* barra non disponibile */ }
+    try { await StatusBar.setBackgroundColor({ color: dark ? '#0E1513' : '#F4FBF8' }); } catch { /* colore della barra non modificabile */ }
   }
   return dark;
 }

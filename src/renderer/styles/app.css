@@ -1384,3 +1384,9 @@ html.region-intl .it-only { display: none !important; }
   .rgn-langs, .rgn-sum { grid-template-columns: 1fr 1fr; }
   .rgn-foot { flex-wrap: wrap; } .rgn-note { width: 100%; }
 }
+@media (max-width: 760px) {
+  /* griglie con colonne fisse (es. modulo + pannello laterale da 340 px): una colonna sul telefono */
+  .view .grid[style*="px"] { grid-template-columns: minmax(0, 1fr) !important; }
+  .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .seg button { white-space: nowrap; flex: none; }
+}

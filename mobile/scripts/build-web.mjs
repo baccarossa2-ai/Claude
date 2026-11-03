@@ -42,7 +42,9 @@ for (const [page, entry, boot] of [['index.html', 'js/app.js', 'boot-app.js'], [
   if (!html.includes(tag)) throw new Error(`${page}: script principale non trovato`);
   html = html.replace(tag, `<script src="mobile/bridge.js"></script>\n  <script type="module" src="mobile/${boot}"></script>`);
   html = html.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover">');
-  html = html.replace('</head>', '  <link rel="stylesheet" href="mobile/mobile.css">\n</head>');
+  // design Android (Material 3) caricato solo nell'APK, dopo lo stile del PC
+  html = html.replace('</head>', '  <link rel="stylesheet" href="mobile/mobile.css">\n  <link rel="stylesheet" href="mobile/android.css">\n  <meta name="theme-color" content="#F4FBF8">\n</head>');
+  html = html.replace('<html lang="it"', '<html lang="it" class="android"');
   fs.writeFileSync(file, html);
 }
 

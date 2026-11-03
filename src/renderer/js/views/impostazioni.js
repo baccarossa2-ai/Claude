@@ -1,7 +1,7 @@
 // Impostazioni: stampanti reali, ricevute, promemoria, aspetto, sicurezza, chat, dati e backup.
 import { db, DEFAULT_CAUSALI, RECEIPT_CATEGORIES } from '../lib/db.js';
 import { icon, on, $, $$, toast, confirmDialog, modal, promptDialog } from '../lib/ui.js';
-import { esc, euro, uid, colorFor, date } from '../lib/format.js';
+import { esc, euro, uid, colorFor, date, LOCALE } from '../lib/format.js';
 import { docShell } from '../print/documents.js';
 import { applyTheme } from '../app.js';
 import { ensureProfile, startChat } from '../lib/chatstate.js';
@@ -111,9 +111,9 @@ function ricevute(box) {
       <div class="grid g2"><label class="field"><span>Testo sotto la firma</span><input id="fi" value="${esc(r.firma || '')}" placeholder="Timbro e firma"></label>
       <label class="field"><span>Messaggio in fondo</span><input id="fo" value="${esc(r.footer || '')}"></label></div></div>`, 'file-text')
     + card('Automatismi', '', `<div class="col" style="gap:12px">
-      <label class="switch"><input type="checkbox" id="da" ${r.detrazioneAuto ? 'checked' : ''}><i></i>Aggiungi la dicitura per la detrazione fiscale agli atleti dai 5 ai 18 anni</label>
-      <label class="switch"><input type="checkbox" id="ba" ${r.bolloAuto ? 'checked' : ''}><i></i>Proponi la marca da bollo oltre la soglia</label>
-      <div class="grid g2"><label class="field"><span>Soglia bollo (€)</span><input type="number" step="0.01" id="bt" value="${r.bolloThreshold}"></label><label class="field"><span>Importo marca (€)</span><input type="number" step="0.01" id="bm" value="${r.bolloAmount}"></label></div></div>`, 'wand-sparkles')
+      <label class="switch it-only"><input type="checkbox" id="da" ${r.detrazioneAuto ? 'checked' : ''}><i></i>Aggiungi la dicitura per la detrazione fiscale agli atleti dai 5 ai 18 anni</label>
+      <label class="switch it-only"><input type="checkbox" id="ba" ${r.bolloAuto ? 'checked' : ''}><i></i>Proponi la marca da bollo oltre la soglia</label>
+      <div class="grid g2 it-only"><label class="field"><span>Soglia bollo (€)</span><input type="number" step="0.01" id="bt" value="${r.bolloThreshold}"></label><label class="field"><span>Importo marca (€)</span><input type="number" step="0.01" id="bm" value="${r.bolloAmount}"></label></div></div>`, 'wand-sparkles')
     + card('Causali rapide', 'Pulsanti che compaiono nella nuova ricevuta. Con “quota disciplina” l\'importo è la quota mensile × i mesi scelti.', `<div id="caus" class="col" style="gap:8px"></div>
       <div class="row mt"><button class="btn sm" id="addC">${icon('plus', 15)}Aggiungi causale</button><button class="btn sm ghost" id="resetC">${icon('rotate-ccw', 15)}Ripristina predefinite</button></div>`, 'list');
 
@@ -236,7 +236,7 @@ async function dati(box) {
   box.innerHTML = card('Backup', 'Ogni giorno Athlos salva in automatico una copia dell\'archivio (ultimi 30 giorni).', `
       <div class="row wrap"><button class="btn primary" id="bnow">${icon('save', 15)}Backup adesso</button><button class="btn" id="bexp">${icon('download', 15)}Esporta backup completo (.athlos)</button><button class="btn" id="bimp">${icon('upload', 15)}Importa backup</button><button class="btn ghost" id="bdir">${icon('folder-open', 15)}Apri cartella</button></div>
       <div class="card table-wrap mt" style="max-height:300px"><table class="table"><thead><tr><th>Copia</th><th>Data</th><th class="num">Dimensione</th><th></th></tr></thead>
-      <tbody>${backups.map(b => `<tr><td class="mono small">${esc(b.name)}</td><td>${new Date(b.mtime).toLocaleString('it-IT')}</td><td class="num">${(b.size / 1024).toFixed(0)} KB</td><td class="right"><button class="btn sm ghost" data-restore="${esc(b.name)}">${icon('rotate-ccw', 14)}Ripristina</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nessun backup ancora</td></tr>'}</tbody></table></div>
+      <tbody>${backups.map(b => `<tr><td class="mono small">${esc(b.name)}</td><td>${new Date(b.mtime).toLocaleString(LOCALE)}</td><td class="num">${(b.size / 1024).toFixed(0)} KB</td><td class="right"><button class="btn sm ghost" data-restore="${esc(b.name)}">${icon('rotate-ccw', 14)}Ripristina</button></td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nessun backup ancora</td></tr>'}</tbody></table></div>
       <p class="tiny muted mt">Archivio: <span class="mono selectable">${esc(paths.file)}</span></p>`, 'hard-drive')
     + card('Dati di esempio', '', `<p class="small muted">${demo ? `Ci sono ${demo} atleti di esempio con le loro ricevute.` : 'Carica 24 atleti inventati per fare pratica con ricevute e scadenzario.'}</p>
       <div class="row mt">${demo ? `<button class="btn danger" id="rmDemo">${icon('trash-2', 15)}Elimina i dati di esempio</button>` : `<button class="btn" id="addDemo">${icon('sparkles', 15)}Carica dati di esempio</button>`}</div>`, 'sparkles')

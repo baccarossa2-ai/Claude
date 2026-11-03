@@ -1,5 +1,7 @@
 // Dati di esempio inventati, per provare l'app senza inserire persone reali.
 // Tutti i record hanno demo: true e si eliminano da Impostazioni › Dati.
+import { t } from '../lib/i18n.js';
+import { isIT } from '../lib/region.js';
 import { db } from '../lib/db.js';
 import { computeCF } from '../lib/cf.js';
 import { toISO, uid, MESI } from '../lib/format.js';
@@ -31,7 +33,7 @@ export async function createDemoData() {
     if (i === 2) birth.setMonth(now.getMonth(), now.getDate()); // un compleanno oggi
     const [luogo, prov] = pick(LUOGHI);
     const sesso = female ? 'F' : 'M';
-    const cf = computeCF({ nome, cognome, dataNascita: toISO(birth), sesso, luogoNascita: luogo, provinciaNascita: prov });
+    const cf = !isIT() ? { ok: false } : computeCF({ nome, cognome, dataNascita: toISO(birth), sesso, luogoNascita: luogo, provinciaNascita: prov });
     const scad = new Date(now);
     scad.setDate(scad.getDate() + [-12, -3, 2, 6, 11, 18, 25, 29, 45, 80, 120, 200, 260, 300][i % 14] + Math.floor(r() * 3));
     let discs;
@@ -93,7 +95,7 @@ export async function createDemoData() {
       metodo: pick(['Contanti', 'Contanti', 'POS', 'POS', 'Bonifico']),
       mesi: tipo === 'generale' ? [`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] : [],
       disciplina: disc ? disc.nome : '',
-      detrazione: tipo === 'generale' && !!c.genitore,
+      detrazione: isIT() && tipo === 'generale' && !!c.genitore,
       bollo: false,
       note: '',
     });
@@ -101,7 +103,7 @@ export async function createDemoData() {
   const quota = (c, d) => {
     const disc = db.discipline(c.discipline[0]);
     const dn = disc ? ` (${disc.nome.toLowerCase().replace(/^ginnastica /, 'g. ')})` : '';
-    return { descrizione: `Quota corso mese di ${mese(d)}${dn}`, importo: disc ? disc.quotaMensile : 45, categoria: 'corso' };
+    return { descrizione: `${t('Quota corso mese di')} ${mese(d)}${dn}`, importo: disc ? disc.quotaMensile : 45, categoria: 'corso' };
   };
   for (let m = 5; m >= 0; m--) {
     const d = new Date(now.getFullYear(), now.getMonth() - m, 5);
@@ -109,18 +111,18 @@ export async function createDemoData() {
       const day = toISO(new Date(d.getFullYear(), d.getMonth(), 3 + Math.floor(r() * 20)));
       if (day >= toISO(now)) continue;
       const righe = [quota(c, d)];
-      if (r() < .15) righe.push({ descrizione: 'Quota di iscrizione', importo: 30, categoria: 'iscrizione' });
+      if (r() < .15) righe.push({ descrizione: t('Quota di iscrizione'), importo: 30, categoria: 'iscrizione' });
       await emit(c, day, d, 'generale', righe);
     }
   }
   // giornata di oggi: quote, un'iscrizione e un corrispettivo commerciale
   for (const [i, c] of list.slice(0, 7).entries()) {
     const righe = [quota(c, now)];
-    if (i === 2) righe.push({ descrizione: 'Quota di iscrizione', importo: 30, categoria: 'iscrizione' });
-    if (i === 5) righe.push({ descrizione: 'Quota di tesseramento', importo: 15, categoria: 'tesseramento' });
+    if (i === 2) righe.push({ descrizione: t('Quota di iscrizione'), importo: 30, categoria: 'iscrizione' });
+    if (i === 5) righe.push({ descrizione: t('Quota di tesseramento'), importo: 15, categoria: 'tesseramento' });
     await emit(c, toISO(now), now, 'generale', righe);
   }
-  await emit(list[3], toISO(now), now, 'commerciale', [{ descrizione: 'Mezze punte', importo: 23, categoria: 'commerciale' }]);
+  await emit(list[3], toISO(now), now, 'commerciale', [{ descrizione: t('Mezze punte'), importo: 23, categoria: 'commerciale' }]);
   db.log('demo', 'Caricati 24 atleti di esempio');
 }
 

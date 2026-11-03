@@ -2,6 +2,9 @@
 // del giorno di preavviso (30 giorni prima, o quanto scelto nelle impostazioni) e una il giorno della scadenza.
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { native } from './fsx.js';
+// testi nella lingua scelta al primo avvio (il traduttore lo pubblica l'interfaccia)
+const tr = s => (typeof window !== 'undefined' && window.__athlosT ? window.__athlosT(s) : s);
+
 
 const HORIZON_DAYS = 150;   // AlarmManager ha un limite di allarmi per app: si programma solo il prossimo periodo
 const MAX_SCHEDULED = 240;
@@ -32,8 +35,8 @@ function plan(clients, settings) {
     const name = `${c.nome || ''} ${c.cognome || ''}`.trim() || 'atleta';
     const when = at9(exp, 0);
     const steps = [
-      { kind: 'avviso', at: at9(exp, days), title: 'Certificato medico in scadenza', body: `Il certificato di ${name} scade il ${it(when)} (tra ${days} giorni). Tocca per avvisare la famiglia.` },
-      { kind: 'scadenza', at: when, title: 'Certificato medico scaduto oggi', body: `Oggi scade il certificato di ${name}. Senza certificato valido non può allenarsi.` },
+      { kind: 'avviso', at: at9(exp, days), title: tr('Certificato medico in scadenza'), body: tr(`Il certificato di ${name} scade il ${it(when)} (tra ${days} giorni). Tocca per avvisare la famiglia.`) },
+      { kind: 'scadenza', at: when, title: tr('Certificato medico scaduto oggi'), body: tr(`Oggi scade il certificato di ${name}. Senza certificato valido non può allenarsi.`) },
     ];
     for (const s of steps) {
       const t = s.at.getTime();

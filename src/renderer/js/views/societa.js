@@ -3,6 +3,7 @@ import { db, defaultCompany } from '../lib/db.js';
 import { icon, on, $, $$, toast, pickImage } from '../lib/ui.js';
 import { esc, uid, address } from '../lib/format.js';
 import { validatePIVA, validateCF } from '../lib/cf.js';
+import { isIT } from '../lib/region.js';
 import { placeAutocomplete } from '../lib/places.js';
 
 const FORME = ['A.S.D.', 'S.S.D. a r.l.', 'S.S.D. cooperativa', 'Associazione', 'S.r.l.', 'S.n.c.', 'Ditta individuale', 'Libero professionista', 'Altro'];
@@ -31,7 +32,7 @@ export default {
               <label class="field"><span>Partita IVA</span><input name="partitaIva" class="mono" maxlength="13" value="${esc(c.partitaIva)}"><small class="hint" id="pivaH"></small></label>
               <label class="field"><span>Codice fiscale</span><input name="codiceFiscale" class="mono upper" maxlength="16" value="${esc(c.codiceFiscale)}"><small class="hint" id="cfH"></small></label>
               <label class="field"><span>Legale rappresentante / presidente</span><input name="presidente" value="${esc(c.presidente)}"></label>
-              <label class="field"><span>N. iscrizione Registro attività sportive (RASD)</span><input name="registroRasd" value="${esc(c.registroRasd)}"></label>
+              <label class="field it-only"><span>N. iscrizione Registro attività sportive (RASD)</span><input name="registroRasd" value="${esc(c.registroRasd)}"></label>
               <label class="field span-all"><span>Affiliazioni (federazioni ed enti)</span><input name="affiliazioni" value="${esc(c.affiliazioni)}" placeholder="Es. FGI, FIJLKAM, CSI, UISP"></label>
             </div>
           </div></div>
@@ -46,8 +47,8 @@ export default {
               <label class="field"><span>Nazione</span><input name="f.nazione" value="${esc(c.fatturazione.nazione)}"></label>
             </div>
             <div class="grid g3 mt">
-              <label class="field"><span>Codice destinatario SDI</span><input name="codiceSdi" class="mono upper" maxlength="7" value="${esc(c.codiceSdi)}"></label>
-              <label class="field"><span>PEC</span><input name="pec" value="${esc(c.pec)}"></label>
+              <label class="field it-only"><span>Codice destinatario SDI</span><input name="codiceSdi" class="mono upper" maxlength="7" value="${esc(c.codiceSdi)}"></label>
+              <label class="field it-only"><span>PEC</span><input name="pec" value="${esc(c.pec)}"></label>
               <label class="field"><span>IBAN</span><input name="iban" class="mono upper" value="${esc(c.iban)}"></label>
             </div>
           </div></div>
@@ -89,7 +90,7 @@ export default {
       $$('#tipo button', root).forEach(b => b.classList.toggle('active', b.dataset.v === (c.tipoSoggetto === 'persona' ? 'persona' : 'ente')));
       $('#names', root).innerHTML = c.tipoSoggetto === 'persona'
         ? `<div class="grid g2"><label class="field"><span>Nome</span><input name="nome" value="${esc(c.nome)}"></label><label class="field"><span>Cognome</span><input name="cognome" value="${esc(c.cognome)}"></label></div>`
-        : `<div class="grid" style="grid-template-columns:2fr 1fr"><label class="field"><span>Denominazione sociale</span><input name="denominazione" value="${esc(c.denominazione)}" placeholder="Es. Athletic Club"></label>
+        : `<div class="grid" style="grid-template-columns:2fr 1fr"><label class="field"><span>Denominazione sociale</span><input name="denominazione" value="${esc(c.denominazione)}" placeholder="Es. Polisportiva Aurora"></label>
            <label class="field"><span>Forma giuridica</span><select name="formaGiuridica">${FORME.map(f => `<option ${c.formaGiuridica === f ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>`;
     };
 
@@ -131,11 +132,11 @@ export default {
     };
 
     const validate = () => {
-      const p = c.partitaIva ? validatePIVA(c.partitaIva) : null;
-      const f = c.codiceFiscale ? validateCF(c.codiceFiscale) : null;
+      const p = c.partitaIva && isIT() ? validatePIVA(c.partitaIva) : null;
+      const f = c.codiceFiscale && isIT() ? validateCF(c.codiceFiscale) : null;
       $('#pivaH', root).textContent = p ? (p.ok ? '✓ Valida' : p.error) : '';
       $('#pivaH', root).className = 'hint ' + (p ? (p.ok ? 'ok' : 'err') : '');
-      $('#cfH', root).textContent = f ? (f.ok ? '✓ Valido' : f.error) : 'Per le associazioni è spesso numerico (11 cifre)';
+      $('#cfH', root).textContent = f ? (f.ok ? '✓ Valido' : f.error) : (isIT() ? 'Per le associazioni è spesso numerico (11 cifre)' : '');
       $('#cfH', root).className = 'hint ' + (f ? (f.ok ? 'ok' : 'err') : '');
     };
 

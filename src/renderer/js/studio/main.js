@@ -430,6 +430,7 @@ async function boot() {
   try { appData = await window.athlos.db.load(); } catch { /* senza dati società */ }
   appData.company = appData.company || {};
   appData.disciplines = appData.disciplines || [];
+  try { const { applyRegion } = await import('../lib/region.js'); await applyRegion(appData.settings && appData.settings.region); } catch (err) { console.warn('Lingua non applicata:', err); }
   window.athlos.system.setTheme('dark');
   buildUI();
   document.addEventListener('keydown', keys);

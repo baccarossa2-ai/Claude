@@ -4,6 +4,7 @@ import { icon, avatar, on, $, $$, emptyState, popMenu, modal, toast, confirmDial
 import { go } from '../lib/router.js';
 import { esc, age, daysUntil, date, fullName, normalize, debounce, uid, titleCase } from '../lib/format.js';
 import { toCSV, parseCSV, parseDateIT } from '../lib/csv.js';
+import { untranslate } from '../lib/i18n.js';
 import { decodeCF, validateCF } from '../lib/cf.js';
 import { printDocument, listDocument } from '../print/documents.js';
 import { sendReminder } from './dashboard.js';
@@ -261,7 +262,7 @@ async function importCSV(after) {
   if (!files.length) return;
   const rows = parseCSV(files[0].text);
   if (rows.length < 2) { toast('Il file non contiene righe da importare', { type: 'warning' }); return; }
-  const head = rows[0].map(h => normalize(h).trim());
+  const head = rows[0].map(h => normalize(untranslate(h)).trim());
   const idx = {};
   for (const [k, list] of Object.entries(ALIASES)) {
     const i = head.findIndex(h => list.includes(h));

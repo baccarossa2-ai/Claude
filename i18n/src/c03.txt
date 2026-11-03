@@ -1,0 +1,494 @@
+1080¦Line spacing¦Interlineado¦Interligne¦Zeilenabstand¦Entrelinha
+1081¦Issue the receipt to¦Emitir el recibo a nombre de¦Établir le reçu au nom de¦Quittung ausstellen auf¦Emitir o recibo em nome de
+1082¦Payer¦Titular¦Payeur¦Zahler¦Titular
+1083¦Header¦Encabezado¦En-tête¦Kopfzeile¦Cabeçalho
+1084¦Winter¦Invierno¦Hiver¦Winter¦Inverno
+1086¦Send¦Enviar¦Envoyer¦Senden¦Enviar
+1087¦Send to {0} on WhatsApp¦Enviar a {0} por WhatsApp¦Envoyer à {0} sur WhatsApp¦An {0} per WhatsApp senden¦Enviar para {0} no WhatsApp
+1088¦Send to families and athletes¦Enviar a familias y atletas¦Envoyer aux familles et aux athlètes¦An Familien und Athleten senden¦Enviar para famílias e atletas
+1089¦Send as a task to tick off¦Enviar como tarea para marcar¦Envoyer comme tâche à cocher¦Als abhakbare Aufgabe senden¦Enviar como tarefa para marcar
+1090¦Send photo¦Enviar foto¦Envoyer une photo¦Foto senden¦Enviar foto
+1091¦Send reminder¦Enviar recordatorio¦Envoyer un rappel¦Erinnerung senden¦Enviar lembrete
+1092¦Send a photo¦Enviar una foto¦Envoyer une photo¦Ein Foto senden¦Enviar uma foto
+1093¦Sent to the printer¦Enviado a la impresora¦Envoyé à l'imprimante¦An den Drucker gesendet¦Enviado para a impressora
+1094¦Enter¦Intro¦Entrée¦Eingabe¦Enter
+1095¦Send to several families¦Envío a varias familias¦Envoi à plusieurs familles¦Senden an mehrere Familien¦Envio para várias famílias
+1096¦Automatic sending¦Envío automático¦Envoi automatique¦Automatisches Senden¦Envio automático
+1097¦Guided reminder sending¦Envío guiado de recordatorios¦Envoi guidé des rappels¦Geführter Versand der Erinnerungen¦Envio guiado de lembretes
+1098¦Guided sending: Athlos opens WhatsApp with the message already written, you press send and move on to the next.¦Envío guiado: Athlos abre WhatsApp con el mensaje ya escrito, tú pulsas enviar y pasas al siguiente.¦Envoi guidé : Athlos ouvre WhatsApp avec le message déjà écrit, vous appuyez sur envoyer et passez au suivant.¦Geführtes Senden: Athlos öffnet WhatsApp mit fertiger Nachricht, du tippst auf Senden und gehst zum Nächsten.¦Envio guiado: o Athlos abre o WhatsApp com a mensagem pronta, você toca em enviar e passa para o próximo.
+1099¦Send on WhatsApp¦Enviar por WhatsApp¦Envoyer sur WhatsApp¦Per WhatsApp senden¦Enviar pelo WhatsApp
+1101¦Join us too!¦¡Inscríbete tú también!¦Inscris-toi toi aussi !¦Mach auch mit!¦Inscreva-se você também!
+1102¦Enrolment¦Inscripción¦Inscription¦Anmeldung¦Inscrição
+1103¦Enrolment {0}¦Inscripción {0}¦Inscription {0}¦Anmeldung {0}¦Inscrição {0}
+1104¦Most recent enrolment¦Inscripción más reciente¦Inscription la plus récente¦Neueste Anmeldung¦Inscrição mais recente
+1105¦Enrolments¦Inscripciones¦Inscriptions¦Anmeldungen¦Inscrições
+1106¦Enrolment open¦Inscripciones abiertas¦Inscriptions ouvertes¦Anmeldung offen¦Inscrições abertas
+1107¦ENROLMENT OPEN¦INSCRIPCIONES ABIERTAS¦INSCRIPTIONS OUVERTES¦ANMELDUNG OFFEN¦INSCRIÇÕES ABERTAS
+1108¦Enrolments, payments and receipts¦Inscripciones, pagos y recibos¦Inscriptions, paiements et reçus¦Anmeldungen, Zahlungen und Quittungen¦Inscrições, pagamentos e recibos
+1109¦Inspect¦Inspeccionar¦Inspecter¦Untersuchen¦Inspecionar
+1110¦Coach¦Monitor¦Entraîneur¦Trainer¦Instrutor
+1111¦Coaches¦Monitores¦Entraîneurs¦Trainer¦Instrutores
+1112¦Italy¦Italia¦Italie¦Italien¦Itália
+1114¦JPG (smaller)¦JPG (más ligero)¦JPG (plus léger)¦JPG (kleiner)¦JPG (mais leve)
+1121¦Kata and kumite for children, teens and adults.¦Kata y kumite para niños, jóvenes y adultos.¦Kata et kumite pour enfants, ados et adultes.¦Kata und Kumite für Kinder, Jugendliche und Erwachsene.¦Kata e kumite para crianças, jovens e adultos.
+1123¦The current archive will be replaced by the backup (a safety copy is saved first).¦El archivo actual se sustituirá por el de la copia (antes se guarda una copia de seguridad).¦L'archive actuelle sera remplacée par celle de la sauvegarde (une copie de sécurité est d'abord enregistrée).¦Das aktuelle Archiv wird durch die Sicherung ersetzt (vorher wird eine Kopie gespeichert).¦O arquivo atual será substituído pelo do backup (antes é salva uma cópia de segurança).
+1124¦The work chat¦El chat de trabajo¦Le chat de travail¦Der Arbeits-Chat¦O chat de trabalho
+1125¦The gym will be closed¦El gimnasio permanecerá cerrado¦Le club sera fermé¦Die Halle bleibt geschlossen¦A academia estará fechada
+1126¦Receipt no. {0}/{1} will stay in the register marked VOID and its number won't be reused.¦El recibo n.º {0}/{1} quedará en el registro con la marca ANULADO y su número no se reutilizará.¦Le reçu n° {0}/{1} restera dans le registre avec la mention ANNULÉ et son numéro ne sera pas réutilisé.¦Quittung Nr. {0}/{1} bleibt mit dem Vermerk STORNIERT im Register, die Nummer wird nicht erneut vergeben.¦O recibo n.º {0}/{1} ficará no registro com a marca ANULADO e o número não será reutilizado.
+1127¦The transition applies to the start of the selected clip, if it's attached to the previous one on the same track.¦La transición se aplica al inicio del clip seleccionado, si está pegado al anterior en la misma pista.¦La transition s'applique au début du clip sélectionné, s'il est collé au précédent sur la même piste.¦Der Übergang gilt am Anfang des ausgewählten Clips, wenn er auf derselben Spur am vorherigen anliegt.¦A transição se aplica ao início do clipe selecionado, se estiver encostado ao anterior na mesma faixa.
+1128¦your club¦tu club¦votre club¦dein Verein¦seu clube
+1129¦Your club¦Tu club¦Votre club¦Dein Verein¦Seu clube
+1130¦Your club,¦Tu club,¦Votre club,¦Dein Verein,¦Seu clube,
+1131¦Blink¦Parpadeo¦Clignoter¦Blinken¦Piscar
+1135¦The disciplines practised at the club. Fees are suggested automatically on receipts.¦Las disciplinas que se practican en el club. Las cuotas se proponen automáticamente en los recibos.¦Les disciplines pratiquées au club. Les cotisations sont proposées automatiquement sur les reçus.¦Die im Verein angebotenen Disziplinen. Die Beiträge werden in den Quittungen automatisch vorgeschlagen.¦As modalidades praticadas no clube. Os valores são sugeridos automaticamente nos recibos.
+1136¦Windows notifications are working correctly ✓¦Las notificaciones de Windows funcionan correctamente ✓¦Les notifications Windows fonctionnent correctement ✓¦Windows-Benachrichtigungen funktionieren ✓¦As notificações do Windows funcionam corretamente ✓
+1137¦Workstations with the same key find each other on the local network (Wi-Fi or cable).¦Los puestos con la misma clave se encuentran solos en la red local (Wi-Fi o cable).¦Les postes avec la même clé se trouvent tout seuls sur le réseau local (Wi-Fi ou câble).¦Arbeitsplätze mit demselben Schlüssel finden sich im lokalen Netzwerk von selbst (WLAN oder Kabel).¦Os computadores com a mesma chave se encontram sozinhos na rede local (Wi-Fi ou cabo).
+1138¦Receipts issued today appear here automatically, split by payment method and fee type.¦Los recibos emitidos hoy aparecen aquí solos, divididos por método de pago y tipo de cuota.¦Les reçus émis aujourd'hui apparaissent ici automatiquement, répartis par mode de paiement et type de cotisation.¦Heute ausgestellte Quittungen erscheinen hier automatisch, nach Zahlungsart und Beitragsart getrennt.¦Os recibos emitidos hoje aparecem aqui sozinhos, divididos por forma de pagamento e tipo de valor.
+1139¦Receipts are created from the athlete's record or with the “New receipt” button.¦Los recibos se crean desde la ficha del atleta o con el botón “Nuevo recibo”.¦Les reçus se créent depuis la fiche de l'athlète ou avec le bouton « Nouveau reçu ».¦Quittungen erstellst du im Athletenprofil oder über „Neue Quittung“.¦Os recibos são criados na ficha do atleta ou com o botão “Novo recibo”.
+1140¦Printers are the ones installed in Windows (USB, network, Wi-Fi or virtual like “Microsoft Print to PDF”).¦Las impresoras son las instaladas en Windows (USB, red, Wi-Fi o virtuales como “Microsoft Print to PDF”).¦Les imprimantes sont celles installées dans Windows (USB, réseau, Wi-Fi ou virtuelles comme « Microsoft Print to PDF »).¦Es sind die in Windows installierten Drucker (USB, Netzwerk, WLAN oder virtuell wie „Microsoft Print to PDF“).¦As impressoras são as instaladas no Windows (USB, rede, Wi-Fi ou virtuais como “Microsoft Print to PDF”).
+1141¦Are thermal printers supported?¦¿Se admiten impresoras térmicas?¦Les imprimantes thermiques sont-elles prises en charge ?¦Werden Thermodrucker unterstützt?¦Impressoras térmicas são suportadas?
+1142¦Their {0} receipts will stay archived.¦Sus {0} recibos quedarán archivados.¦Ses {0} reçus resteront archivés.¦Die {0} Quittungen bleiben archiviert.¦Os {0} recibos continuarão arquivados.
+1143¦The latest recorded operations¦Las últimas operaciones registradas¦Les dernières opérations enregistrées¦Die zuletzt erfassten Vorgänge¦As últimas operações registradas
+1144¦Legal representative / president¦Representante legal / presidente¦Représentant légal / président¦Gesetzlicher Vertreter / Vorsitzender¦Representante legal / presidente
+1145¦Light (4 Mbps)¦Ligera (4 Mbps)¦Légère (4 Mbps)¦Leicht (4 Mbps)¦Leve (4 Mbps)
+1147¦Rising letters¦Letras ascendentes¦Lettres montantes¦Aufsteigende Buchstaben¦Letras subindo
+1148¦Class covered ✅¦Clase cubierta ✅¦Cours assuré ✅¦Training abgedeckt ✅¦Aula coberta ✅
+1149¦Free trial class¦Clase de prueba gratuita¦Cours d'essai gratuit¦Kostenloses Probetraining¦Aula experimental grátis
+1150¦Substitute coach¦Clase sustituida¦Cours remplacé¦Vertretung¦Aula substituída
+1151¦Freelancer¦Profesional autónomo¦Profession libérale¦Freiberufler¦Profissional liberal
+1153¦Line¦Línea¦Ligne¦Linie¦Linha
+1156¦TV lines¦Líneas TV¦Lignes TV¦TV-Linien¦Linhas de TV
+1157¦Language not applied:¦Idioma no aplicado:¦Langue non appliquée :¦Sprache nicht angewendet:¦Idioma não aplicado:
+1158¦Layer¦Nivel¦Calque¦Ebene¦Camada
+1159¦Layer {0}¦Nivel {0}¦Calque {0}¦Ebene {0}¦Camada {0}
+1160¦Layer 2¦Nivel 2¦Calque 2¦Ebene 2¦Camada 2
+1161¦Layer below¦Nivel inferior¦Calque inférieur¦Ebene darunter¦Camada abaixo
+1162¦Staff communicate between the gym's workstations, with no accounts.¦El equipo se comunica entre los puestos del gimnasio, sin cuentas.¦Le staff communique entre les postes du club, sans compte.¦Das Team kommuniziert zwischen den Arbeitsplätzen der Halle, ohne Konten.¦A equipe se comunica entre os computadores da academia, sem contas.
+1163¦Staff connected,¦El equipo conectado,¦Le staff connecté,¦Das Team vernetzt,¦A equipe conectada,
+1165¦A4 poster¦Cartel A4¦Affiche A4¦A4-Plakat¦Cartaz A4
+1166¦Event poster¦Cartel del evento¦Affiche de l'événement¦Event-Plakat¦Cartaz do evento
+1167¦A4 event poster¦Cartel del evento A4¦Affiche de l'événement A4¦A4-Event-Plakat¦Cartaz do evento A4
+1169¦Club logo, name and colours in one click.¦Logotipo, nombre y colores del club en un clic.¦Logo, nom et couleurs du club en un clic.¦Logo, Name und Farben des Vereins mit einem Klick.¦Logotipo, nome e cores do clube com um clique.
+1171¦Warm light¦Luz cálida¦Lumière chaude¦Warmes Licht¦Luz quente
+1172¦Bright light¦Luz intensa¦Lumière intense¦Helles Licht¦Luz intensa
+1173¦Soft light¦Luz suave¦Lumière douce¦Weiches Licht¦Luz suave
+1175¦Brightness¦Brillo¦Luminosité¦Helligkeit¦Brilho
+1176¦Monday¦lunes¦lundi¦Montag¦segunda-feira
+1177¦Monday 2 November¦lunes 2 de noviembre¦lundi 2 novembre¦Montag, 2. November¦segunda-feira, 2 de novembro
+1178¦Place¦Lugar¦Lieu¦Ort¦Local
+1179¦place of birth¦lugar de nacimiento¦lieu de naissance¦Geburtsort¦local de nascimento
+1180¦Place of birth¦Lugar de nacimiento¦Lieu de naissance¦Geburtsort¦Local de nascimento
+1181¦birthplace¦lugar nacimiento¦lieu naissance¦Geburtsort¦local nascimento
+1182¦Blot¦Mancha¦Tache¦Klecks¦Mancha
+1183¦Typewriter¦Máquina de escribir¦Machine à écrire¦Schreibmaschine¦Máquina de escrever
+1184¦Mother¦Madre¦Mère¦Mutter¦Mãe
+1185¦Magic¦Magia¦Magie¦Magie¦Magia
+1186¦Shift¦Mayús¦Maj¦Umschalt¦Shift
+1187¦Missing¦Falta¦Manquant¦Fehlt¦Ausente
+1188¦Missing¦Faltan¦Manquants¦Fehlend¦Ausentes
+1189¦Send greetings¦Enviar felicitación¦Envoyer des vœux¦Glückwünsche senden¦Enviar parabéns
+1190¦Send birthday wishes¦Enviar felicitación de cumpleaños¦Envoyer des vœux d'anniversaire¦Geburtstagsgrüße senden¦Enviar parabéns de aniversário
+1191¦Revenue stamp¦Timbre fiscal¦Timbre fiscal¦Stempelmarke¦Selo fiscal
+1192¦Revenue stamp € {0}¦Timbre fiscal € {0}¦Timbre fiscal € {0}¦Stempelmarke € {0}¦Selo fiscal € {0}
+1193¦Revenue stamp of € {0} {1}¦Timbre fiscal de € {0} {1}¦Timbre fiscal de € {0} {1}¦Stempelmarke zu € {0} {1}¦Selo fiscal de € {0} {1}
+1194¦Revenue stamp of € {0} applied to the original.¦Timbre fiscal de € {0} aplicado en el original.¦Timbre fiscal de € {0} apposé sur l'original.¦Stempelmarke zu € {0} auf dem Original angebracht.¦Selo fiscal de € {0} aplicado no original.
+1195¦Revenue stamp and 19% deduction¦Timbre fiscal y deducción 19%¦Timbre fiscal et déduction 19 %¦Stempelmarke und 19 % Absetzbarkeit¦Selo fiscal e dedução 19%
+1196¦Margin¦Margen¦Marge¦Rand¦Margem
+1197¦Tuesday¦martes¦mardi¦Dienstag¦terça-feira
+1198¦Male¦Hombre¦Homme¦Männlich¦Masculino
+1199¦Gold medal¦Medalla de oro¦Médaille d'or¦Goldmedaille¦Medalha de ouro
+1200¦Media¦Medios¦Médias¦Medien¦Mídia
+1201¦Media replaced: animations, filters and position stay the same¦Medio sustituido: animaciones, filtros y posición se mantienen¦Média remplacé : animations, filtres et position restent identiques¦Medium ersetzt: Animationen, Filter und Position bleiben gleich¦Mídia substituída: animações, filtros e posição continuam iguais
+1202¦Doctor / clinic¦Médico / centro¦Médecin / centre¦Arzt / Einrichtung¦Médico / clínica
+1203¦Medium¦Medio¦Moyen¦Mittel¦Médio
+1204¦Megaphone¦Megáfono¦Mégaphone¦Megafon¦Megafone
+1205¦Monthly¦Mensual¦Mensuel¦Monatlich¦Mensal
+1206¦Menu¦Menú¦Menu¦Menü¦Menu
+1207¦Compact side menu (icons only)¦Menú lateral compacto (solo iconos)¦Menu latéral compact (icônes uniquement)¦Kompaktes Seitenmenü (nur Symbole)¦Menu lateral compacto (só ícones)
+1208¦Wednesday¦miércoles¦mercredi¦Mittwoch¦quarta-feira
+1209¦Month¦Mes¦Mois¦Monat¦Mês
+1210¦Months covered by receipts · click an uncovered month to issue the receipt¦Meses cubiertos por recibos · haz clic en un mes sin cubrir para emitir el recibo¦Mois couverts par des reçus · cliquez sur un mois non couvert pour émettre le reçu¦Durch Quittungen abgedeckte Monate · klicke auf einen offenen Monat, um die Quittung auszustellen¦Meses cobertos por recibos · clique num mês em aberto para emitir o recibo
+1211¦Months covered¦Meses de referencia¦Mois concernés¦Abgerechnete Monate¦Meses de referência
+1212¦Focus¦Enfoque¦Mise au point¦Fokus¦Foco
+1213¦Direct messages¦Mensajes directos¦Messages directs¦Direktnachrichten¦Mensagens diretas
+1214¦Social media messages¦Mensajes para redes sociales¦Messages pour les réseaux sociaux¦Nachrichten für Social Media¦Mensagens para redes sociais
+1215¦Messages prepared for {0} recipients¦Mensajes preparados para {0} destinatarios¦Messages préparés pour {0} destinataires¦Nachrichten für {0} Empfänger vorbereitet¦Mensagens preparadas para {0} destinatários
+1216¦Ready messages¦Mensajes listos¦Messages prêts¦Fertige Nachrichten¦Mensagens prontas
+1217¦Ready messages for families and social media: pick a template, customise it and post it wherever you like.¦Mensajes listos para familias y redes sociales: elige una plantilla, personalízala y publícala donde quieras.¦Messages prêts pour les familles et les réseaux sociaux : choisissez un modèle, personnalisez-le et publiez-le où vous voulez.¦Fertige Nachrichten für Familien und Social Media: Vorlage wählen, anpassen und überall veröffentlichen.¦Mensagens prontas para famílias e redes sociais: escolha um modelo, personalize e publique onde quiser.
+1218¦Message¦Mensaje¦Message¦Nachricht¦Mensagem
+1219¦Message to staff¦Mensaje al equipo¦Message au staff¦Nachricht ans Team¦Mensagem para a equipe
+1220¦Greeting message¦Mensaje de felicitación¦Message de vœux¦Grußnachricht¦Mensagem de felicitações
+1221¦Payment confirmation message¦Mensaje de confirmación de pago¦Message de confirmation de paiement¦Nachricht zur Zahlungsbestätigung¦Mensagem de confirmação de pagamento
+1222¦Direct message¦Mensaje directo¦Message direct¦Direktnachricht¦Mensagem direta
+1223¦message deleted¦mensaje eliminado¦message supprimé¦Nachricht gelöscht¦mensagem apagada
+1224¦Footer message¦Mensaje al pie¦Message en bas de page¦Fußzeilentext¦Mensagem no rodapé
+1225¦Message for {0}¦Mensaje para {0}¦Message pour {0}¦Nachricht für {0}¦Mensagem para {0}
+1226¦Certificate reminder message¦Mensaje de recordatorio del certificado¦Message de rappel du certificat¦Nachricht zur Attest-Erinnerung¦Mensagem de lembrete do atestado
+1227¦Message saved¦Mensaje guardado¦Message enregistré¦Nachricht gespeichert¦Mensagem salva
+1228¦Social post¦Mensaje social¦Message social¦Social-Media-Beitrag¦Mensagem social
+1229¦WhatsApp / email message¦Mensaje WhatsApp / email¦Message WhatsApp / e-mail¦WhatsApp-/E-Mail-Nachricht¦Mensagem WhatsApp / e-mail
+1231¦Method¦Método¦Mode¦Zahlungsart¦Forma
+1232¦Payment method¦Método de pago¦Mode de paiement¦Zahlungsart¦Forma de pagamento
+1233¦Payment method:¦Método de pago:¦Mode de paiement :¦Zahlungsart:¦Forma de pagamento:
+1234¦Half shoes¦Medias puntas¦Demi-pointes¦Gymnastikschläppchen¦Meia-ponta
+1235¦Microphone not available: check it's connected and allowed in Windows¦Micrófono no disponible: comprueba que esté conectado y permitido en Windows¦Micro non disponible : vérifiez qu'il est branché et autorisé dans Windows¦Mikrofon nicht verfügbar: Prüfe, ob es angeschlossen und in Windows erlaubt ist¦Microfone indisponível: verifique se está conectado e permitido no Windows
+1236¦Military¦Militar¦Militaire¦Militär¦Militar
+1237¦Minor¦Menor¦Mineur¦Minderjährig¦Menor
+1238¦Mixing audio…¦Mezclando el audio…¦Mixage de l'audio…¦Audio wird gemischt…¦Mixando o áudio…
+1239¦Precise mode: every frame is rendered one by one, with audio mixed separately. The file works with Instagram, TikTok, Facebook, WhatsApp and YouTube.¦Modo preciso: cada fotograma se calcula uno a uno, con el audio mezclado aparte. El archivo es compatible con Instagram, TikTok, Facebook, WhatsApp y YouTube.¦Mode précis : chaque image est calculée une à une, avec l'audio mixé à part. Le fichier est compatible avec Instagram, TikTok, Facebook, WhatsApp et YouTube.¦Präziser Modus: Jedes Bild wird einzeln berechnet, das Audio separat gemischt. Die Datei passt für Instagram, TikTok, Facebook, WhatsApp und YouTube.¦Modo preciso: cada quadro é calculado um a um, com o áudio mixado à parte. O arquivo é compatível com Instagram, TikTok, Facebook, WhatsApp e YouTube.
+1240¦Templates¦Plantillas¦Modèles¦Vorlagen¦Modelos
+1241¦Ready-made templates¦Plantillas listas¦Modèles prêts¦Fertige Vorlagen¦Modelos prontos
+1242¦Ready templates for WhatsApp, Messenger, Facebook, Instagram and X.¦Plantillas listas para WhatsApp, Messenger, Facebook, Instagram y X.¦Modèles prêts pour WhatsApp, Messenger, Facebook, Instagram et X.¦Fertige Vorlagen für WhatsApp, Messenger, Facebook, Instagram und X.¦Modelos prontos para WhatsApp, Messenger, Facebook, Instagram e X.
+1243¦Template saved in “Mine”¦Plantilla guardada en “Mis plantillas”¦Modèle enregistré dans « Mes modèles »¦Vorlage unter „Meine“ gespeichert¦Modelo salvo em “Meus modelos”
+1244¦Modern¦Moderno¦Moderne¦Modern¦Moderno
+1245¦Edit¦Editar¦Modifier¦Bearbeiten¦Editar
+1246¦Edit {0}¦Editar {0}¦Modifier {0}¦{0} bearbeiten¦Editar {0}
+1247¦Edit record¦Editar ficha¦Modifier la fiche¦Datensatz bearbeiten¦Editar ficha
+1248¦Unsaved changes¦Cambios sin guardar¦Modifications non enregistrées¦Ungespeicherte Änderungen¦Alterações não salvas
+1249¦Spring¦Muelle¦Ressort¦Feder¦Mola
+1250¦Multiply¦Multiplicar¦Multiplier¦Multiplizieren¦Multiplicar
+1251¦Timeline editing and post design in a single window. Everything local, no subscriptions and no watermarks.¦Edición con línea de tiempo y diseño de publicaciones en una sola ventana. Todo en local, sin suscripciones y sin marcas de agua.¦Montage sur timeline et design de publications dans une seule fenêtre. Tout en local, sans abonnement ni filigrane.¦Zeitleisten-Schnitt und Post-Design in einem Fenster. Alles lokal, ohne Abo und ohne Wasserzeichen.¦Edição em linha do tempo e design de posts numa única janela. Tudo local, sem assinaturas e sem marca d'água.
+1252¦Timeline editing and post design in one app.¦Edición con línea de tiempo y diseño de publicaciones en una sola app.¦Montage sur timeline et design de publications dans une seule app.¦Zeitleisten-Schnitt und Post-Design in einer App.¦Edição em linha do tempo e design de posts num só app.
+1254¦Softness¦Suavidad¦Douceur¦Weichheit¦Suavidade
+1255¦Soft¦Suave¦Doux¦Weich¦Suave
+1256¦Show/hide¦Mostrar/ocultar¦Afficher/masquer¦Ein-/ausblenden¦Mostrar/ocultar
+1257¦Monster¦Monstruo¦Monstre¦Monster¦Monstro
+1258¦Electron engine {0} · Chromium {1} · {2} {3}¦Motor Electron {0} · Chromium {1} · {2} {3}¦Moteur Electron {0} · Chromium {1} · {2} {3}¦Electron-Engine {0} · Chromium {1} · {2} {3}¦Motor Electron {0} · Chromium {1} · {2} {3}
+1259¦Continuous motion¦Movimiento continuo¦Mouvement continu¦Dauerbewegung¦Movimento contínuo
+1261¦MP4 (H.264) · maximum compatibility¦MP4 (H.264) · máxima compatibilidad¦MP4 (H.264) · compatibilité maximale¦MP4 (H.264) · maximale Kompatibilität¦MP4 (H.264) · compatibilidade máxima
+1262¦MP4 (H.264) · recommended for social media¦MP4 (H.264) · recomendado para redes sociales¦MP4 (H.264) · conseillé pour les réseaux sociaux¦MP4 (H.264) · empfohlen für Social Media¦MP4 (H.264) · recomendado para redes sociais
+1263¦MP4 {0}{1} · precise, recommended for social media¦MP4 {0}{1} · preciso, recomendado para redes sociales¦MP4 {0}{1} · précis, conseillé pour les réseaux sociaux¦MP4 {0}{1} · präzise, empfohlen für Social Media¦MP4 {0}{1} · preciso, recomendado para redes sociais
+1264¦MP4 for Instagram, TikTok, WhatsApp and YouTube; PNG, JPG and PDF.¦MP4 para Instagram, TikTok, WhatsApp y YouTube; PNG, JPG y PDF.¦MP4 pour Instagram, TikTok, WhatsApp et YouTube ; PNG, JPG et PDF.¦MP4 für Instagram, TikTok, WhatsApp und YouTube; PNG, JPG und PDF.¦MP4 para Instagram, TikTok, WhatsApp e YouTube; PNG, JPG e PDF.
+1265¦Multicast not available:¦Multicast no disponible:¦Multicast non disponible :¦Multicast nicht verfügbar:¦Multicast indisponível:
+1266¦Music¦Música¦Musique¦Musik¦Música
+1267¦Music and sound effects¦Música y efectos de sonido¦Musique et effets sonores¦Musik und Soundeffekte¦Música e efeitos sonoros
+1268¦No. {0} · Born {1}¦N.º {0} · Nacido/a el {1}¦N° {0} · Né(e) le {1}¦Nr. {0} · Geboren am {1}¦N.º {0} · Nascido/a em {1}
+1269¦house no.¦número¦n°¦Hausnr.¦número
+1270¦Sports register no. (RASD)¦N.º registro deportivo (RASD)¦N° registre sportif (RASD)¦Sportregister-Nr. (RASD)¦N.º registro esportivo (RASD)
+1271¦Birth¦Nacimiento¦Naissance¦Geburt¦Nascimento
+1272¦Ribbon¦Cinta¦Ruban¦Band¦Fita
+1273¦born in¦nacido en¦né à¦geboren in¦nascido em
+1274¦born on¦nacido el¦né le¦geboren am¦nascido em
+1275¦Born¦Nacido/a el¦Né(e) le¦Geboren am¦Nascido/a em
+1276¦Nature¦Naturaleza¦Nature¦Natur¦Natureza
+1277¦Natural¦Natural¦Naturel¦Natürlich¦Natural
+1278¦Country¦País¦Pays¦Land¦País
+1279¦Let's talk later¦Lo hablamos luego¦On en parle plus tard¦Sprechen wir später¦Falamos depois
+1280¦Negative¦Negativo¦Négatif¦Negativ¦Negativo
+1281¦In the project¦En el proyecto¦Dans le projet¦Im Projekt¦No projeto
+1283¦Blue neon¦Neón azul¦Néon bleu¦Neon Blau¦Neon azul
+1284¦Pink neon¦Neón rosa¦Néon rose¦Neon Pink¦Neon rosa
+1285¦Neon, gold, comic, gradient, with word-by-word animations.¦Neón, oro, cómic, degradado, con animaciones palabra por palabra.¦Néon, or, BD, dégradé, avec animations mot par mot.¦Neon, Gold, Comic, Verlauf, mit Wort-für-Wort-Animationen.¦Neon, ouro, quadrinhos, degradê, com animações palavra por palavra.
+1286¦Black¦Negro¦Noir¦Schwarz¦Preto
+1287¦No accounts, no servers: it works on the gym's network.¦Sin cuentas, sin servidores: funciona en la red del gimnasio.¦Aucun compte, aucun serveur : il fonctionne sur le réseau du club.¦Keine Konten, keine Server: läuft im Netzwerk der Halle.¦Sem contas, sem servidores: funciona na rede da academia.
+1288¦No athletes yet¦Aún no hay atletas¦Aucun athlète pour l'instant¦Noch keine Athleten¦Nenhum atleta ainda
+1289¦No alerts: everything's in order!¦Sin avisos: ¡todo en regla!¦Aucune alerte : tout est en ordre !¦Keine Hinweise: alles in Ordnung!¦Nenhum aviso: tudo em dia!
+1290¦No backups yet¦Aún no hay copias¦Aucune sauvegarde pour l'instant¦Noch keine Sicherungen¦Nenhum backup ainda
+1291¦No certificates in this section.¦No hay certificados en esta sección.¦Aucun certificat dans cette section.¦Keine Atteste in diesem Bereich.¦Nenhum atestado nesta seção.
+1292¦No certificate expires in the next {0} days.¦Ningún certificado vence en los próximos {0} días.¦Aucun certificat n'expire dans les {0} prochains jours.¦Kein Attest läuft in den nächsten {0} Tagen ab.¦Nenhum atestado vence nos próximos {0} dias.
+1293¦No colleagues connected¦Ningún compañero conectado¦Aucun collègue connecté¦Keine Kollegen verbunden¦Nenhum colega conectado
+1294¦No tasks. Use the ☑ button to send one.¦No hay tareas. Usa el botón ☑ para enviar una.¦Aucune tâche. Utilisez le bouton ☑ pour en envoyer une.¦Keine Aufgaben. Mit ☑ sendest du eine.¦Nenhuma tarefa. Use o botão ☑ para enviar uma.
+1295¦No birthdays in the next 7 days.¦No hay cumpleaños en los próximos 7 días.¦Aucun anniversaire dans les 7 prochains jours.¦Keine Geburtstage in den nächsten 7 Tagen.¦Nenhum aniversário nos próximos 7 dias.
+1296¦No recipient: the message opens in WhatsApp and you choose the contact or group.¦Sin destinatario: el mensaje se abre en WhatsApp y eliges tú el contacto o el grupo.¦Aucun destinataire : le message s'ouvre dans WhatsApp et vous choisissez le contact ou le groupe.¦Kein Empfänger: Die Nachricht öffnet sich in WhatsApp und du wählst Kontakt oder Gruppe.¦Sem destinatário: a mensagem abre no WhatsApp e você escolhe o contato ou o grupo.
+1297¦Nothing selected¦Ningún elemento seleccionado¦Aucun élément sélectionné¦Nichts ausgewählt¦Nenhum elemento selecionado
+1298¦No parent or guardian entered.¦Ningún padre, madre o tutor introducido.¦Aucun parent ou tuteur saisi.¦Kein Elternteil oder Vormund eingetragen.¦Nenhum responsável cadastrado.
+1299¦No pinned messages.¦No hay mensajes fijados.¦Aucun message épinglé.¦Keine angehefteten Nachrichten.¦Nenhuma mensagem fixada.
+1300¦No templates found.¦No se han encontrado plantillas.¦Aucun modèle trouvé.¦Keine Vorlagen gefunden.¦Nenhum modelo encontrado.
+1301¦No transactions this month¦Sin movimientos en el mes¦Aucun mouvement ce mois-ci¦Keine Bewegungen im Monat¦Nenhum movimento no mês
+1302¦no number¦sin número¦aucun numéro¦keine Nummer¦sem número
+1303¦No number¦Sin número¦Aucun numéro¦Keine Nummer¦Sem número
+1304¦No number on record¦Ningún número en la ficha¦Aucun numéro dans la fiche¦Keine Nummer gespeichert¦Nenhum número na ficha
+1305¦No PIN¦Sin PIN¦Aucun code PIN¦Keine PIN¦Sem PIN
+1306¦No pending reminders¦No hay recordatorios pendientes¦Aucun rappel en attente¦Keine offenen Erinnerungen¦Nenhum lembrete pendente
+1307¦No results¦Sin resultados¦Aucun résultat¦Keine Ergebnisse¦Nenhum resultado
+1308¦No results for “{0}”¦Sin resultados para “{0}”¦Aucun résultat pour « {0} »¦Keine Ergebnisse für „{0}“¦Nenhum resultado para “{0}”
+1309¦No phone¦Sin teléfono¦Aucun téléphone¦Kein Telefon¦Sem telefone
+1310¦None¦Ninguna¦Aucune¦Keine¦Nenhuma
+1311¦No discipline¦Ninguna disciplina¦Aucune discipline¦Keine Disziplin¦Nenhuma modalidade
+1312¦No photos.¦No hay fotos.¦Aucune photo.¦Keine Fotos.¦Nenhuma foto.
+1313¦No network¦Sin red¦Aucun réseau¦Kein Netzwerk¦Sem rede
+1314¦No receipts¦Ningún recibo¦Aucun reçu¦Keine Quittungen¦Nenhum recibo
+1315¦No receipts with these filters¦Ningún recibo con estos filtros¦Aucun reçu avec ces filtres¦Keine Quittungen mit diesen Filtern¦Nenhum recibo com esses filtros
+1316¦No receipts issued¦Ningún recibo emitido¦Aucun reçu émis¦Keine Quittungen ausgestellt¦Nenhum recibo emitido
+1317¦No receipts on this day¦Ningún recibo en este día¦Aucun reçu ce jour-là¦Keine Quittungen an diesem Tag¦Nenhum recibo neste dia
+1318¦No printers found¦No se encontraron impresoras¦Aucune imprimante trouvée¦Keine Drucker gefunden¦Nenhuma impressora encontrada
+1319¦No expenses this month.¦Sin gastos en el mes.¦Aucune dépense ce mois-ci.¦Keine Ausgaben im Monat.¦Nenhuma despesa no mês.
+1320¦No expenses recorded.¦No hay gastos registrados.¦Aucune dépense enregistrée.¦Keine Ausgaben erfasst.¦Nenhuma despesa registrada.
+1321¦Nobody¦Nadie¦Personne¦Niemand¦Ninguém
+1322¦Snow¦Nieve¦Neige¦Schnee¦Neve
+1323¦Nothing to show here¦Nada que mostrar aquí¦Rien à afficher ici¦Hier gibt es nichts anzuzeigen¦Nada para mostrar aqui
+1324¦Sharpness¦Nitidez¦Netteté¦Schärfe¦Nitidez
+1326¦First name¦Nombre¦Prénom¦Vorname¦Nome
+1327¦Name (recipient)¦Nombre (destinatario)¦Nom (destinataire)¦Name (Empfänger)¦Nome (destinatário)
+1328¦Athlete Name¦Nombre del atleta¦Nom de l'athlète¦Name des Athleten¦Nome do atleta
+1329¦FIRST LAST¦NOMBRE APELLIDO¦PRÉNOM NOM¦VORNAME NACHNAME¦NOME SOBRENOME
+1330¦Channel name¦Nombre del canal¦Nom du canal¦Kanalname¦Nome do canal
+1331¦Template name¦Nombre de la plantilla¦Nom du modèle¦Vorlagenname¦Nome do modelo
+1332¦Club name¦Nombre del club¦Nom du club¦Vereinsname¦Nome do clube
+1333¦Track name¦Nombre de la pista¦Nom de la piste¦Spurname¦Nome da faixa
+1334¦First and last name¦Nombre y apellidos¦Prénom et nom¦Vor- und Nachname¦Nome e sobrenome
+1335¦First name and surname are required¦El nombre y los apellidos son obligatorios¦Le prénom et le nom sont obligatoires¦Vor- und Nachname sind Pflicht¦Nome e sobrenome são obrigatórios
+1336¦parent's first name¦nombre del padre/madre¦prénom du parent¦Vorname Elternteil¦nome do responsável
+1337¦Name at the bottom, semi-transparent, for the whole video¦Nombre abajo, semitransparente, durante todo el vídeo¦Nom en bas, semi-transparent, pendant toute la vidéo¦Name unten, halbtransparent, im ganzen Video¦Nome embaixo, semitransparente, durante todo o vídeo
+1338¦Branch name¦Nombre de la sede¦Nom du site¦Name des Standorts¦Nome da unidade
+1339¦Club name¦Nombre del club¦Nom du club¦Vereinsname¦Nome do clube
+1340¦non-competitive¦no competitivo¦non compétitif¦nicht wettkampfmäßig¦não competitivo
+1341¦There are no consecutive clips¦No hay clips consecutivos¦Il n'y a pas de clips consécutifs¦Es gibt keine aufeinanderfolgenden Clips¦Não há clipes consecutivos
+1342¦hasn't been handed in yet¦aún no se ha entregado¦n'a pas encore été remis¦wurde noch nicht abgegeben¦ainda não foi entregue
+1343¦Don't save¦No guardar¦Ne pas enregistrer¦Nicht speichern¦Não salvar
+1344¦Not found¦No encontrado¦Introuvable¦Nicht gefunden¦Não encontrado
+1345¦Normal¦Normal¦Normal¦Normal¦Normal
+1346¦Notes¦Notas¦Notes¦Notizen¦Notas
+1347¦Notes (optional)¦Notas (opcionales)¦Notes (facultatives)¦Notizen (optional)¦Notas (opcionais)
+1348¦Notes of the day¦Notas del día¦Notes du jour¦Notizen des Tages¦Notas do dia
+1349¦Notes and consents¦Notas y consentimientos¦Notes et consentements¦Notizen und Einwilligungen¦Notas e consentimentos
+1350¦Windows notifications at startup¦Notificaciones de Windows al iniciar¦Notifications Windows au démarrage¦Windows-Benachrichtigungen beim Start¦Notificações do Windows ao iniciar
+1351¦Night¦Noche¦Nuit¦Nacht¦Noite
+1352¦Numbering¦Numeración¦Numérotation¦Nummerierung¦Numeração
+1353¦Numbering updated¦Numeración actualizada¦Numérotation mise à jour¦Nummerierung aktualisiert¦Numeração atualizada
+1354¦Number¦Número¦Numéro¦Nummer¦Número
+1355¦house number¦número de la calle¦numéro de rue¦Hausnummer¦número da casa
+1356¦Swimming¦Natación¦Natation¦Schwimmen¦Natação
+1357¦New¦Nueva¦Nouvelle¦Neu¦Nova
+1358¦New record¦Nueva ficha¦Nouvelle fiche¦Neuer Datensatz¦Nova ficha
+1359¦New item¦Nuevo concepto¦Nouveau libellé¦Neue Position¦Novo item
+1360¦New discipline¦Nueva disciplina¦Nouvelle discipline¦Neue Disziplin¦Nova modalidade
+1361¦New receipt¦Nuevo recibo¦Nouveau reçu¦Neue Quittung¦Novo recibo
+1362¦New commercial receipt¦Nuevo recibo comercial¦Nouveau reçu commercial¦Neue Verkaufsquittung¦Novo recibo comercial
+1363¦New general receipt¦Nuevo recibo general¦Nouveau reçu général¦Neue allgemeine Quittung¦Novo recibo geral
+1364¦New expiry date¦Nuevo vencimiento¦Nouvelle échéance¦Neues Ablaufdatum¦Novo vencimento
+1365¦New track¦Nueva pista¦Nouvelle piste¦Neue Spur¦Nova faixa
+1366¦New¦Nuevo¦Nouveau¦Neu¦Novo
+1367¦New athlete¦Nuevo atleta¦Nouvel athlète¦Neuer Athlet¦Novo atleta
+1368¦New athlete / customer¦Nuevo atleta / cliente¦Nouvel athlète / client¦Neuer Athlet / Kunde¦Novo atleta / cliente
+1369¦new athlete customer record add¦nuevo atleta cliente ficha añadir¦nouvel athlète client fiche ajouter¦neuer Athlet Kunde Datensatz hinzufügen¦novo atleta cliente ficha adicionar
+1370¦New channel¦Nuevo canal¦Nouveau canal¦Neuer Kanal¦Novo canal
+1371¦New certificate for {0}¦Nuevo certificado de {0}¦Nouveau certificat de {0}¦Neues Attest von {0}¦Novo atestado de {0}
+1372¦New PIN¦Nuevo PIN¦Nouveau code PIN¦Neue PIN¦Novo PIN
+1373¦New project¦Nuevo proyecto¦Nouveau projet¦Neues Projekt¦Novo projeto
+1374¦New video¦Nuevo vídeo¦Nouvelle vidéo¦Neues Video¦Novo vídeo
+1375¦Ocean¦Océano¦Océan¦Ozean¦Oceano
+1376¦Today¦Hoy¦Aujourd'hui¦Heute¦Hoje
+1377¦Today you have¦Hoy tienes¦Aujourd'hui vous avez¦Heute hast du¦Hoje você tem
+1378¦Today reminders are sent with one click (also in a guided sequence from Deadlines). Fully automatic sending, without opening WhatsApp, requires an account¦Hoy los recordatorios se envían con un clic (también en secuencia guiada desde Vencimientos). El envío totalmente automático, sin abrir WhatsApp, requiere una cuenta¦Aujourd'hui, les rappels s'envoient en un clic (aussi en séquence guidée depuis l'Échéancier). L'envoi entièrement automatique, sans ouvrir WhatsApp, nécessite un compte¦Erinnerungen werden heute mit einem Klick gesendet (auch als geführte Folge aus den Fristen). Vollautomatisches Senden ohne WhatsApp zu öffnen erfordert ein Konto¦Hoje os lembretes são enviados com um clique (também em sequência guiada a partir de Prazos). O envio totalmente automático, sem abrir o WhatsApp, exige uma conta
+1379¦{0}'s certificate expires today. Without a valid certificate they can't train.¦Hoy vence el certificado de {0}. Sin certificado válido no puede entrenar.¦Le certificat de {0} expire aujourd'hui. Sans certificat valide, pas d'entraînement.¦Heute läuft das Attest von {0} ab. Ohne gültiges Attest kein Training.¦Hoje vence o atestado de {0}. Sem atestado válido não pode treinar.
+1380¦Every year both series restart from 1. If in {0} you've already issued receipts with another program, say which number to continue from.¦Cada año las dos series se reinician desde 1. Si en {0} ya emitiste recibos con otro programa, indica desde qué número continuar.¦Chaque année, les deux séries repartent de 1. Si en {0} vous avez déjà émis des reçus avec un autre logiciel, indiquez à partir de quel numéro continuer.¦Jedes Jahr beginnen beide Serien bei 1. Hast du {0} schon Quittungen mit einem anderen Programm ausgestellt, gib die nächste Nummer an.¦Todo ano as duas séries reiniciam em 1. Se em {0} você já emitiu recibos com outro programa, indique de qual número continuar.
+1381¦Every computer running Athlos on the same gym network finds the others by itself. Messages don't go through the internet. If a PC was off, it catches up on missed messages when it's turned back on.¦Cada ordenador con Athlos en la misma red del gimnasio encuentra a los demás solo. Los mensajes no pasan por internet. Si un PC estaba apagado, recupera los mensajes perdidos al encenderse.¦Chaque ordinateur avec Athlos sur le même réseau du club trouve les autres tout seul. Les messages ne passent pas par internet. Si un PC était éteint, il récupère les messages manqués au redémarrage.¦Jeder Computer mit Athlos im selben Netzwerk der Halle findet die anderen selbst. Nachrichten laufen nicht übers Internet. War ein PC aus, holt er verpasste Nachrichten beim Einschalten nach.¦Cada computador com Athlos na mesma rede da academia encontra os outros sozinho. As mensagens não passam pela internet. Se um PC estava desligado, recupera as mensagens perdidas ao ligar.
+1382¦Every day Athlos automatically saves a copy of the archive (last 30 days).¦Cada día Athlos guarda automáticamente una copia del archivo (últimos 30 días).¦Chaque jour, Athlos enregistre automatiquement une copie de l'archive (30 derniers jours).¦Jeden Tag speichert Athlos automatisch eine Kopie des Archivs (letzte 30 Tage).¦Todos os dias o Athlos salva automaticamente uma cópia do arquivo (últimos 30 dias).
+1383¦Every morning Athlos alerts you to expiring certificates: one click and the family gets the reminder.¦Cada mañana Athlos te avisa de los certificados por vencer: un clic y la familia recibe el recordatorio.¦Chaque matin, Athlos vous signale les certificats qui expirent : un clic et la famille reçoit le rappel.¦Jeden Morgen erinnert dich Athlos an ablaufende Atteste: Ein Klick und die Familie erhält die Erinnerung.¦Toda manhã o Athlos avisa sobre os atestados a vencer: um clique e a família recebe o lembrete.
+1384¦Over 40 filters and 20 dynamic effects¦Más de 40 filtros y 20 efectos dinámicos¦Plus de 40 filtres et 20 effets dynamiques¦Über 40 Filter und 20 dynamische Effekte¦Mais de 40 filtros e 20 efeitos dinâmicos
+1385¦Shadow¦Sombra¦Ombre¦Schatten¦Sombra
+1386¦Shadow / glow {0}¦Sombra / resplandor {0}¦Ombre / lueur {0}¦Schatten / Leuchten {0}¦Sombra / brilho {0}
+1387¦Long shadow¦Sombra larga¦Ombre portée¦Langer Schatten¦Sombra longa
+1389¦Online ({0})¦En línea ({0})¦En ligne ({0})¦Online ({0})¦Online ({0})
+1390¦Online now¦En línea ahora¦En ligne maintenant¦Jetzt online¦Online agora
+1391¦Opacity¦Opacidad¦Opacité¦Deckkraft¦Opacidade
+1394¦Matte¦Mate¦Mat¦Matt¦Fosco
+1395¦Open day¦Puertas abiertas¦Portes ouvertes¦Tag der offenen Tür¦Open day
+1396¦OPEN DAY¦PUERTAS ABIERTAS¦PORTES OUVERTES¦TAG DER OFFENEN TÜR¦OPEN DAY
+1397¦Or issue the receipt to someone not on record:¦O emite el recibo a nombre de una persona sin ficha:¦Ou établissez le reçu au nom d'une personne sans fiche :¦Oder stelle die Quittung auf eine Person ohne Datensatz aus:¦Ou emita o recibo em nome de uma pessoa sem ficha:
+1398¦Oops¦Vaya¦Oups¦Hoppla¦Ops
+1399¦Time¦Hora¦Heure¦Uhrzeit¦Hora
+1400¦Sort by¦Ordenar por¦Trier par¦Sortieren nach¦Ordenar por
+1401¦Leotard and uniform orders¦Pedido de maillots y equipaciones¦Commande de justaucorps et tenues¦Bestellung Turnanzüge und Kleidung¦Pedido de collants e uniformes
+1402¦Original¦Original¦Original¦Original¦Original
+1403¦Original {0}×¦Original {0}×¦Original {0}×¦Original {0}×¦Original {0}×
+1404¦Original + copy on the same sheet¦Original + copia en la misma hoja¦Original + copie sur la même feuille¦Original + Kopie auf demselben Blatt¦Original + cópia na mesma folha
+1405¦Original + copy, A4/A5/thermal¦Original + copia, A4/A5/térmica¦Original + copie, A4/A5/thermique¦Original + Kopie, A4/A5/Thermo¦Original + cópia, A4/A5/térmica
+1406¦Original and copy, on A4, A5 or thermal.¦Original y copia, en A4, A5 o térmica.¦Original et copie, en A4, A5 ou thermique.¦Original und Kopie, auf A4, A5 oder Thermo.¦Original e cópia, em A4, A5 ou térmica.
+1407¦Gold¦Oro¦Or¦Gold¦Ouro
+1408¦Clock¦Reloj¦Horloge¦Uhr¦Relógio
+1409¦Sway¦Oscilar¦Osciller¦Schwingen¦Oscilar
+1411¦Excellent (8 Mbps)¦Óptima (8 Mbps)¦Excellente (8 Mbps)¦Sehr gut (8 Mbps)¦Ótima (8 Mbps)
+1413¦VAT no. {0}¦NIF {0}¦N° TVA {0}¦USt-IdNr. {0}¦CNPJ/NIF {0}
+1414¦Pacific¦Pacífico¦Pacifique¦Pazifik¦Pacífico
+1415¦Father¦Padre¦Père¦Vater¦Pai
+1416¦Payments¦Pagos¦Paiements¦Zahlungen¦Pagamentos
+1417¦Payment¦Pago¦Paiement¦Zahlung¦Pagamento
+1418¦Paid¦Pagado¦Payé¦Bezahlt¦Pago
+1419¦Paid in {0}¦Pagado en {0}¦Payé en {0}¦Bezahlt {0}¦Pago em {0}
+1420¦Test page¦Página de prueba¦Page de test¦Testseite¦Página de teste
+1421¦Test page sent¦Página de prueba enviada¦Page de test envoyée¦Testseite gesendet¦Página de teste enviada
+1422¦Sports hall¦Pabellón deportivo¦Gymnase¦Sporthalle¦Ginásio de esportes
+1423¦Overview¦Resumen¦Vue d'ensemble¦Übersicht¦Visão geral
+1424¦Pop words¦Palabras pop¦Mots pop¦Pop-Wörter¦Palavras pop
+1425¦Start from a template¦Empieza con una plantilla¦Partir d'un modèle¦Mit einer Vorlage beginnen¦Comece com um modelo
+1426¦VAT number¦NIF / CIF¦N° de TVA¦USt-IdNr.¦CNPJ / NIF
+1427¦Transitions between consecutive clips on the same track.¦Transiciones entre clips consecutivos en la misma pista.¦Transitions entre clips consécutifs sur la même piste.¦Übergänge zwischen aufeinanderfolgenden Clips auf derselben Spur.¦Transições entre clipes consecutivos na mesma faixa.
+1428¦Step 1 of 3 · Club¦Paso 1 de 3 · Club¦Étape 1 sur 3 · Club¦Schritt 1 von 3 · Verein¦Passo 1 de 3 · Clube
+1429¦Step 2 of 3 · Disciplines¦Paso 2 de 3 · Disciplinas¦Étape 2 sur 3 · Disciplines¦Schritt 2 von 3 · Disziplinen¦Passo 2 de 3 · Modalidades
+1430¦Step 3 of 3 · You¦Paso 3 de 3 · Tú¦Étape 3 sur 3 · Vous¦Schritt 3 von 3 · Du¦Passo 3 de 3 · Você
+1431¦Pastel¦Pastel¦Pastel¦Pastell¦Pastel
+1432¦PDF and confirmation on WhatsApp¦PDF y confirmación por WhatsApp¦PDF et confirmation sur WhatsApp¦PDF und Bestätigung per WhatsApp¦PDF e confirmação no WhatsApp
+1433¦PDF and print¦PDF e impresión¦PDF et impression¦PDF und Druck¦PDF e impressão
+1434¦PDF saved¦PDF guardado¦PDF enregistré¦PDF gespeichert¦PDF salvo
+1435¦Film¦Película¦Pellicule¦Film¦Filme
+1436¦Marker¦Rotulador¦Feutre¦Filzstift¦Caneta
+1437¦Pentagon¦Pentágono¦Pentagone¦Fünfeck¦Pentágono
+1438¦for {0}¦para {0}¦pour {0}¦für {0}¦para {0}
+1439¦to open¦para abrir¦pour ouvrir¦zum Öffnen¦para abrir
+1440¦to close¦para cerrar¦pour fermer¦zum Schließen¦para fechar
+1441¦To create a custom graphic or video use Salto Studio.¦Para crear un gráfico o un vídeo a medida usa Salto Studio.¦Pour créer un visuel ou une vidéo sur mesure, utilisez Salto Studio.¦Für eine individuelle Grafik oder ein Video nutze Salto Studio.¦Para criar uma arte ou um vídeo personalizado use o Salto Studio.
+1442¦Recommended for minors: they will be the payer on the receipts.¦Recomendado para menores: será el titular de los recibos.¦Conseillé pour les mineurs : il sera le payeur des reçus.¦Empfohlen für Minderjährige: Er ist Zahler der Quittungen.¦Recomendado para menores: será o titular dos recibos.
+1443¦For the tax deduction the receipt must be issued to the person paying.¦Para la deducción fiscal el recibo debe emitirse a nombre de quien paga.¦Pour la déduction fiscale, le reçu doit être au nom de la personne qui paie.¦Für die Steuerabsetzbarkeit muss die Quittung auf den Zahler lauten.¦Para a dedução fiscal o recibo deve estar em nome de quem paga.
+1445¦to move around¦para moverte¦pour vous déplacer¦zum Navigieren¦para navegar
+1446¦For another payment¦Para otro pago¦Pour un autre paiement¦Für eine weitere Zahlung¦Para outro pagamento
+1447¦For WhatsApp and reminders¦Para WhatsApp y recordatorios¦Pour WhatsApp et les rappels¦Für WhatsApp und Erinnerungen¦Para WhatsApp e lembretes
+1448¦Period¦Periodo¦Période¦Zeitraum¦Período
+1450¦person connected (you)¦persona conectada (tú)¦personne connectée (vous)¦Person verbunden (du)¦pessoa conectada (você)
+1451¦Individual¦Persona física¦Personne physique¦Natürliche Person¦Pessoa física
+1452¦Individual (first and last name)¦Persona física (nombre y apellidos)¦Personne physique (prénom et nom)¦Natürliche Person (Vor- und Nachname)¦Pessoa física (nome e sobrenome)
+1453¦Custom¦Personalizado¦Personnalisé¦Benutzerdefiniert¦Personalizado
+1454¦people connected¦personas conectadas¦personnes connectées¦Personen verbunden¦pessoas conectadas
+1455¦Weight¦Peso¦Graisse¦Stärke¦Peso
+1456¦Pill¦Píldora¦Pilule¦Pille¦Pílula
+1457¦PIN active¦PIN activo¦Code PIN actif¦PIN aktiv¦PIN ativo
+1458¦6-digit PIN¦PIN de 6 dígitos¦Code PIN à 6 chiffres¦6-stellige PIN¦PIN de 6 dígitos
+1459¦Access PIN¦PIN de acceso¦Code PIN d'accès¦Zugangs-PIN¦PIN de acesso
+1460¦PIN set¦PIN configurado¦Code PIN défini¦PIN festgelegt¦PIN definido
+1461¦PIN removed¦PIN eliminado¦Code PIN supprimé¦PIN entfernt¦PIN removido
+1462¦Rain¦Lluvia¦Pluie¦Regen¦Chuva
+1466¦PNG (best quality)¦PNG (máxima calidad)¦PNG (qualité maximale)¦PNG (beste Qualität)¦PNG (qualidade máxima)
+1467¦PNG or JPG, ideally square with a transparent background.¦PNG o JPG, mejor cuadrado y con fondo transparente.¦PNG ou JPG, idéalement carré avec fond transparent.¦PNG oder JPG, am besten quadratisch mit transparentem Hintergrund.¦PNG ou JPG, de preferência quadrado e com fundo transparente.
+1470¦Happy pop¦Pop alegre¦Pop joyeux¦Fröhlicher Pop¦Pop alegre
+1472¦Move the cursor to the start of the clip¦Lleva el cursor al inicio del clip¦Placer le curseur au début du clip¦Cursor an den Clipanfang setzen¦Levar o cursor ao início do clipe
+1473¦Bring forward¦Traer adelante¦Mettre au premier plan¦Nach vorne¦Trazer para frente
+1474¦Send backward¦Enviar atrás¦Mettre en arrière-plan¦Nach hinten¦Enviar para trás
+1475¦Bring a friend¦Trae a un amigo¦Amène un ami¦Bring einen Freund mit¦Traga um amigo
+1476¦Brought forward¦Traído adelante¦Mis au premier plan¦Nach vorne gebracht¦Trazido para frente
+1477¦Sent backward¦Enviado atrás¦Mis en arrière-plan¦Nach hinten gebracht¦Enviado para trás
+1478¦Doors¦Puertas¦Portes¦Türen¦Portas
+1479¦Card (b)¦Tarjeta (b)¦Carte (b)¦Karte (b)¦Cartão (b)
+1480¦Place the cursor over a clip to split it¦Coloca el cursor sobre un clip para dividirlo¦Placez le curseur sur un clip pour le couper¦Setze den Cursor auf einen Clip, um ihn zu teilen¦Posicione o cursor sobre um clipe para dividi-lo
+1481¦Position and size¦Posición y tamaño¦Position et taille¦Position und Größe¦Posição e tamanho
+1482¦Can I continue the numbering from my old program?¦¿Puedo continuar la numeración del programa anterior?¦Puis-je continuer la numérotation de l'ancien logiciel ?¦Kann ich die Nummerierung des alten Programms fortsetzen?¦Posso continuar a numeração do programa antigo?
+1483¦Posts and messages¦Publicaciones y mensajes¦Publications et messages¦Beiträge und Nachrichten¦Posts e mensagens
+1484¦Square post¦Publicación cuadrada¦Publication carrée¦Quadratischer Beitrag¦Post quadrado
+1485¦Social post¦Publicación social¦Publication sociale¦Social-Media-Beitrag¦Post social
+1486¦Vertical post¦Publicación vertical¦Publication verticale¦Hochformat-Beitrag¦Post vertical
+1487¦Posture, breathing, strength and flexibility.¦Postura, respiración, fuerza y flexibilidad.¦Posture, respiration, force et souplesse.¦Haltung, Atmung, Kraft und Beweglichkeit.¦Postura, respiração, força e flexibilidade.
+1488¦Notice period updated¦Antelación actualizada¦Préavis mis à jour¦Vorlauf aktualisiert¦Antecedência atualizada
+1489¦Notice set to {0} days¦Antelación fijada en {0} días¦Préavis réglé à {0} jours¦Vorlauf auf {0} Tage gesetzt¦Antecedência definida em {0} dias
+1490¦Preparing the backup…¦Preparando la copia…¦Préparation de la sauvegarde…¦Sicherung wird vorbereitet…¦Preparando o backup…
+1491¦Preparing the file…¦Preparando el archivo…¦Préparation du fichier…¦Datei wird vorbereitet…¦Preparando o arquivo…
+1492¦Preparing…¦Preparando…¦Préparation…¦Wird vorbereitet…¦Preparando…
+1493¦Coach introduction¦Presentación del monitor¦Présentation de l'entraîneur¦Trainer-Vorstellung¦Apresentação do instrutor
+1494¦President¦Presidente¦Président¦Vorsitzender¦Presidente
+1496¦Price¦Precio¦Prix¦Preis¦Preço
+1497¦First class free ·¦Primera clase gratis ·¦Premier cours gratuit ·¦Erste Stunde gratis ·¦Primeira aula grátis ·
+1498¦Getting started¦Primeros pasos¦Premiers pas¦Erste Schritte¦Primeiros passos
+1499¦First number of commercial series {0}¦Primer número de la serie comercial {0}¦Premier numéro de la série commerciale {0}¦Erste Nummer der Verkaufsserie {0}¦Primeiro número da série comercial {0}
+1500¦First number of general series {0}¦Primer número de la serie general {0}¦Premier numéro de la série générale {0}¦Erste Nummer der allgemeinen Serie {0}¦Primeiro número da série geral {0}
+1501¦Main¦Principal¦Principal¦Haupt¦Principal
+1502¦Privacy¦Privacidad¦Confidentialité¦Datenschutz¦Privacidade
+1503¦Profile saved¦Perfil guardado¦Profil enregistré¦Profil gespeichert¦Perfil salvo
+1504¦Recent projects¦Proyectos recientes¦Projets récents¦Letzte Projekte¦Projetos recentes
+1505¦Salto Studio projects¦Proyectos de Salto Studio¦Projets Salto Studio¦Salto-Studio-Projekte¦Projetos do Salto Studio
+1506¦Project¦Proyecto¦Projet¦Projekt¦Projeto
+1507¦Project not found¦Proyecto no encontrado¦Projet introuvable¦Projekt nicht gefunden¦Projeto não encontrado
+1508¦Project saved in Documents › Salto Studio¦Proyecto guardado en Documentos › Salto Studio¦Projet enregistré dans Documents › Salto Studio¦Projekt in Dokumente › Salto Studio gespeichert¦Projeto salvo em Documentos › Salto Studio
+1509¦Untitled project¦Proyecto sin título¦Projet sans titre¦Unbenanntes Projekt¦Projeto sem título
+1510¦Certificate reminder (WhatsApp)¦Recordatorio de certificado (WhatsApp)¦Rappel de certificat (WhatsApp)¦Attest-Erinnerung (WhatsApp)¦Lembrete de atestado (WhatsApp)
+1511¦Certificate reminder sent to {0} {1}¦Recordatorio de certificado enviado a {0} {1}¦Rappel de certificat envoyé à {0} {1}¦Attest-Erinnerung an {0} {1} gesendet¦Lembrete de atestado enviado para {0} {1}
+1512¦Certificate reminder sent via {0}¦Recordatorio de certificado enviado por {0}¦Rappel de certificat envoyé via {0}¦Attest-Erinnerung per {0} gesendet¦Lembrete de atestado enviado via {0}
+1513¦Certificate reminder on WhatsApp¦Recordatorio de certificado por WhatsApp¦Rappel de certificat sur WhatsApp¦Attest-Erinnerung per WhatsApp¦Lembrete de atestado no WhatsApp
+1514¦Reminders and notifications¦Recordatorios y notificaciones¦Rappels et notifications¦Erinnerungen und Benachrichtigungen¦Lembretes e notificações
+1515¦Reminders sent¦Recordatorios enviados¦Rappels envoyés¦Erinnerungen gesendet¦Lembretes enviados
+1516¦Reminders not scheduled:¦Recordatorios no programados:¦Rappels non programmés :¦Erinnerungen nicht geplant:¦Lembretes não agendados:
+1517¦Monthly fee reminder¦Recordatorio de cuota mensual¦Rappel de cotisation mensuelle¦Erinnerung Monatsbeitrag¦Lembrete de mensalidade
+1518¦Fitness promo¦Promo fitness¦Promo fitness¦Fitness-Aktion¦Promo fitness
+1519¦Promotion¦Promoción¦Promotion¦Aktion¦Promoção
+1520¦Promotions¦Promociones¦Promotions¦Aktionen¦Promoções
+1521¦Suggest the revenue stamp above the threshold¦Proponer el timbre fiscal por encima del umbral¦Proposer le timbre fiscal au-delà du seuil¦Stempelmarke über dem Schwellenwert vorschlagen¦Sugerir o selo fiscal acima do limite
+1522¦Next {0} days and already expired¦Próximos {0} días y ya vencidos¦{0} prochains jours et déjà expirés¦Nächste {0} Tage und bereits abgelaufen¦Próximos {0} dias e já vencidos
+1523¦Next number¦Próximo número¦Prochain numéro¦Nächste Nummer¦Próximo número
+1524¦Next step¦Siguiente paso¦Étape suivante¦Nächster Schritt¦Próximo passo
+1525¦Protects athletes' personal data (GDPR) when the PC is shared.¦Protege los datos personales de los atletas (RGPD) cuando el PC es compartido.¦Protège les données personnelles des athlètes (RGPD) quand le PC est partagé.¦Schützt die personenbezogenen Daten der Athleten (DSGVO), wenn der PC geteilt wird.¦Protege os dados pessoais dos atletas (LGPD/RGPD) quando o PC é compartilhado.
+1526¦State¦Prov.¦Dép.¦Region¦Estado
+1527¦birth state¦prov. nacimiento¦dép. naissance¦Geburtsregion¦estado nascimento
+1528¦Birth state¦Prov. nacimiento¦Dép. de naissance¦Geburtsregion¦Estado de nascimento
+1529¦Try changing the search or the filters.¦Prueba a cambiar la búsqueda o los filtros.¦Essayez de modifier la recherche ou les filtres.¦Ändere die Suche oder die Filter.¦Tente mudar a pesquisa ou os filtros.
+1530¦Try all disciplines for free! Bring a friend 🤸‍♀️¦¡Prueba gratis todas las disciplinas! Trae a un amigo 🤸‍♀️¦Essayez gratuitement toutes les disciplines ! Amenez un ami 🤸‍♀️¦Probiere alle Disziplinen kostenlos aus! Bring einen Freund mit 🤸‍♀️¦Experimente grátis todas as modalidades! Traga um amigo 🤸‍♀️
+1531¦FREE TRIAL¦PRUEBA GRATUITA¦ESSAI GRATUIT¦GRATIS PROBETRAINING¦AULA GRÁTIS
+1532¦Try a notification¦Probar una notificación¦Tester une notification¦Benachrichtigung testen¦Testar uma notificação
+1533¦State / province¦Provincia¦Département / région¦Bundesland / Region¦Estado / província
+1534¦state of birth¦provincia de nacimiento¦département de naissance¦Geburtsregion¦estado de nascimento
+1535¦State of birth¦Provincia de nacimiento¦Département de naissance¦Geburtsregion¦Estado de nascimento
+1536¦Province and postcode filled in automatically as you type.¦Provincia y código postal se rellenan solos mientras escribes.¦Département et code postal remplis automatiquement pendant la saisie.¦Region und PLZ werden beim Tippen automatisch ausgefüllt.¦Estado e CEP preenchidos automaticamente enquanto você digita.
+1537¦state of birth¦provincia nacimiento¦département naissance¦Geburtsregion¦estado nascimento
+1538¦Post on X¦Publicar en X¦Publier sur X¦Auf X posten¦Publicar no X
+1539¦Buttons shown on the new receipt. With “discipline fee” the amount is the monthly fee × the chosen months.¦Botones que aparecen en el nuevo recibo. Con “cuota de disciplina” el importe es la cuota mensual × los meses elegidos.¦Boutons affichés sur le nouveau reçu. Avec « cotisation discipline », le montant est la cotisation mensuelle × les mois choisis.¦Schaltflächen auf der neuen Quittung. Mit „Disziplinbeitrag“ ist der Betrag Monatsbeitrag × gewählte Monate.¦Botões que aparecem no novo recibo. Com “valor da modalidade” o valor é a mensalidade × os meses escolhidos.
+1540¦Pulse¦Pulso¦Pulsation¦Pulsieren¦Pulsação
+1541¦You can also drag files from File Explorer.¦También puedes arrastrar archivos desde el Explorador de archivos.¦Vous pouvez aussi glisser des fichiers depuis l'Explorateur.¦Du kannst Dateien auch aus dem Explorer ziehen.¦Você também pode arrastar arquivos do Explorador de Arquivos.
+1542¦Something went wrong¦Algo ha salido mal¦Une erreur s'est produite¦Etwas ist schiefgelaufen¦Algo deu errado
+1543¦Quality¦Calidad¦Qualité¦Qualität¦Qualidade
+1544¦When other PCs at the gym open Athlos on the same network, your colleagues will appear here.¦Cuando otros PC del gimnasio abran Athlos en la misma red, los compañeros aparecerán aquí.¦Quand d'autres PC du club ouvriront Athlos sur le même réseau, vos collègues apparaîtront ici.¦Wenn andere PCs der Halle Athlos im selben Netzwerk öffnen, erscheinen die Kollegen hier.¦Quando outros PCs da academia abrirem o Athlos na mesma rede, os colegas aparecerão aqui.
+1545¦How many days before expiry do you want to notify the family?¦¿Cuántos días antes del vencimiento quieres avisar a la familia?¦Combien de jours avant l'expiration voulez-vous prévenir la famille ?¦Wie viele Tage vor Ablauf soll die Familie benachrichtigt werden?¦Quantos dias antes do vencimento você quer avisar a família?
+1546¦The one visible now ({0}s)¦El visible ahora ({0}s)¦Celui visible maintenant ({0} s)¦Das jetzt sichtbare ({0} s)¦O visível agora ({0}s)
+1547¦This workstation¦Este puesto¦Ce poste¦Dieser Arbeitsplatz¦Este computador
+1548¦These details appear on every receipt, on cards and in messages. Each club enters its own name.¦Estos datos aparecen en cada recibo, en los carnets y en los mensajes. Cada club introduce su propio nombre.¦Ces données apparaissent sur chaque reçu, sur les cartes et dans les messages. Chaque club saisit son propre nom.¦Diese Daten erscheinen auf jeder Quittung, auf Ausweisen und in Nachrichten. Jeder Verein trägt seinen eigenen Namen ein.¦Esses dados aparecem em cada recibo, nas carteirinhas e nas mensagens. Cada clube insere o próprio nome.
+1549¦This computer doesn't support video recording¦Este ordenador no admite la grabación de vídeo¦Cet ordinateur ne prend pas en charge l'enregistrement vidéo¦Dieser Computer unterstützt keine Videoaufnahme¦Este computador não suporta gravação de vídeo
+1550¦This month¦Este mes¦Ce mois-ci¦Dieser Monat¦Este mês
+1551¦This message has no fields to fill in.¦Este mensaje no tiene campos que rellenar.¦Ce message n'a aucun champ à remplir.¦Diese Nachricht hat keine Felder zum Ausfüllen.¦Esta mensagem não tem campos para preencher.
+1552¦The latest operations will appear here.¦Aquí aparecerán las últimas operaciones.¦Les dernières opérations apparaîtront ici.¦Hier erscheinen die letzten Vorgänge.¦As últimas operações aparecerão aqui.
+1553¦Course fee¦Cuota del curso¦Cotisation du cours¦Kursbeitrag¦Mensalidade do curso
+1554¦Course fee for¦Cuota del curso mes de¦Cotisation du cours mois de¦Kursbeitrag für¦Mensalidade do curso de
+1555¦Enrolment fee¦Cuota de inscripción¦Frais d'inscription¦Aufnahmegebühr¦Taxa de inscrição
+1556¦Membership fee¦Cuota de licencia¦Cotisation de licence¦Lizenzgebühr¦Taxa de filiação
+1557¦Discipline fee¦Cuota de disciplina¦Cotisation discipline¦Disziplinbeitrag¦Valor da modalidade
+1558¦Competition fee¦Cuota de competición¦Frais de compétition¦Wettkampfgebühr¦Taxa de competição
+1559¦Enrolment fee¦Cuota de inscripción¦Frais d'inscription¦Aufnahmegebühr¦Taxa de inscrição
+1560¦Enrolment fee {0}¦Cuota de inscripción {0}¦Frais d'inscription {0}¦Aufnahmegebühr {0}¦Taxa de inscrição {0}
+1561¦Monthly fee {0}¦Cuota mensual {0}¦Cotisation mensuelle {0}¦Monatsbeitrag {0}¦Mensalidade {0}
+1562¦Expected monthly fee¦Cuota mensual prevista¦Cotisation mensuelle prévue¦Vorgesehener Monatsbeitrag¦Mensalidade prevista
+1563¦Show fee¦Cuota del festival¦Frais de gala¦Show-Gebühr¦Taxa da apresentação
+1564¦Show/competition fee¦Cuota festival/competiciones¦Frais gala/compétitions¦Gebühr Show/Wettkämpfe¦Taxa apresentação/competições
+1565¦SHOW/COMPETITION FEES¦CUOTA FESTIVAL/COMPETICIONES¦FRAIS GALA/COMPÉTITIONS¦SHOW/WETTKÄMPFE¦APRESENTAÇÃO/COMPETIÇÕES
+1566¦Membership fee¦Cuota de licencia¦Cotisation de licence¦Lizenzgebühr¦Taxa de filiação
+1567¦Quarterly course fee¦Cuota trimestral del curso¦Cotisation trimestrielle du cours¦Quartalsbeitrag Kurs¦Mensalidade trimestral do curso
+1568¦Course fees¦Cuotas del curso¦Cotisations des cours¦Kursbeiträge¦Mensalidades dos cursos
+1569¦COURSE FEES¦CUOTAS CURSO¦COTISATIONS COURS¦KURSBEITRÄGE¦MENSALIDADES
+1570¦Enrolment fees¦Cuotas de inscripción¦Frais d'inscription¦Aufnahmegebühren¦Taxas de inscrição
+1571¦ENROLMENT FEES¦CUOTAS INSCRIPCIÓN¦FRAIS D'INSCRIPTION¦AUFNAHMEGEBÜHREN¦INSCRIÇÕES
+1572¦Membership fees¦Cuotas licencia¦Cotisations licence¦Lizenzgebühren¦Filiações
+1573¦MEMBERSHIP FEES¦CUOTAS LICENCIA¦COTISATIONS LICENCE¦LIZENZGEBÜHREN¦FILIAÇÕES
+1576¦Reactions¦Reacciones¦Réactions¦Reaktionen¦Reações
+1578¦Highlight reel¦Reel de highlights¦Reel des temps forts¦Highlight-Reel¦Reel de destaques
+1579¦Record your voice and apply voice effects.¦Graba tu voz y aplica efectos de voz.¦Enregistrez votre voix et appliquez des effets de voix.¦Nimm deine Stimme auf und wende Stimmeffekte an.¦Grave sua voz e aplique efeitos de voz.
+1580¦Record the voice-over¦Graba la voz en off¦Enregistrer la voix off¦Sprecherstimme aufnehmen¦Gravar a narração
+1581¦Record while the video plays and apply 12 voice effects.¦Graba mientras el vídeo avanza y aplica 12 efectos de voz.¦Enregistrez pendant que la vidéo défile et appliquez 12 effets de voix.¦Nimm auf, während das Video läuft, und wende 12 Stimmeffekte an.¦Grave enquanto o vídeo avança e aplique 12 efeitos de voz.
+1582¦Record voice-over¦Grabar voz en off¦Enregistrer une voix off¦Sprecherstimme aufnehmen¦Gravar narração
+1583¦Recording {0} / {1} s¦Grabando {0} / {1} s¦Enregistrement {0} / {1} s¦Aufnahme {0} / {1} s¦Gravando {0} / {1} s
+1584¦Recording too short¦Grabación demasiado corta¦Enregistrement trop court¦Aufnahme zu kurz¦Gravação muito curta
+1585¦Register exported: opens with Excel¦Registro exportado: se abre con Excel¦Registre exporté : s'ouvre avec Excel¦Register exportiert: öffnet sich mit Excel¦Registro exportado: abre com o Excel
+1586¦Receipt register¦Registro de recibos¦Registre des reçus¦Quittungsregister¦Registro de recibos
+1587¦Receipt register {0}¦Registro de recibos {0}¦Registre des reçus {0}¦Quittungsregister {0}¦Registro de recibos {0}
+1588¦Receipt register {0}.csv¦Registro de recibos {0}.csv¦Registre des reçus {0}.csv¦Quittungsregister {0}.csv¦Registro de recibos {0}.csv
+1589¦Adjust¦Ajustar¦Régler¦Anpassen¦Ajustar
+1590¦Adjustments¦Ajustes¦Réglages¦Anpassungen¦Ajustes
+1592¦Relationship¦Relación¦Lien¦Beziehung¦Parentesco
+1593¦Makes a green or blue background transparent: put the athlete in front of any background.¦Hace transparente el fondo verde o azul: pon al atleta delante de cualquier fondo.¦Rend transparent le fond vert ou bleu : placez l'athlète devant n'importe quel décor.¦Macht grünen oder blauen Hintergrund transparent: Stelle den Athleten vor jeden Hintergrund.¦Deixa transparente o fundo verde ou azul: coloque o atleta diante de qualquer fundo.
+1594¦Address¦Domicilio¦Adresse¦Wohnsitz¦Endereço
+1595¦Address and contacts¦Domicilio y contactos¦Adresse et contacts¦Wohnsitz und Kontakte¦Endereço e contatos
+1596¦Network¦Red¦Réseau¦Netzwerk¦Rede
+1597¦Network:¦Red:¦Réseau :¦Netzwerk:¦Rede:
+1599¦Rectangle¦Rectángulo¦Rectangle¦Rechteck¦Retângulo
+1601¦Reactivate¦Reactivar¦Réactiver¦Reaktivieren¦Reativar
+1602¦REC. {0}¦REC. {0}¦REÇU {0}¦QUITT. {0}¦REC. {0}
+1603¦Derive date, sex and place from the code¦Obtener fecha, sexo y lugar del código¦Déduire date, sexe et lieu du code¦Datum, Geschlecht und Ort aus dem Code ermitteln¦Obter data, sexo e local a partir do código
+1604¦Day's takings (c)¦Ingresos del día (c)¦Recettes du jour (c)¦Tageseinnahmen (c)¦Receitas do dia (c)
+1605¦Global search and commands¦Búsqueda global y comandos¦Recherche globale et commandes¦Globale Suche und Befehle¦Pesquisa global e comandos
+1606¦Search by first name, surname, discipline¦Búsqueda por nombre, apellido, disciplina¦Recherche par prénom, nom, discipline¦Suche nach Vorname, Nachname, Disziplin¦Pesquisa por nome, sobrenome, modalidade
+1607¦Receipt¦Recibo¦Reçu¦Quittung¦Recibo
+1608¦Receipt {0} {1}-{2}¦Recibo {0} {1}-{2}¦Reçu {0} {1}-{2}¦Quittung {0} {1}-{2}¦Recibo {0} {1}-{2}
+1609¦Receipt {0} {1}-{2} {3}¦Recibo {0} {1}-{2} {3}¦Reçu {0} {1}-{2} {3}¦Quittung {0} {1}-{2} {3}¦Recibo {0} {1}-{2} {3}
+1610¦{0} receipt no. {1}/{2}¦Recibo {0} n.º {1}/{2}¦Reçu {0} n° {1}/{2}¦Quittung {0} Nr. {1}/{2}¦Recibo {0} n.º {1}/{2}
+1611¦{0} receipt no. {1}/{2} – {3} {4} – {5}¦Recibo {0} n.º {1}/{2} – {3} {4} – {5}¦Reçu {0} n° {1}/{2} – {3} {4} – {5}¦Quittung {0} Nr. {1}/{2} – {3} {4} – {5}¦Recibo {0} n.º {1}/{2} – {3} {4} – {5}
+1612¦A4 receipt¦Recibo A4¦Reçu A4¦A4-Quittung¦Recibo A4
+1613¦Receipt voided¦Recibo anulado¦Reçu annulé¦Quittung storniert¦Recibo anulado
+1614¦Commercial receipt¦Recibo comercial¦Reçu commercial¦Verkaufsquittung¦Recibo comercial
+1615¦COMMERCIAL RECEIPT¦RECIBO COMERCIAL¦REÇU COMMERCIAL¦VERKAUFSQUITTUNG¦RECIBO COMERCIAL
+1616¦commercial receipt sale¦recibo comercial venta¦reçu commercial vente¦Verkaufsquittung Verkauf¦recibo comercial venda
+1617¦Receipt deleted¦Recibo eliminado¦Reçu supprimé¦Quittung gelöscht¦Recibo excluído
+1618¦General receipt¦Recibo general¦Reçu général¦Allgemeine Quittung¦Recibo geral
+1619¦GENERAL RECEIPT¦RECIBO GENERAL¦REÇU GÉNÉRAL¦ALLGEMEINE QUITTUNG¦RECIBO GERAL

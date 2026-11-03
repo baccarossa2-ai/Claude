@@ -6,6 +6,7 @@ import { go } from '../lib/router.js';
 import { esc, age, todayISO, toISO, titleCase, date } from '../lib/format.js';
 import { computeCF, validateCF, decodeCF } from '../lib/cf.js';
 import { placeAutocomplete } from '../lib/places.js';
+import { isIT } from '../lib/region.js';
 
 const EMPTY = () => ({
   nome: '', cognome: '', sesso: '', dataNascita: '', luogoNascita: '', provinciaNascita: '', codiceFiscale: '',
@@ -42,11 +43,11 @@ export default {
                 <div class="field"><span>Sesso</span><div class="seg" id="sesso"><button data-v="F" class="${c.sesso === 'F' ? 'active' : ''}">Femmina</button><button data-v="M" class="${c.sesso === 'M' ? 'active' : ''}">Maschio</button></div></div>
                 <label class="field"><span>Data di nascita</span><input type="date" name="dataNascita" value="${esc(c.dataNascita)}" max="${todayISO()}"><small class="hint" id="ageHint"></small></label>
                 <label class="field"><span>Luogo di nascita</span><div><input name="luogoNascita" value="${esc(c.luogoNascita)}" placeholder="Comune o stato estero"></div></label>
-                <label class="field"><span>Provincia di nascita</span><input name="provinciaNascita" class="upper" maxlength="2" value="${esc(c.provinciaNascita)}" placeholder="Es. CT (EE se estero)"></label>
+                <label class="field"><span>Provincia di nascita</span><input name="provinciaNascita" class="upper" maxlength="${isIT() ? 2 : 40}" value="${esc(c.provinciaNascita)}" placeholder="${isIT() ? 'Es. CT (EE se estero)' : ''}"></label>
                 <label class="field span-all"><span>Codice fiscale</span>
-                  <div class="input-group"><input name="codiceFiscale" class="mono upper" maxlength="16" value="${esc(c.codiceFiscale)}" placeholder="Calcolalo con il pulsante o scrivilo">
-                    <button class="btn" id="calcCF" type="button">${icon('wand-sparkles', 16)}Calcola</button>
-                    <button class="btn ghost" id="decCF" type="button" data-tip="Ricava data, sesso e luogo dal codice">${icon('scan-line', 16)}</button></div>
+                  <div class="input-group"><input name="codiceFiscale" class="mono upper" maxlength="${isIT() ? 16 : 30}" value="${esc(c.codiceFiscale)}" placeholder="${isIT() ? 'Calcolalo con il pulsante o scrivilo' : ''}">
+                    <button class="btn it-only" id="calcCF" type="button">${icon('wand-sparkles', 16)}Calcola</button>
+                    <button class="btn ghost it-only" id="decCF" type="button" data-tip="Ricava data, sesso e luogo dal codice">${icon('scan-line', 16)}</button></div>
                   <small class="hint" id="cfHint"></small></label>
               </div>
             </div>
@@ -60,8 +61,8 @@ export default {
               </div>
               <div class="grid mt" style="grid-template-columns:2fr 1fr 1fr">
                 <label class="field"><span>Comune</span><div><input name="res.comune" value="${esc(c.residenza.comune)}" placeholder="Inizia a scrivere…"></div></label>
-                <label class="field"><span>CAP</span><input name="res.cap" maxlength="5" value="${esc(c.residenza.cap)}"></label>
-                <label class="field"><span>Provincia</span><input name="res.provincia" class="upper" maxlength="2" value="${esc(c.residenza.provincia)}"></label>
+                <label class="field"><span>CAP</span><input name="res.cap" maxlength="${isIT() ? 5 : 12}" value="${esc(c.residenza.cap)}"></label>
+                <label class="field"><span>Provincia</span><input name="res.provincia" class="upper" maxlength="${isIT() ? 2 : 40}" value="${esc(c.residenza.provincia)}"></label>
               </div>
               <div class="grid g2 mt">
                 <label class="field"><span>Telefono / cellulare</span><div class="input-icon">${icon('phone', 16)}<input name="telefono" value="${esc(c.telefono)}" placeholder="Per WhatsApp e promemoria"></div></label>
@@ -123,7 +124,7 @@ export default {
             <h3 style="margin-top:14px" id="sumName"></h3>
             <p class="muted small" id="sumInfo"></p>
           </div>
-          <div class="card pad-sm">
+          <div class="card pad-sm it-only">
             <div class="row"><span class="badge accent">${icon('sparkles', 13)}Suggerimento</span></div>
             <p class="small" style="margin-top:8px;color:var(--text-2)">Scrivi nome, cognome, sesso, data e comune di nascita: premi <b>Calcola</b> e il codice fiscale è pronto. Se hai già il codice, premi ${icon('scan-line', 13)} per ricavare gli altri dati.</p>
           </div>
@@ -147,7 +148,7 @@ export default {
       const a = age(c.dataNascita);
       $('#sumName', root).textContent = `${c.nome} ${c.cognome}`.trim() || 'Nuovo atleta';
       $('#sumInfo', root).textContent = [a !== null ? `${a} anni` : '', c.luogoNascita, editing ? `Tessera ${editing.tessera}` : ''].filter(Boolean).join(' · ');
-      $('#ageHint', root).textContent = a !== null ? `${a} anni${a < 18 ? ' · minorenne' : ''}${a >= 5 && a <= 18 ? ' · detrazione 19% applicabile' : ''}` : '';
+      $('#ageHint', root).textContent = a !== null ? `${a} anni${a < 18 ? ' · minorenne' : ''}${isIT() && a >= 5 && a <= 18 ? ' · detrazione 19% applicabile' : ''}` : '';
       $('#parentLbl', root).textContent = a !== null && a < 18 ? 'Consigliato per i minorenni' : '';
       if (a !== null && a < 18 && !showParent && !editing && !c._parentAsked) {
         c._parentAsked = true;
@@ -180,9 +181,9 @@ export default {
       const hint = $('#cfHint', root);
       const inp = f('codiceFiscale');
       if (!v) { hint.textContent = ''; hint.className = 'hint'; inp.classList.remove('invalid', 'valid'); return; }
-      const r = validateCF(v);
-      let msg = r.ok ? '✓ Codice fiscale valido' : r.error;
-      if (r.ok && c.nome && c.cognome && c.dataNascita && c.sesso && c.luogoNascita) {
+      const r = isIT() ? validateCF(v) : { ok: true };
+      let msg = r.ok ? (isIT() ? '✓ Codice fiscale valido' : '') : r.error;
+      if (isIT() && r.ok && c.nome && c.cognome && c.dataNascita && c.sesso && c.luogoNascita) {
         const exp = computeCF(c);
         if (exp.ok && exp.value !== v) msg = '⚠ Valido, ma non corrisponde ai dati inseriti (possibile omocodia o dati diversi)';
       }
@@ -198,7 +199,7 @@ export default {
       const h = $('#gcfHint', root);
       if (!h || !c.genitore) return;
       const v = c.genitore.codiceFiscale;
-      if (!v) { h.textContent = ''; return; }
+      if (!v || !isIT()) { h.textContent = ''; return; }
       const r = validateCF(v);
       h.textContent = r.ok ? '✓ Valido' : r.error;
       h.className = 'hint ' + (r.ok ? 'ok' : 'err');
@@ -298,7 +299,7 @@ export default {
 
     const save = async () => {
       if (!c.nome.trim() || !c.cognome.trim()) { toast('Nome e cognome sono obbligatori', { type: 'warning' }); f(c.nome.trim() ? 'cognome' : 'nome').focus(); return; }
-      if (c.codiceFiscale && !validateCF(c.codiceFiscale).ok) {
+      if (isIT() && c.codiceFiscale && !validateCF(c.codiceFiscale).ok) {
         toast('Il codice fiscale non è valido: correggilo o lascialo vuoto', { type: 'warning' });
         f('codiceFiscale').focus();
         return;

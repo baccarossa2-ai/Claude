@@ -1,4 +1,5 @@
 // Panoramica: saluto, numeri chiave, grafici, scadenze, compleanni e azioni rapide.
+import { t } from '../lib/i18n.js';
 import { db } from '../lib/db.js';
 import { icon, countUp, avatar, on, $ } from '../lib/ui.js';
 import { go } from '../lib/router.js';
@@ -9,9 +10,9 @@ const IMAGES = ['palestra', 'artistica', 'ritmica', 'judo', 'aerea', 'fitness'];
 
 function greeting() {
   const h = new Date().getHours();
-  if (h < 12) return 'Buongiorno';
-  if (h < 18) return 'Buon pomeriggio';
-  return 'Buonasera';
+  if (h < 12) return t('Buongiorno');
+  if (h < 18) return t('Buon pomeriggio');
+  return t('Buonasera');
 }
 
 export default {

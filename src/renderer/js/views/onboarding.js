@@ -3,6 +3,7 @@ import { db } from '../lib/db.js';
 import { icon, el, $, $$, confetti, on } from '../lib/ui.js';
 import { esc } from '../lib/format.js';
 import { validatePIVA, validateCF } from '../lib/cf.js';
+import { isIT } from '../lib/region.js';
 import { ensureProfile } from '../lib/chatstate.js';
 import { createDemoData } from '../data/demo.js';
 
@@ -108,7 +109,7 @@ export function runOnboarding() {
             <div class="seg" id="tipo"><button data-v="ente" class="${draft.tipoSoggetto !== 'persona' ? 'active' : ''}">${icon('building-2', 15)}Società / associazione</button><button data-v="persona" class="${draft.tipoSoggetto === 'persona' ? 'active' : ''}">${icon('user', 15)}Persona fisica</button></div>
             <div id="nameFields"></div>
             <div class="grid g2">
-              <label class="field"><span>Partita IVA</span><input id="piva" class="mono" maxlength="13" value="${esc(draft.partitaIva)}" placeholder="11 cifre"><small class="hint" id="pivaHint"></small></label>
+              <label class="field"><span>Partita IVA</span><input id="piva" class="mono" maxlength="13" value="${esc(draft.partitaIva)}" placeholder="${isIT() ? '11 cifre' : ''}"><small class="hint" id="pivaHint"></small></label>
               <label class="field"><span>Codice fiscale</span><input id="cf" class="mono upper" maxlength="16" value="${esc(draft.codiceFiscale)}" placeholder="Codice fiscale"><small class="hint" id="cfHint"></small></label>
             </div>
             <div class="grid" style="grid-template-columns:2fr 1fr">
@@ -126,7 +127,7 @@ export function runOnboarding() {
         const nameFields = () => {
           $('#nameFields', node).innerHTML = draft.tipoSoggetto === 'persona'
             ? `<div class="grid g2"><label class="field"><span>Nome</span><input id="nome" value="${esc(draft.nome)}"></label><label class="field"><span>Cognome</span><input id="cognome" value="${esc(draft.cognome)}"></label></div>`
-            : `<div class="grid" style="grid-template-columns:2fr 1fr"><label class="field"><span>Denominazione sociale</span><input id="den" value="${esc(draft.denominazione)}" placeholder="Es. Athletic Club"></label>
+            : `<div class="grid" style="grid-template-columns:2fr 1fr"><label class="field"><span>Denominazione sociale</span><input id="den" value="${esc(draft.denominazione)}" placeholder="Es. Polisportiva Aurora"></label>
                <label class="field"><span>Forma giuridica</span><select id="forma">${['A.S.D.', 'S.S.D. a r.l.', 'S.S.D. cooperativa', 'Associazione', 'S.r.l.', 'Ditta individuale', 'Altro'].map(f => `<option ${draft.formaGiuridica === f ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>`;
         };
         nameFields();
@@ -139,8 +140,8 @@ export function runOnboarding() {
         const check = () => {
           const p = $('#piva', node).value.trim();
           const c = $('#cf', node).value.trim();
-          const pv = p ? validatePIVA(p) : null;
-          const cv = c ? validateCF(c) : null;
+          const pv = p && isIT() ? validatePIVA(p) : null;
+          const cv = c && isIT() ? validateCF(c) : null;
           $('#pivaHint', node).textContent = pv ? (pv.ok ? '✓ Partita IVA valida' : pv.error) : '';
           $('#pivaHint', node).className = 'hint ' + (pv ? (pv.ok ? 'ok' : 'err') : '');
           $('#cfHint', node).textContent = cv ? (cv.ok ? '✓ Codice fiscale valido' : cv.error) : '';

@@ -2,7 +2,7 @@
 import { db } from '../lib/db.js';
 import { icon, on, $, $$, modal, toast, confirmDialog, pickImage } from '../lib/ui.js';
 import { go } from '../lib/router.js';
-import { esc, euro, uid } from '../lib/format.js';
+import { esc, euro, uid, currencySymbol } from '../lib/format.js';
 
 const COLORS = ['#6366F1', '#8B5CF6', '#A855F7', '#EC4899', '#E11D48', '#F97316', '#EAB308', '#10B981', '#14B8A6', '#0EA5E9', '#3B82F6', '#64748B'];
 const ICONS = ['medal', 'trophy', 'sparkles', 'shield', 'wand-sparkles', 'heart-pulse', 'dumbbell', 'activity', 'flame', 'zap', 'star', 'award', 'gem', 'crown', 'music', 'waves', 'baby', 'users', 'rocket', 'infinity', 'circle-dot', 'target', 'timer', 'sun'];
@@ -58,8 +58,8 @@ function edit(d, after) {
         <label class="field"><span>Nome</span><input id="n" value="${esc(x.nome)}" placeholder="Es. Ginnastica artistica"></label>
         <label class="field"><span>Descrizione</span><input id="ds" value="${esc(x.descrizione)}" placeholder="Breve descrizione"></label>
         <div class="grid g3">
-          <label class="field"><span>Quota mensile €</span><input id="qm" type="number" step="0.5" value="${x.quotaMensile}"></label>
-          <label class="field"><span>Quota iscrizione €</span><input id="qi" type="number" step="0.5" value="${x.quotaIscrizione}"></label>
+          <label class="field"><span>Quota mensile ${currencySymbol()}</span><input id="qm" type="number" step="0.5" value="${x.quotaMensile}"></label>
+          <label class="field"><span>Quota iscrizione ${currencySymbol()}</span><input id="qi" type="number" step="0.5" value="${x.quotaIscrizione}"></label>
           <label class="field"><span>Federazione / ente</span><input id="fe" value="${esc(x.federazione || '')}"></label>
         </div>
         <div class="field"><span>Colore</span><div class="color-swatches" id="cols">${COLORS.map(c => `<button style="background:${c}" data-c="${c}" class="${c === x.colore ? 'sel' : ''}"></button>`).join('')}</div></div>

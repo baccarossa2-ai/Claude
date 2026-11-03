@@ -1,0 +1,54 @@
+{0} · {1} di¦{0} · {1} of¦{0} · {1} de¦{0} · {1} sur¦{0} · {1} von¦{0} · {1} de
+{0} · chiusura del¦{0} · closing of¦{0} · cierre del¦{0} · clôture du¦{0} · Abschluss vom¦{0} · fechamento de
+{0} · quota¦{0} · fee¦{0} · cuota¦{0} · cotisation¦{0} · Beitrag¦{0} · mensalidade
+{0} anagrafica: {1} {2}¦{0} record: {1} {2}¦{0} ficha: {1} {2}¦{0} fiche : {1} {2}¦{0} Datensatz: {1} {2}¦{0} ficha: {1} {2}
+{0} atleti sono iscritti a {1}: verranno tolti da questa disciplina. In alternativa puoi solo disattivarla.¦{0} athletes are enrolled in {1}: they will be removed from this discipline. Alternatively you can just deactivate it.¦{0} atletas están inscritos en {1}: se quitarán de esta disciplina. Como alternativa puedes solo desactivarla.¦{0} athlètes sont inscrits en {1} : ils seront retirés de cette discipline. Vous pouvez aussi simplement la désactiver.¦{0} Athleten sind in {1} angemeldet: Sie werden aus dieser Disziplin entfernt. Alternativ kannst du sie nur deaktivieren.¦{0} atletas estão inscritos em {1}: serão removidos desta modalidade. Como alternativa, você pode só desativá-la.
+⚠ Codice già presente: {0} {1}¦⚠ ID already on record: {0} {1}¦⚠ Código ya registrado: {0} {1}¦⚠ Code déjà enregistré : {0} {1}¦⚠ Nummer bereits vorhanden: {0} {1}¦⚠ Código já cadastrado: {0} {1}
+anni · {0}¦years · {0}¦años · {0}¦ans · {0}¦Jahre · {0}¦anos · {0}
+anni · Tessera¦years · Card¦años · Carnet¦ans · Carte¦Jahre · Ausweis¦anos · Carteirinha
+Avvisato il {0} ({1})¦Notified on {0} ({1})¦Avisado el {0} ({1})¦Prévenu le {0} ({1})¦Benachrichtigt am {0} ({1})¦Avisado em {0} ({1})
+Euro¦Amount¦Importe¦Montant¦Betrag¦Valor
+Importo¦Amount¦Importe¦Montant¦Betrag¦Valor
+Filtro: {0}¦Filter: {0}¦Filtro: {0}¦Filtre : {0}¦Filter: {0}¦Filtro: {0}
+Formato: {0} ({1}×{2})¦Format: {0} ({1}×{2})¦Formato: {0} ({1}×{2})¦Format : {0} ({1}×{2})¦Format: {0} ({1}×{2})¦Formato: {0} ({1}×{2})
+Gen.: {0}¦Gen.: {0}¦Gen.: {0}¦Gén. : {0}¦Allg.: {0}¦Ger.: {0}
+GIORNO: {0}¦DAY: {0}¦DÍA: {0}¦JOUR : {0}¦TAG: {0}¦DIA: {0}
+MESE DI: {0}¦MONTH: {0}¦MES DE: {0}¦MOIS DE : {0}¦MONAT: {0}¦MÊS DE: {0}
+SEDE: {0}¦BRANCH: {0}¦SEDE: {0}¦SITE : {0}¦STANDORT: {0}¦UNIDADE: {0}
+ANNO: {0}¦YEAR: {0}¦AÑO: {0}¦ANNÉE : {0}¦JAHR: {0}¦ANO: {0}
+Sede: {0} · {1}¦Branch: {0} · {1}¦Sede: {0} · {1}¦Site : {0} · {1}¦Standort: {0} · {1}¦Unidade: {0} · {1}
+Sede: {0} · {1} {2}¦Branch: {0} · {1} {2}¦Sede: {0} · {1} {2}¦Site : {0} · {1} {2}¦Standort: {0} · {1} {2}¦Unidade: {0} · {1} {2}
+sede legale: {0}¦registered office: {0}¦domicilio social: {0}¦siège social : {0}¦Sitz: {0}¦sede: {0}
+Glitch, VHS, coriandoli, stelline, chroma key per il green screen.¦Glitch, VHS, confetti, sparkles, chroma key for green screen.¦Glitch, VHS, confeti, estrellitas, croma para pantalla verde.¦Glitch, VHS, confettis, étoiles, chroma key pour fond vert.¦Glitch, VHS, Konfetti, Sternchen, Chroma Key für Greenscreen.¦Glitch, VHS, confete, estrelinhas, chroma key para tela verde.
+L'esportazione avviene in tempo reale ({0} secondi): tieni aperta questa finestra fino alla fine.¦Export runs in real time ({0} seconds): keep this window open until it finishes.¦La exportación se hace en tiempo real ({0} segundos): mantén abierta esta ventana hasta el final.¦L'export se fait en temps réel ({0} secondes) : gardez cette fenêtre ouverte jusqu'à la fin.¦Der Export läuft in Echtzeit ({0} Sekunden): Lass dieses Fenster bis zum Ende offen.¦A exportação é em tempo real ({0} segundos): mantenha esta janela aberta até o fim.
+Modello “{0}” pronto: clicca sui testi per modificarli¦Template “{0}” ready: click the texts to edit them¦Plantilla “{0}” lista: haz clic en los textos para editarlos¦Modèle « {0} » prêt : cliquez sur les textes pour les modifier¦Vorlage „{0}“ bereit: Klicke auf die Texte, um sie zu bearbeiten¦Modelo “{0}” pronto: clique nos textos para editá-los
+Montaggio video come CapCut, grafiche come Canva: un unico studio per Reel, storie, post e locandine di {0}.¦Video editing and graphic design in one studio for {0}'s Reels, stories, posts and posters.¦Edición de vídeo y diseño gráfico en un único estudio para Reels, historias, publicaciones y carteles de {0}.¦Montage vidéo et graphisme dans un seul studio pour les Reels, stories, publications et affiches de {0}.¦Videoschnitt und Grafikdesign in einem Studio für Reels, Storys, Posts und Plakate von {0}.¦Edição de vídeo e design num único estúdio para Reels, stories, posts e cartazes do {0}.
+N. {0} · Nato/a il¦No. {0} · Born¦N.º {0} · Nacido/a el¦N° {0} · Né(e) le¦Nr. {0} · Geboren am¦N.º {0} · Nascido/a em
+Note: {0}¦Notes: {0}¦Notas: {0}¦Notes : {0}¦Notizen: {0}¦Notas: {0}
+Pagamento: {0}¦Payment: {0}¦Pago: {0}¦Paiement : {0}¦Zahlung: {0}¦Pagamento: {0}
+Periodo: {0}¦Period: {0}¦Periodo: {0}¦Période : {0}¦Zeitraum: {0}¦Período: {0}
+Prossima: n.¦Next: no.¦Próximo: n.º¦Prochain : n°¦Nächste: Nr.¦Próximo: n.º
+ricevute in {0} giorni¦receipts in {0} days¦recibos en {0} días¦reçus en {0} jours¦Quittungen in {0} Tagen¦recibos em {0} dias
+righe. Colonne riconosciute: {0}.¦rows. Recognised columns: {0}.¦filas. Columnas reconocidas: {0}.¦lignes. Colonnes reconnues : {0}.¦Zeilen. Erkannte Spalten: {0}.¦linhas. Colunas reconhecidas: {0}.
+Stampato: {0}¦Printed: {0}¦Impreso: {0}¦Imprimé : {0}¦Gedruckt: {0}¦Impresso: {0}
+Su {0} il messaggio si apre già scritto: devi solo premere invio.¦On {0} the message opens already written: just press send.¦En {0} el mensaje se abre ya escrito: solo tienes que pulsar enviar.¦Sur {0}, le message s'ouvre déjà écrit : il suffit d'appuyer sur envoyer.¦In {0} öffnet sich die Nachricht schon fertig: Du musst nur auf Senden tippen.¦No {0} a mensagem abre já escrita: só precisa tocar em enviar.
+{0} Su {1} il messaggio si apre già scritto: devi solo premere invio.¦{0} On {1} the message opens already written: just press send.¦{0} En {1} el mensaje se abre ya escrito: solo tienes que pulsar enviar.¦{0} Sur {1}, le message s'ouvre déjà écrit : il suffit d'appuyer sur envoyer.¦{0} In {1} öffnet sich die Nachricht schon fertig: Du musst nur auf Senden tippen.¦{0} No {1} a mensagem abre já escrita: só precisa tocar em enviar.
+Tessera n. {0} · Iscritto dal¦Card no. {0} · Member since¦Carnet n.º {0} · Inscrito desde¦Carte n° {0} · Inscrit depuis le¦Ausweis Nr. {0} · Mitglied seit¦Carteirinha n.º {0} · Inscrito desde
+Testo copiato: incollalo in {0} con Ctrl+V¦Text copied: paste it into {0} with Ctrl+V¦Texto copiado: pégalo en {0} con Ctrl+V¦Texte copié : collez-le dans {0} avec Ctrl+V¦Text kopiert: Füge ihn in {0} mit Strg+V ein¦Texto copiado: cole em {0} com Ctrl+V
+Tutto quello che serve per gestire {0}: in pochi minuti sei operativo.¦Everything you need to run {0}: you'll be up and running in minutes.¦Todo lo necesario para gestionar {0}: en pocos minutos estás operativo.¦Tout le nécessaire pour gérer {0} : vous êtes opérationnel en quelques minutes.¦Alles, was du brauchst, um {0} zu verwalten: In wenigen Minuten startklar.¦Tudo o que você precisa para gerir {0}: em poucos minutos está tudo pronto.
+Ultimo promemoria: {0}¦Last reminder: {0}¦Último recordatorio: {0}¦Dernier rappel : {0}¦Letzte Erinnerung: {0}¦Último lembrete: {0}
+Genitore: {0}¦Parent: {0}¦Padre/madre: {0}¦Parent : {0}¦Elternteil: {0}¦Responsável: {0}
+CAP¦Postcode¦C.P.¦Code postal¦PLZ¦CEP
+Ricevuto da¦Received from¦Recibido de¦Reçu de¦Erhalten von¦Recebido de
+Click¦Click¦Clic¦Clic¦Klick¦Clique
+Volume¦Volume¦Volumen¦Volume¦Lautstärke¦Volume
+Video 1¦Video 1¦Vídeo 1¦Vidéo 1¦Video 1¦Vídeo 1
+Relax¦Relax¦Relax¦Détente¦Entspannt¦Relax
+Retrò¦Retro¦Retro¦Rétro¦Retro¦Retrô
+Social¦Social¦Redes sociales¦Réseaux sociaux¦Social Media¦Redes sociais
+Letter¦Letter¦Carta¦Letter¦Letter¦Carta
+first name¦first name¦nombre¦prénom¦Vorname¦nome
+last name¦last name¦apellidos¦nom¦Nachname¦sobrenome
+Collezione non valida¦Invalid collection¦Colección no válida¦Collection non valide¦Ungültige Sammlung¦Coleção inválida
+Esc¦Esc¦Esc¦Échap¦Esc¦Esc
+Enter¦Enter¦Intro¦Entrée¦Eingabe¦Enter

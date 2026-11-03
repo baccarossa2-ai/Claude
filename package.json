@@ -1,10 +1,10 @@
 {
   "name": "athlos-suite",
   "productName": "Athlos Suite",
-  "version": "1.0.0",
-  "description": "Athlos Suite — gestionale desktop per società sportive: anagrafiche, ricevute, scadenzario certificati, stampa, editor video Salto Studio, chat Squadra e messaggi social.",
+  "version": "1.1.0",
+  "description": "Athlos Suite: desktop management software for sports clubs (members, receipts, cash reports, medical certificates, printing, Salto Studio video editor, team chat and social messages).",
   "main": "src/main/main.js",
-  "author": "Athletic Club",
+  "author": "Athlos",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
@@ -27,7 +27,7 @@
   "build": {
     "appId": "it.athlos.suite",
     "productName": "Athlos Suite",
-    "copyright": "Copyright © 2026 Athletic Club",
+    "copyright": "Copyright © 2026 Athlos",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -70,12 +70,13 @@
       "uninstallerIcon": "build/icon.ico",
       "installerHeaderIcon": "build/icon.ico",
       "uninstallDisplayName": "Athlos Suite",
-      "language": "1040",
+      "language": "1033",
       "installerLanguages": [
-        "it_IT"
+        "en_US"
       ],
       "artifactName": "Athlos-Suite-Setup-${version}.${ext}",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "multiLanguageInstaller": false
     },
     "portable": {
       "artifactName": "Athlos-Suite-Portable-${version}.${ext}"

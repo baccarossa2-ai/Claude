@@ -1,6 +1,6 @@
 // Componenti di interfaccia: icone, notifiche a comparsa, finestre modali, menu, animazioni.
 import { ICONS } from './icons.js';
-import { esc, initials, colorFor } from './format.js';
+import { esc, initials, colorFor, num } from './format.js';
 
 export function icon(name, size = 18, extra = '') {
   const inner = ICONS[name] || ICONS['circle'];
@@ -195,7 +195,7 @@ export function popMenu(anchor, items, { align = 'right' } = {}) {
 }
 
 // ------------------------------------------------------------------ animazioni
-export function countUp(node, to, { duration = 900, format = v => Math.round(v).toLocaleString('it-IT') } = {}) {
+export function countUp(node, to, { duration = 900, format = v => num(Math.round(v)) } = {}) {
   const from = 0;
   const start = performance.now();
   const step = now => {

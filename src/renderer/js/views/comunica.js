@@ -3,13 +3,14 @@
 import { db } from '../lib/db.js';
 import { icon, on, $, $$, toast, modal, avatar, promptDialog, confirmDialog } from '../lib/ui.js';
 import { esc, fillTemplate, euro, date, todayISO, MESI, normalize, phoneIntl, fullName, uid } from '../lib/format.js';
+import { t as tr } from '../lib/i18n.js';
 import { CATEGORIES, TEMPLATES, HASHTAGS, EMOJIS, PLATFORMS, adapt, xLength, shortenForX } from '../data/templates.js';
 import { companyName } from '../print/receipt.js';
 
 const st = { cat: 'tutti', q: '', tplId: TEMPLATES[0].id, platform: 'whatsapp', text: '', tags: new Set(), unicodeBold: true, image: 'palestra', imageCustom: '', vars: {} };
 
 function allTemplates() {
-  return [...(db.templates || []).map(t => ({ ...t, custom: true })), ...TEMPLATES];
+  return [...(db.templates || []).map(t => ({ ...t, custom: true })), ...TEMPLATES.map(x => ({ ...x, title: tr(x.title), text: tr(x.text) }))];
 }
 
 function defaultVars() {

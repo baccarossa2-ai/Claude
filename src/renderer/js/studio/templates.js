@@ -1,6 +1,7 @@
 // Modelli pronti di Salto Studio (stile Canva): ogni modello crea un progetto completo,
 // già personalizzato con nome, logo e contatti della società.
 import { newProject, baseClip, textClip, nid, FORMATS } from './state.js';
+import { t as tr } from '../lib/i18n.js';
 
 const IMG = name => `athlos://app/assets/images/${name}.webp`;
 const fmt = id => FORMATS.find(f => f.id === id);
@@ -45,7 +46,7 @@ const img = (src, x, y, w, h, extra = {}) => baseClip('image', { src, name: 'Imm
 const color = (x, y, w, h, extra = {}) => baseClip('color', { name: 'Riquadro', x, y, w, h, ...extra });
 const shape = (shapeName, x, y, w, h, extra = {}) => baseClip('shape', { name: 'Forma', shape: shapeName, x, y, w, h, fill: '#7C4DFF', strokeWidth: 0, ...extra });
 const sticker = (emoji, x, y, s, extra = {}) => baseClip('sticker', { name: 'Adesivo ' + emoji, emoji, x, y, w: s, h: s, ...extra });
-const text = (t, x, y, w, extra = {}) => textClip({ text: t, x, y, w, ...extra });
+const text = (t, x, y, w, extra = {}) => textClip({ text: tr(t), x, y, w, ...extra });
 
 function brandFooter(p, b, y, extra = {}) {
   const parts = [b.phone && `📞 ${b.phone}`, b.instagram && `📸 ${b.instagram}`].filter(Boolean).join('   ');

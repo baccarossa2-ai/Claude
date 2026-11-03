@@ -413,10 +413,13 @@ async function boot() {
   const t0 = performance.now();
   await db.init();
   await applyTheme();
+  const { ensureRegion } = await import('./views/region.js');
+  if (db.settings.region && db.settings.region.country) await ensureRegion();
   const wait = Math.max(0, 1300 - (performance.now() - t0));
   setTimeout(async () => {
     const splash = $('#splash');
     if (db.settings.pin && db.settings.lockOnStart) await lockScreen();
+    if (!db.settings.region || !db.settings.region.country) { splash.classList.add('out'); await ensureRegion(); }
     if (!db.settings.onboardingDone) {
       const { runOnboarding } = await import('./views/onboarding.js');
       splash.classList.add('out');

@@ -1,11 +1,12 @@
-// CSV compatibile con Excel italiano (separatore ";" e BOM UTF-8).
+// CSV compatibile con Excel (separatore ";" e BOM UTF-8). Le intestazioni sono nella lingua scelta.
+import { t } from './i18n.js';
 
 export function toCSV(rows, sep = ';') {
   const cell = v => {
     const s = v === null || v === undefined ? '' : String(v);
     return /[";\n\r,]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  return '﻿' + rows.map(r => r.map(cell).join(sep)).join('\r\n');
+  return '﻿' + rows.map((r, i) => (i === 0 ? r.map(x => t(x)) : r).map(cell).join(sep)).join('\r\n');
 }
 
 export function parseCSV(text) {

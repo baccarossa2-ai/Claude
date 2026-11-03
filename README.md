@@ -8,14 +8,22 @@ Anagrafiche · Ricevute · Scadenzario certificati · Stampa · Salto Studio (vi
 
 Athlos è un **programma Windows vero e proprio** (installer `.exe` e versione portatile): si apre nella sua finestra, funziona **senza internet** e salva i dati **sul computer della società**. Non apre il browser e non dipende da server esterni.
 
-È configurato per **Athletic Club** con le cinque discipline: ginnastica artistica, ginnastica ritmica, judo, acrobatica aerea, salute e fitness. Ogni società può cambiare nome, dati, logo e discipline.
+È un prodotto **generico**, pronto per qualsiasi società: nessun nome è preimpostato. L'installer è in **inglese**; al primo avvio una schermata (in inglese) chiede il **paese** e poi la **lingua** (English, Italiano, Español, Français, Deutsch, Português): da quel momento Athlos resta in quella lingua, con valuta, formato delle date, prefisso telefonico e discipline proposte adatti al paese. Codice fiscale, comuni italiani, marca da bollo e detrazione del 19% compaiono solo per Italia e San Marino.
+
+### Traduzioni
+
+I testi sono scritti in italiano nel codice e tradotti al volo dai dizionari `src/renderer/js/i18n/<lingua>.js`:
+
+- `node scripts/i18n-extract.mjs` raccoglie i testi in `i18n/strings.json`;
+- le traduzioni sono in `i18n/<lingua>.json` (più `i18n/src/*.txt`, righe `testo¦en¦es¦fr¦de¦pt`);
+- `node scripts/i18n-build.mjs` genera i dizionari usati dall'app (finestre, stampe, notifiche, menu del tasto destro).
 
 ## Scaricare l'EXE
 
 1. Apri la scheda **Actions** del repository, scegli l'ultima esecuzione di **“Crea EXE Windows”** e scarica l'artefatto **Athlos-Suite-Windows**.
 2. Dentro trovi:
-   - `Athlos-Suite-Setup-1.0.0.exe`: installer con collegamento sul desktop e nel menu Start;
-   - `Athlos-Suite-Portable-1.0.0.exe`: si avvia senza installazione, anche da chiavetta USB.
+   - `Athlos-Suite-Setup-1.1.0.exe`: installer con collegamento sul desktop e nel menu Start;
+   - `Athlos-Suite-Portable-1.1.0.exe`: si avvia senza installazione, anche da chiavetta USB.
 3. Quando pubblichi un tag `v1.0.0`, gli stessi file vengono allegati automaticamente a una **Release**.
 
 > L'EXE non è firmato digitalmente: al primo avvio Windows SmartScreen può mostrare “PC protetto”. Scegli **Ulteriori informazioni → Esegui comunque**. Per eliminare l'avviso serve un certificato di firma del codice.

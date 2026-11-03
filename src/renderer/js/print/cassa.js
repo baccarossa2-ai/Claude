@@ -1,5 +1,5 @@
 // Stampa della chiusura di cassa giornaliera (come il foglio della palestra) e del riepilogo mensile.
-import { esc, MESI, date } from '../lib/format.js';
+import { esc, MESI, date, currencySymbol, amount } from '../lib/format.js';
 import { docShell } from './documents.js';
 import { sedeLabel } from '../lib/cassa.js';
 import { companyName } from './receipt.js';
@@ -7,8 +7,8 @@ import { companyName } from './receipt.js';
 // "€ 325,00" con il simbolo a sinistra; zero = "€ -" come sul foglio
 function money(n, empty = '-') {
   const v = Number(n) || 0;
-  const t = v ? v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : empty;
-  return `<span class="m"><i>€</i><b>${t}</b></span>`;
+  const t = v ? amount(v) : empty;
+  return `<span class="m"><i>${currencySymbol()}</i><b>${t}</b></span>`;
 }
 const cell = v => (Number(v) ? money(v) : '');
 

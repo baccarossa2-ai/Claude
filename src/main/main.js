@@ -15,6 +15,8 @@ const QRCode = require('qrcode');
 const { Store } = require('./store');
 const printing = require('./printing');
 const { LanChat } = require('./chat');
+const bundle = require('./bundle');
+const { makeT } = require('./i18n');
 
 const isDev = process.argv.includes('--dev');
 const RENDERER = path.join(__dirname, '..', 'renderer');
@@ -200,16 +202,16 @@ function setupWebContents(wc) {
     }
     if (params.isEditable) {
       items.push(
-        { label: 'Annulla', role: 'undo' },
-        { label: 'Ripeti', role: 'redo' },
+        { label: tr('Annulla'), role: 'undo' },
+        { label: tr('Ripeti'), role: 'redo' },
         { type: 'separator' },
-        { label: 'Taglia', role: 'cut', enabled: params.editFlags.canCut },
-        { label: 'Copia', role: 'copy', enabled: params.editFlags.canCopy },
-        { label: 'Incolla', role: 'paste', enabled: params.editFlags.canPaste },
-        { label: 'Seleziona tutto', role: 'selectAll' },
+        { label: tr('Taglia'), role: 'cut', enabled: params.editFlags.canCut },
+        { label: tr('Copia'), role: 'copy', enabled: params.editFlags.canCopy },
+        { label: tr('Incolla'), role: 'paste', enabled: params.editFlags.canPaste },
+        { label: tr('Seleziona tutto'), role: 'selectAll' },
       );
     } else if (params.selectionText) {
-      items.push({ label: 'Copia', role: 'copy' });
+      items.push({ label: tr('Copia'), role: 'copy' });
     }
     if (isDev) items.push({ type: 'separator' }, { label: 'Ispeziona', click: () => wc.inspectElement(params.x, params.y) });
     if (items.length) Menu.buildFromTemplate(items).popup();
@@ -235,6 +237,10 @@ function debounce(fn, ms) {
   let t;
   return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 }
+
+// testi delle finestre di sistema nella lingua scelta al primo avvio
+function tr(text) { return store ? makeT(store)(text) : text; }
+function trFilters(filters) { return (filters || []).map(f => ({ ...f, name: tr(f.name) })); }
 
 function senderWindow(e) {
   return BrowserWindow.fromWebContents(e.sender) || mainWindow;
@@ -265,22 +271,22 @@ function registerIpc() {
   ipcMain.handle('backup:restore', (_e, name) => store.restoreBackup(name));
   ipcMain.handle('backup:export', async e => {
     const { canceled, filePath } = await dialog.showSaveDialog(senderWindow(e), {
-      title: 'Esporta backup completo',
+      title: tr('Esporta backup completo'),
       defaultPath: `Athlos-backup-${new Date().toISOString().slice(0, 10)}.athlos`,
-      filters: [{ name: 'Backup Athlos', extensions: ['athlos'] }],
+      filters: [{ name: tr('Backup Athlos'), extensions: ['athlos'] }],
     });
     if (canceled || !filePath) return null;
-    fs.writeFileSync(filePath, store.exportBundle());
+    fs.writeFileSync(filePath, bundle.exportAll({ store, studioDir, chatFile: chat.file, version: app.getVersion() }));
     return filePath;
   });
   ipcMain.handle('backup:import', async e => {
     const { canceled, filePaths } = await dialog.showOpenDialog(senderWindow(e), {
-      title: 'Importa backup',
-      filters: [{ name: 'Backup Athlos', extensions: ['athlos', 'json'] }],
+      title: tr('Importa backup'),
+      filters: [{ name: tr('Backup Athlos'), extensions: ['athlos', 'json'] }],
       properties: ['openFile'],
     });
     if (canceled || !filePaths[0]) return false;
-    store.importBundle(fs.readFileSync(filePaths[0], 'utf8'));
+    bundle.importAll(fs.readFileSync(filePaths[0], 'utf8'), { store, studioDir, chatFile: chat.file });
     return true;
   });
   ipcMain.handle('backup:openFolder', () => shell.openPath(store.backupDir));
@@ -294,8 +300,8 @@ function registerIpc() {
     let target = opts.filePath;
     if (!target) {
       const { canceled, filePath } = await dialog.showSaveDialog(senderWindow(e), {
-        title: 'Salva PDF',
-        defaultPath: (opts.defaultName || 'documento') + '.pdf',
+        title: tr('Salva PDF'),
+        defaultPath: tr(opts.defaultName || 'documento') + '.pdf',
         filters: [{ name: 'PDF', extensions: ['pdf'] }],
       });
       if (canceled || !filePath) return null;
@@ -309,8 +315,8 @@ function registerIpc() {
   // --- file
   ipcMain.handle('file:open', async (e, opts = {}) => {
     const { canceled, filePaths } = await dialog.showOpenDialog(senderWindow(e), {
-      title: opts.title || 'Apri file',
-      filters: opts.filters || [],
+      title: tr(opts.title || 'Apri file'),
+      filters: trFilters(opts.filters),
       properties: ['openFile', ...(opts.multiple ? ['multiSelections'] : [])],
     });
     if (canceled) return [];
@@ -327,9 +333,9 @@ function registerIpc() {
     let target = opts.filePath;
     if (!target) {
       const { canceled, filePath } = await dialog.showSaveDialog(senderWindow(e), {
-        title: opts.title || 'Salva',
-        defaultPath: opts.defaultName || 'file',
-        filters: opts.filters || [],
+        title: tr(opts.title || 'Salva'),
+        defaultPath: tr(opts.defaultName || 'file'),
+        filters: trFilters(opts.filters),
       });
       if (canceled || !filePath) return null;
       target = filePath;
@@ -389,7 +395,7 @@ function registerIpc() {
   ipcMain.handle('clipboard:image', (_e, dataUrl) => { clipboard.writeImage(nativeImage.createFromDataURL(dataUrl)); return true; });
   ipcMain.handle('notify', (e, { title, body, silent }) => {
     if (!Notification.isSupported()) return false;
-    const n = new Notification({ title, body, silent: !!silent, icon: ICON });
+    const n = new Notification({ title: tr(title), body: tr(body), silent: !!silent, icon: ICON });
     n.on('click', () => {
       const w = senderWindow(e);
       if (w) { if (w.isMinimized()) w.restore(); w.focus(); w.webContents.send('notify:click', { title }); }

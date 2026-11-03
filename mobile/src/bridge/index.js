@@ -15,6 +15,10 @@ import * as store from './store.js';
 import * as print from './print.js';
 import { scheduleReminders, ensurePermission } from './reminders.js';
 import { createChatApi } from './chat-api.js';
+import * as bundle from './bundle.js';
+// testi nella lingua scelta al primo avvio (il traduttore lo pubblica l'interfaccia)
+const tr = s => (typeof window !== 'undefined' && window.__athlosT ? window.__athlosT(s) : s);
+
 
 const VERSION = '1.0.1';
 const STUDIO = 'athlos/studio';
@@ -120,7 +124,7 @@ async function writeData(rel, d, directory) {
 async function shareFile(rel, directory, title) {
   const uri = await fsx.uriOf(rel, directory);
   try {
-    await Share.share({ title, files: [uri], dialogTitle: title });
+    await Share.share({ title: tr(title), files: [uri], dialogTitle: tr(title) });
     return true;
   } catch (err) {
     if (/cancel/i.test(String(err && err.message))) return false;
@@ -251,7 +255,7 @@ let notifySeq = Math.floor(Date.now() / 1000) % 100000;
 async function notify({ title, body }) {
   if (!fsx.native) return false;
   if (!(await ensurePermission())) return false;
-  await LocalNotifications.schedule({ notifications: [{ id: 1000000 + (notifySeq++ % 900000), title, body, smallIcon: 'ic_stat_athlos', iconColor: '#7C5CFF', extra: { kind: 'info' } }] });
+  await LocalNotifications.schedule({ notifications: [{ id: 1000000 + (notifySeq++ % 900000), title: tr(title), body: tr(body), smallIcon: 'ic_stat_athlos', iconColor: '#7C5CFF', extra: { kind: 'info' } }] });
   return true;
 }
 
@@ -323,20 +327,20 @@ window.athlos = {
     exportFile: async () => {
       const b = busy('Preparazione del backup…');
       let text;
-      try { text = await store.exportBundle(); } finally { b.done(); }
+      try { text = await bundle.exportAll(VERSION); } finally { b.done(); }
       return saveFile({ defaultName: `Athlos-backup-${new Date().toISOString().slice(0, 10)}.athlos`, text });
     },
     importFile: async () => {
       const [f] = await pickFiles({});
       if (!f) return false;
       const b = busy('Importazione del backup…');
-      try { await store.importBundle(await f.text()); } finally { b.done(); }
+      try { await bundle.importAll(await f.text()); } finally { b.done(); }
       return true;
     },
     openFolder: async () => {
       const rel = await store.latestBackupPath();
       if (!rel || !fsx.native) return false;
-      return shareFile(rel, fsx.Directory.Data, 'Ultimo backup di Athlos');
+      return shareFile(rel, fsx.Directory.Data, tr('Ultimo backup di Athlos'));
     },
   },
   print: {
@@ -437,7 +441,7 @@ async function initAndroid() {
     }
   });
   try {
-    await LocalNotifications.createChannel({ id: 'athlos', name: 'Athlos', description: 'Scadenze dei certificati e avvisi', importance: 4, visibility: 1 });
+    await LocalNotifications.createChannel({ id: 'athlos', name: 'Athlos', description: tr('Scadenze dei certificati e avvisi'), importance: 4, visibility: 1 });
   } catch { /* canale già presente */ }
 }
 

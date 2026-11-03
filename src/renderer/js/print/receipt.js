@@ -1,7 +1,8 @@
 // Modello di stampa delle ricevute (generali e commerciali) per A4, A5 e stampanti termiche.
 import { db } from '../lib/db.js';
-import { esc, euro, date, address, MESI } from '../lib/format.js';
+import { esc, euro, date, address, MESI, currencySymbol, amount, CURRENCY } from '../lib/format.js';
 import { euroInWords } from '../lib/words.js';
+import { isIT } from '../lib/region.js';
 import { docShell } from './documents.js';
 import { mediaToDataUrl } from '../lib/ui.js';
 
@@ -62,7 +63,7 @@ export function companyLegalName(c = db.company) {
 }
 
 // importi come sulle ricevute cartacee: "€ 55,00"
-const eur = n => `€ ${(Number(n) || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const eur = n => `${currencySymbol()} ${amount(n)}`;
 const OLD_FOOTER = 'Grazie per la fiducia! Conserva questa ricevuta.';
 
 function paper(r, logo) {
@@ -94,16 +95,16 @@ function paper(r, logo) {
     <div class="rp-parties">
       ${same ? personBlock('Anagrafica cliente', payer) + '<div></div>' : personBlock('Anagrafica genitore', payer) + personBlock('Anagrafica atleta', ath)}
     </div>
-    <div class="rp-cols"><span>DESCRIZIONE</span><span>EURO</span></div>
+    <div class="rp-cols"><span>DESCRIZIONE</span><span>${CURRENCY === 'EUR' ? 'EURO' : 'IMPORTO'}</span></div>
     <div class="rp-box">
       <table><tbody>${rows}</tbody></table>
       <div class="rp-total"><span>TOTALE DA CORRISPONDERE</span><b>${eur(r.totale)}</b></div>
     </div>
     <p class="rp-pay">Metodo di pagamento: <b>${esc(r.metodo || '—')}</b></p>
-    ${r.detrazione ? `<p class="rp-note">${esc(DETRAZIONE_TEXT)}</p>` : ''}
+    ${r.detrazione && isIT() ? `<p class="rp-note">${esc(DETRAZIONE_TEXT)}</p>` : ''}
     ${dicitura ? `<p class="rp-note">${esc(dicitura)}</p>` : ''}
     ${r.note ? `<p class="rp-note">Note: ${esc(r.note)}</p>` : ''}
-    ${r.bollo ? `<p class="rp-note">Marca da bollo da € ${Number(s.bolloAmount || 2).toFixed(2).replace('.', ',')} applicata sull'originale.</p>` : ''}
+    ${r.bollo && isIT() ? `<p class="rp-note">Marca da bollo da € ${Number(s.bolloAmount || 2).toFixed(2).replace('.', ',')} applicata sull'originale.</p>` : ''}
     <p class="rp-thanks">${esc(footer)}</p>
   </section>`;
 }
@@ -176,9 +177,9 @@ function thermal(r, logo) {
     <hr>${(r.righe || []).map(l => `<div class="row"><span>${esc(l.descrizione)}</span><span>${euro(l.importo)}</span></div>`).join('')}
     ${(r.mesi || []).length ? `<p>Periodo: ${esc(r.mesi.map(monthLabel).join(', '))}</p>` : ''}
     <hr><div class="row big"><span>TOTALE</span><span>${euro(r.totale)}</span></div>
-    <p>Euro ${esc(euroInWords(r.totale))}</p><p>Pagamento: ${esc(r.metodo || '')}</p>
-    ${r.detrazione ? `<p style="font-size:7pt">${esc(DETRAZIONE_TEXT)}</p>` : ''}
-    ${r.bollo ? `<p>Marca da bollo € ${Number(s.bolloAmount || 2).toFixed(2).replace('.', ',')}</p>` : ''}
+    ${isIT() ? `<p>Euro ${esc(euroInWords(r.totale))}</p>` : ''}<p>Pagamento: ${esc(r.metodo || '')}</p>
+    ${r.detrazione && isIT() ? `<p style="font-size:7pt">${esc(DETRAZIONE_TEXT)}</p>` : ''}
+    ${r.bollo && isIT() ? `<p>Marca da bollo € ${Number(s.bolloAmount || 2).toFixed(2).replace('.', ',')}</p>` : ''}
     ${r.note ? `<p>Note: ${esc(r.note)}</p>` : ''}
     <hr><p class="c">${esc(s.footer || '')}</p><p class="c">Firma ____________________</p>
   </div>`;

@@ -3,6 +3,9 @@
 import { registerPlugin } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { native, safeName } from './fsx.js';
+// testi nella lingua scelta al primo avvio (il traduttore lo pubblica l'interfaccia)
+const tr = s => (typeof window !== 'undefined' && window.__athlosT ? window.__athlosT(s) : s);
+
 
 const AthlosPrint = registerPlugin('AthlosPrint');
 
@@ -13,7 +16,7 @@ const titleOf = html => ((/<title>([^<]*)<\/title>/i.exec(html) || [])[1] || 'At
 export async function printers() {
   return [{
     name: 'android',
-    displayName: 'Stampanti del telefono',
+    displayName: tr('Stampanti del telefono'),
     description: 'Wi-Fi, Bluetooth, Mopria o “Salva come PDF”: si sceglie al momento della stampa',
     isDefault: true,
     status: 0,
@@ -39,7 +42,7 @@ export async function pdf({ html, defaultName, pageSize = 'A4', landscape = fals
   const fileName = safeName(defaultName || titleOf(html)).replace(/\.pdf$/i, '') + '.pdf';
   const res = await AthlosPrint.pdf({ html, fileName, paper: pageSize, landscape: !!landscape });
   try {
-    await Share.share({ title: fileName, files: [res.uri], dialogTitle: 'Condividi o salva il PDF' });
+    await Share.share({ title: fileName, files: [res.uri], dialogTitle: tr('Condividi o salva il PDF') });
   } catch (err) {
     if (/cancel/i.test(String(err && err.message))) return null;
     throw err;

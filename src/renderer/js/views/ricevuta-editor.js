@@ -4,6 +4,7 @@ import { icon, avatar, on, $, $$, toast, modal, confetti } from '../lib/ui.js';
 import { go } from '../lib/router.js';
 import { esc, euro, todayISO, age, fullName, MESI_BREVI, MESI, debounce, date, phoneIntl } from '../lib/format.js';
 import { euroInWords } from '../lib/words.js';
+import { isIT } from '../lib/region.js';
 import { receiptHTML, needsBollo, monthLabel, companyName } from '../print/receipt.js';
 import { printDocument, quickPrint } from '../print/documents.js';
 import { discChips } from './atleti.js';
@@ -65,11 +66,11 @@ export default {
               <div class="chips" id="presets" style="margin-bottom:12px"></div>
               <div class="receipt-lines" id="lines"></div>
               <button class="btn sm ghost mt" id="addLine">${icon('plus', 15)}Aggiungi riga</button>
-              <div class="receipt-total"><div><div class="tiny" style="opacity:.8;letter-spacing:.1em;text-transform:uppercase;font-weight:800">Totale</div><div class="small" id="words" style="opacity:.9"></div></div><b id="tot">0,00 €</b></div>
+              <div class="receipt-total"><div><div class="tiny" style="opacity:.8;letter-spacing:.1em;text-transform:uppercase;font-weight:800">Totale</div><div class="small" id="words" style="opacity:.9"></div></div><b id="tot">${euro(0)}</b></div>
             </div>
             <div class="col" style="gap:12px;margin-top:6px">
-              <label class="switch"><input type="checkbox" id="detr"><i></i><span>Dicitura per detrazione fiscale 19% (atleti 5–18 anni)</span></label>
-              <label class="switch"><input type="checkbox" id="bollo"><i></i><span id="bolloLbl">Marca da bollo</span></label>
+              <label class="switch it-only"><input type="checkbox" id="detr"><i></i><span>Dicitura per detrazione fiscale 19% (atleti 5–18 anni)</span></label>
+              <label class="switch it-only"><input type="checkbox" id="bollo"><i></i><span id="bolloLbl">Marca da bollo</span></label>
               <label class="field"><span>Note (facoltative)</span><input id="note" placeholder="Es. saldo quota trimestrale"></label>
             </div>
           </div>
@@ -135,9 +136,9 @@ export default {
     const autoFlags = () => {
       const c = client();
       const a = c ? age(c.dataNascita, r.data) : null;
-      if (!r.detrTouched) r.detrazione = db.settings.receipts.detrazioneAuto && r.tipo === 'generale' && a !== null && a >= 5 && a <= 18;
+      if (!r.detrTouched) r.detrazione = isIT() && db.settings.receipts.detrazioneAuto && r.tipo === 'generale' && a !== null && a >= 5 && a <= 18;
       const tot = build().totale;
-      if (!r.bolloTouched) r.bollo = db.settings.receipts.bolloAuto && tot > Number(db.settings.receipts.bolloThreshold || 77.47);
+      if (!r.bolloTouched) r.bollo = isIT() && db.settings.receipts.bolloAuto && tot > Number(db.settings.receipts.bolloThreshold || 77.47);
       $('#detr', root).checked = r.detrazione;
       $('#bollo', root).checked = r.bollo;
       $('#bolloLbl', root).innerHTML = `Marca da bollo da € ${Number(db.settings.receipts.bolloAmount || 2).toFixed(2).replace('.', ',')} ${tot > Number(db.settings.receipts.bolloThreshold || 77.47) ? '<span class="badge warn">importo oltre 77,47 €</span>' : ''}`;
@@ -246,7 +247,7 @@ export default {
     const totals = () => {
       const t = r.righe.reduce((s, l) => s + (Number(l.importo) || 0), 0);
       $('#tot', root).textContent = euro(t);
-      $('#words', root).textContent = `euro ${euroInWords(t)}`;
+      $('#words', root).textContent = isIT() ? `euro ${euroInWords(t)}` : '';
       autoFlags();
     };
 

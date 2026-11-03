@@ -1,7 +1,8 @@
 // Documenti stampabili (HTML autonomo) e finestra di stampa con anteprima, scelta stampante e PDF.
 import { db } from '../lib/db.js';
 import { modal, icon, toast, $ } from '../lib/ui.js';
-import { esc } from '../lib/format.js';
+import { esc, LOCALE } from '../lib/format.js';
+import { LANG, translateHTML } from '../lib/i18n.js';
 
 const FONT_BASE = new URL('../../assets/fonts/', import.meta.url).href;
 
@@ -14,14 +15,14 @@ export function fontCSS() {
 }
 
 export function docShell({ title, body, css = '', page = 'A4', landscape = false }) {
-  return `<!doctype html><html lang="it"><head><meta charset="utf-8"><title>${esc(title)}</title>
+  return translateHTML(`<!doctype html><html lang="${LANG}"><head><meta charset="utf-8"><title>${esc(title)}</title>
   <style>${fontCSS()}
   @page { size: ${page === 'A5' ? 'A5' : page === 'A4' ? 'A4' : 'auto'} ${landscape ? 'landscape' : 'portrait'}; margin: ${page.startsWith('Termica') ? '2mm' : '12mm'}; }
   *{box-sizing:border-box} html,body{margin:0;padding:0}
   body{font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#1b1838;font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff}
   h1,h2,h3{font-family:'Outfit','Plus Jakarta Sans',sans-serif;margin:0}
   .mono{font-family:'JetBrains Mono',monospace}
-  ${css}</style></head><body>${body}</body></html>`;
+  ${css}</style></head><body>${body}</body></html>`);
 }
 
 export function listDocument({ title, subtitle, head, rows }) {
@@ -41,7 +42,7 @@ export function listDocument({ title, subtitle, head, rows }) {
     body: `<div class="top"><div><h1>${esc(title)}</h1><p>${esc(subtitle || '')}</p></div><div style="text-align:right"><b>${esc(name || '')}</b><p>${esc(c.formaGiuridica || '')}</p></div></div>
       <table><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
       <tbody>${rows.map(r => `<tr>${r.map(v => `<td>${esc(v ?? '')}</td>`).join('')}</tr>`).join('')}</tbody></table>
-      <div class="foot">Stampato con Athlos Suite · ${new Date().toLocaleString('it-IT')}</div>`,
+      <div class="foot">Stampato con Athlos Suite · ${new Date().toLocaleString(LOCALE)}</div>`,
   });
 }
 

@@ -1,14 +1,41 @@
-// Formattazione all'italiana: date, valuta, età, iniziali e piccoli aiuti.
+// Formattazione secondo il paese scelto al primo avvio: date, valuta, mesi, prefisso telefonico.
+// Le esportazioni sono "vive": setLocale aggiorna mesi e formati per tutti i moduli.
 
-export const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
-export const MESI_BREVI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
-export const GIORNI = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
+export let MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+export let MESI_BREVI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+export let GIORNI = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
+export let LOCALE = 'it-IT';
+export let CURRENCY = 'EUR';
+let PHONE_PREFIX = '39';
 
-const euroFmt = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
-const numFmt = new Intl.NumberFormat('it-IT');
+let euroFmt = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+let numFmt = new Intl.NumberFormat('it-IT');
+let dateFmt = new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+export function setLocale({ locale = 'it-IT', currency = 'EUR', phonePrefix = '39' } = {}) {
+  LOCALE = locale;
+  CURRENCY = currency;
+  PHONE_PREFIX = String(phonePrefix || '');
+  euroFmt = new Intl.NumberFormat(locale, { style: 'currency', currency });
+  numFmt = new Intl.NumberFormat(locale);
+  dateFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const m = new Intl.DateTimeFormat(locale, { month: 'long' });
+  const ms = new Intl.DateTimeFormat(locale, { month: 'short' });
+  const wd = new Intl.DateTimeFormat(locale, { weekday: 'long' });
+  MESI = Array.from({ length: 12 }, (_, i) => m.format(new Date(2026, i, 15)));
+  MESI_BREVI = Array.from({ length: 12 }, (_, i) => ms.format(new Date(2026, i, 15)).replace('.', ''));
+  GIORNI = Array.from({ length: 7 }, (_, i) => wd.format(new Date(2026, 1, 1 + i)));
+}
+
+// importo nella valuta del paese (il nome resta "euro" per compatibilità con tutto il codice)
 export const euro = n => euroFmt.format(Number(n) || 0);
 export const num = n => numFmt.format(Number(n) || 0);
+export const money = euro;
+// simbolo della valuta del paese (€, $, £…) e importo senza simbolo con due decimali
+export function currencySymbol() {
+  try { return (euroFmt.formatToParts(0).find(p => p.type === 'currency') || {}).value || CURRENCY; } catch { return CURRENCY; }
+}
+export const amount = n => new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0);
 
 export function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -32,9 +59,9 @@ export function parseISO(s) {
 export function date(s, opts) {
   const d = parseISO(s);
   if (!d) return '—';
-  if (opts === 'long') return `${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`;
-  if (opts === 'short') return `${d.getDate()} ${MESI_BREVI[d.getMonth()]}`;
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  if (opts === 'long') return new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+  if (opts === 'short') return new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'short' }).format(d);
+  return dateFmt.format(d);
 }
 
 export function dateTime(ts) {
@@ -127,8 +154,9 @@ export function phoneIntl(p) {
   if (!n) return '';
   if (n.startsWith('+')) return n.slice(1);
   if (n.startsWith('00')) return n.slice(2);
-  if (n.startsWith('3') && n.length >= 9) return '39' + n;
-  if (n.startsWith('0')) return '39' + n;
+  if (PHONE_PREFIX === '39' && n.startsWith('3') && n.length >= 9) return '39' + n;
+  if (n.startsWith('0') && PHONE_PREFIX) return PHONE_PREFIX + (PHONE_PREFIX === '39' ? n : n.slice(1));
+  if (PHONE_PREFIX && PHONE_PREFIX !== '39' && n.length <= 11 && !n.startsWith(PHONE_PREFIX)) return PHONE_PREFIX + n;
   return n;
 }
 
